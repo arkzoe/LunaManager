@@ -9,7 +9,8 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "explicit",
+    "editor.formatOnSave": "always",
   },
   "eslint.validate": ["javascript", "javascriptreact", "vue", "html"]
 }
