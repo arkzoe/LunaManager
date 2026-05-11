@@ -14,107 +14,107 @@ export default defineConfig({
   theme: {
     colors: {
       // ========== 主色调系统 ==========
-      // 品牌主色 - 靛蓝色系，用于主要操作和强调
+      // 品牌主色 - 柔和蓝紫色系，降低饱和度更护眼
       brand: {
-        50: '#eef2ff',
-        100: '#e0e7ff',
-        200: '#c7d2fe',
-        300: '#a5b4fc',
-        400: '#818cf8',
-        500: '#6366f1', // 主色
-        600: '#4f46e5', // 悬停色
-        700: '#4338ca', // 按下色
-        800: '#3730a3',
-        900: '#312e81',
+        50: '#f5f3ff',
+        100: '#ede9fe',
+        200: '#ddd6fe',
+        300: '#c4b5fd',
+        400: '#a78bfa',
+        500: '#8b7ce8', // 主色 - 柔和紫
+        600: '#7c6ad4', // 悬停色
+        700: '#6d5bbf', // 按下色
+        800: '#5e4aa8',
+        900: '#4c3d8a',
       },
 
       // ========== 中性色系统 ==========
-      // 背景层级 - 从深到浅，建立清晰的视觉层次
+      // 背景层级 - 增强对比度，确保视觉层次清晰
       bg: {
-        base: '#f1f5f9',        // 最底层背景（页面背景）
-        sidebar: '#ffffff',     // 侧边栏背景
-        primary: '#ffffff',     // 主要卡片背景
-        secondary: '#f8fafc',   // 次级卡片/模块背景
-        tertiary: '#f1f5f9',    // 第三层级背景（输入框、按钮等）
-        quaternary: '#e2e8f0',  // 第四层级（分隔区域、禁用状态）
-        hover: '#f8fafc',       // 悬停状态
-        active: '#e0e7ff',      // 激活状态（品牌色浅色调）
+        base: 'var(--bg-base)',
+        sidebar: 'var(--bg-sidebar)',
+        primary: 'var(--bg-primary)',
+        secondary: 'var(--bg-secondary)',
+        tertiary: 'var(--bg-tertiary)',
+        quaternary: 'var(--bg-quaternary)',
+        hover: 'var(--bg-hover)',
+        active: 'var(--bg-active)',
       },
 
-      // 文字颜色 - 确保 WCAG AA 及以上对比度
+      // 文字颜色 - 引用 CSS 变量以支持暗色模式切换
       text: {
-        primary: '#0f172a',     // 主要文字 - 对比度约 15:1
-        secondary: '#334155',   // 次要文字 - 对比度约 7:1
-        tertiary: '#64748b',    // 辅助文字 - 对比度约 4.5:1
-        muted: '#94a3b8',       // 弱化文字 - 对比度约 3:1
-        inverse: '#ffffff',     // 反色文字（用于深色背景）
-        brand: '#4f46e5',       // 品牌色文字
+        primary: 'var(--text-primary)',
+        secondary: 'var(--text-secondary)',
+        tertiary: 'var(--text-tertiary)',
+        muted: 'var(--text-muted)',
+        inverse: 'var(--text-inverse)',
+        brand: 'var(--text-brand)',
       },
 
-      // 边框颜色 - 建立清晰的边界感
+      // 边框颜色 - 引用 CSS 变量以支持暗色模式切换
       border: {
-        DEFAULT: '#e2e8f0',     // 默认边框
-        light: '#f1f5f9',       // 浅色边框（分隔线）
-        medium: '#cbd5e1',      // 中等边框（悬停状态）
-        strong: '#94a3b8',      // 强调边框（聚焦状态）
-        brand: '#6366f1',       // 品牌色边框
+        DEFAULT: 'var(--border-color)',
+        light: 'var(--border-color-light)',
+        medium: 'var(--border-color-medium)',
+        strong: 'var(--border-color-strong)',
+        brand: 'var(--border-brand)',
       },
 
       // ========== 功能色系统 ==========
-      // 成功色 - 绿色系
+      // 成功色 - 柔和绿色系
       success: {
         50: '#f0fdf4',
         100: '#dcfce7',
         200: '#bbf7d0',
         300: '#86efac',
         400: '#4ade80',
-        500: '#22c55e',
-        600: '#16a34a',
-        700: '#15803d',
-        800: '#166534',
-        900: '#14532d',
+        500: '#10b981', // 柔和绿
+        600: '#059669',
+        700: '#047857',
+        800: '#065f46',
+        900: '#064e3b',
       },
 
-      // 警告色 - 橙色系
+      // 警告色 - 柔和橙色系
       warning: {
-        50: '#fff7ed',
-        100: '#ffedd5',
-        200: '#fed7aa',
-        300: '#fdba74',
-        400: '#fb923c',
-        500: '#f97316',
-        600: '#ea580c',
-        700: '#c2410c',
-        800: '#9a3412',
-        900: '#7c2d12',
+        50: '#fffbeb',
+        100: '#fef3c7',
+        200: '#fde68a',
+        300: '#fcd34d',
+        400: '#fbbf24',
+        500: '#f59e0b', // 柔和琥珀
+        600: '#d97706',
+        700: '#b45309',
+        800: '#92400e',
+        900: '#78350f',
       },
 
-      // 危险色 - 红色系
+      // 危险色 - 柔和红色系
       danger: {
         50: '#fef2f2',
         100: '#fee2e2',
         200: '#fecaca',
         300: '#fca5a5',
         400: '#f87171',
-        500: '#ef4444',
+        500: '#ef4444', // 柔和红
         600: '#dc2626',
         700: '#b91c1c',
         800: '#991b1b',
         900: '#7f1d1d',
       },
 
-      // 信息色 - 青色系
+      // 信息色 - 柔和蓝色系
       info: {
-        50: '#ecfeff',
-        100: '#cffafe',
-        200: '#a5f3fc',
-        300: '#67e8f9',
-        400: '#22d3ee',
-        500: '#06b6d4',
-        600: '#0891b2',
-        700: '#0e7490',
-        800: '#155e75',
-        900: '#164e63',
+        50: '#eff6ff',
+        100: '#dbeafe',
+        200: '#bfdbfe',
+        300: '#93c5fd',
+        400: '#60a5fa',
+        500: '#3b82f6', // 柔和蓝
+        600: '#2563eb',
+        700: '#1d4ed8',
+        800: '#1e40af',
+        900: '#1e3a8a',
       },
 
       // ========== 扩展色板 ==========
@@ -198,15 +198,15 @@ export default defineConfig({
       xl: '0 10px 20px rgba(0, 0, 0, 0.05), 0 20px 25px rgba(0, 0, 0, 0.03)',
       '2xl': '0 20px 40px rgba(0, 0, 0, 0.06), 0 30px 50px rgba(0, 0, 0, 0.04)',
       inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.03)',
-      // 品牌色按钮阴影
-      'brand': '0 2px 4px rgba(99, 102, 241, 0.25), 0 4px 8px rgba(99, 102, 241, 0.15)',
-      'brand-lg': '0 4px 8px rgba(99, 102, 241, 0.3), 0 8px 16px rgba(99, 102, 241, 0.2)',
-      // 危险色按钮阴影
-      'danger': '0 2px 4px rgba(239, 68, 68, 0.25), 0 4px 8px rgba(239, 68, 68, 0.15)',
-      'danger-lg': '0 4px 8px rgba(239, 68, 68, 0.3), 0 8px 16px rgba(239, 68, 68, 0.2)',
-      // 成功色按钮阴影
-      'success': '0 2px 4px rgba(34, 197, 94, 0.25), 0 4px 8px rgba(34, 197, 94, 0.15)',
-      'success-lg': '0 4px 8px rgba(34, 197, 94, 0.3), 0 8px 16px rgba(34, 197, 94, 0.2)',
+      // 品牌色按钮阴影 - 柔和紫
+      'brand': '0 2px 4px rgba(139, 124, 232, 0.2), 0 4px 8px rgba(139, 124, 232, 0.12)',
+      'brand-lg': '0 4px 8px rgba(139, 124, 232, 0.25), 0 8px 16px rgba(139, 124, 232, 0.15)',
+      // 危险色按钮阴影 - 柔和红
+      'danger': '0 2px 4px rgba(239, 68, 68, 0.2), 0 4px 8px rgba(239, 68, 68, 0.12)',
+      'danger-lg': '0 4px 8px rgba(239, 68, 68, 0.25), 0 8px 16px rgba(239, 68, 68, 0.15)',
+      // 成功色按钮阴影 - 柔和绿
+      'success': '0 2px 4px rgba(16, 185, 129, 0.2), 0 4px 8px rgba(16, 185, 129, 0.12)',
+      'success-lg': '0 4px 8px rgba(16, 185, 129, 0.25), 0 8px 16px rgba(16, 185, 129, 0.15)',
     },
 
     // ========== 过渡动画 ==========
@@ -228,7 +228,7 @@ export default defineConfig({
     'btn': 'px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer inline-flex items-center justify-center gap-2 select-none shadow-sm hover:shadow-md',
     'btn-brand': 'btn bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-brand hover:shadow-brand-lg',
     'btn-brand-outline': 'btn bg-transparent text-brand-600 border border-brand-500 hover:bg-brand-50',
-    'btn-secondary': 'btn bg-bg-tertiary text-text-secondary border border-border hover:bg-bg-quaternary hover:border-border-medium',
+    'btn-secondary': 'btn bg-bg-tertiary text-text-secondary border border-border hover:bg-bg-quaternary hover:border-border-medium shadow-sm hover:shadow-md',
     'btn-ghost': 'btn bg-transparent text-text-secondary hover:bg-bg-secondary',
     'btn-danger': 'btn bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 shadow-danger hover:shadow-danger-lg',
     'btn-danger-outline': 'btn bg-transparent text-danger-600 border border-danger-500 hover:bg-danger-50',
@@ -238,10 +238,10 @@ export default defineConfig({
     'btn-icon': 'w-9 h-9 p-0 rounded-lg',
 
     // ===== 卡片组件 =====
-    'card': 'bg-bg-primary rounded-xl border border-border',
-    'card-hover': 'card hover:border-border-medium transition-all duration-200',
+    'card': 'bg-bg-primary rounded-xl border border-border shadow-sm',
+    'card-hover': 'card hover:border-border-medium hover:shadow-md transition-all duration-200',
     'card-interactive': 'card-hover cursor-pointer',
-    'card-elevated': 'bg-bg-primary rounded-xl border border-border',
+    'card-elevated': 'bg-bg-primary rounded-xl border border-border shadow-md',
     'card-filled': 'bg-bg-secondary rounded-xl border border-border-light',
 
     // ===== 输入框组件 =====
@@ -266,13 +266,13 @@ export default defineConfig({
     'scrollbar-thin': 'scrollbar:w-2 scrollbar:h-2 scrollbar-track:bg-transparent scrollbar-thumb:bg-border-medium scrollbar-thumb:rounded',
 
     // ===== 游戏卡片 =====
-    'game-card': 'bg-bg-primary rounded-xl border border-border overflow-hidden cursor-pointer transition-all duration-250 hover:-translate-y-1 hover:border-border-medium',
+    'game-card': 'bg-bg-primary rounded-xl border border-border shadow-sm overflow-hidden cursor-pointer transition-all duration-250 hover:-translate-y-1 hover:border-border-medium hover:shadow-md',
     'game-cover': 'w-full aspect-[4/3] bg-gradient-to-br from-bg-secondary to-bg-tertiary flex items-center justify-center',
 
     // ===== 侧边栏导航 =====
     'nav-item': 'w-full h-10 flex items-center gap-3 px-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
-    'nav-item-active': 'nav-item bg-brand-100 text-brand-700',
-    'nav-item-inactive': 'nav-item text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
+    'nav-item-active': 'nav-item bg-white shadow-sm border border-border text-brand-700',
+    'nav-item-inactive': 'nav-item text-text-secondary hover:bg-white hover:shadow-sm hover:text-text-primary',
 
     // ===== 标签组件 =====
     'tag': 'inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full',

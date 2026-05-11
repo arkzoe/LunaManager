@@ -600,37 +600,22 @@ const handleGameClick = (game: Game): void => {
   width: 100%;
   height: 40px;
   padding: 0 12px 0 40px;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 14px;
   transition: all 200ms ease;
 }
 
 .search-input::placeholder {
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary-500);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-html.dark .search-input {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #f8fafc;
-}
-
-html.dark .search-input::placeholder {
-  color: #64748b;
-}
-
-html.dark .search-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
 .toolbar-actions {
@@ -645,28 +630,17 @@ html.dark .search-input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #334155;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 200ms ease;
 }
 
 .icon-btn:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-html.dark .icon-btn {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #94a3b8;
-}
-
-html.dark .icon-btn:hover {
-  background: rgba(30, 41, 59, 1);
-  border-color: rgba(148, 163, 184, 0.3);
+  background: var(--bg-secondary);
+  border-color: var(--border-color-medium);
 }
 
 .filter-btn {
@@ -675,27 +649,17 @@ html.dark .icon-btn:hover {
   align-items: center;
   gap: 6px;
   padding: 0 12px;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #334155;
+  color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
   transition: all 200ms ease;
 }
 
 .filter-btn:hover {
-  background: #f1f5f9;
-}
-
-html.dark .filter-btn {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #94a3b8;
-}
-
-html.dark .filter-btn:hover {
-  background: rgba(30, 41, 59, 1);
+  background: var(--bg-secondary);
 }
 
 .add-btn {
@@ -731,33 +695,19 @@ html.dark .filter-btn:hover {
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: #64748b;
+  color: var(--text-tertiary);
   cursor: pointer;
   transition: all 200ms ease;
 }
 
 .action-menu-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .action-menu-btn.delete:hover {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-html.dark .action-menu-btn {
-  color: #64748b;
-}
-
-html.dark .action-menu-btn:hover {
-  background: rgba(30, 41, 59, 0.8);
-  color: #f8fafc;
-}
-
-html.dark .action-menu-btn.delete:hover {
-  background: rgba(220, 38, 38, 0.2);
-  color: #f87171;
+  background: var(--accent-danger-bg);
+  color: var(--accent-danger);
 }
 
 .back-btn {
@@ -769,24 +719,15 @@ html.dark .action-menu-btn.delete:hover {
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #334155;
+  color: var(--text-tertiary);
   font-size: 14px;
   cursor: pointer;
   transition: all 200ms ease;
 }
 
 .back-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-html.dark .back-btn {
-  color: #94a3b8;
-}
-
-html.dark .back-btn:hover {
-  background: rgba(30, 41, 59, 0.8);
-  color: #f8fafc;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .game-card:hover .more-btn {

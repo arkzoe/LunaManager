@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref } from 'vue'
 import { useThemeStore } from '../stores'
 
@@ -93,7 +93,7 @@ const handleCheckUpdate = (): void => {
     <div class="settings-list flex flex-col gap-3 max-w-200">
       <!-- 基础配置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('basic') }"
       >
         <div
@@ -151,10 +151,7 @@ const handleCheckUpdate = (): void => {
                   {{ downloadPath }}
                 </p>
               </div>
-              <button
-                class="btn-secondary px-4 py-2 min-h-9 bg-bg-tertiary border border-border rounded-lg text-13px font-medium text-text-secondary cursor-pointer transition-all duration-200 flex-shrink-0 hover:bg-bg-quaternary hover:border-border-medium"
-                @click="handleChangeDownloadPath"
-              >
+              <button class="btn-secondary px-4 py-2 min-h-9" @click="handleChangeDownloadPath">
                 更改
               </button>
             </div>
@@ -164,7 +161,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 元数据设置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('metadata') }"
       >
         <div
@@ -223,7 +220,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 外观设置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('appearance') }"
       >
         <div
@@ -310,7 +307,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 游玩配置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('play') }"
       >
         <div
@@ -363,7 +360,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 下载配置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('download') }"
       >
         <div
@@ -424,7 +421,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 数据库备份 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('dbbackup') }"
       >
         <div
@@ -462,18 +459,10 @@ const handleCheckUpdate = (): void => {
                 </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
-                <button
-                  class="btn-secondary px-4 py-2 min-h-9 bg-bg-tertiary border border-border rounded-lg text-13px font-medium text-text-secondary cursor-pointer transition-all duration-200 hover:bg-bg-quaternary hover:border-border-medium"
-                  @click="handleRestoreDb"
-                >
+                <button class="btn-secondary px-4 py-2 min-h-9" @click="handleRestoreDb">
                   恢复
                 </button>
-                <button
-                  class="btn-brand px-4 py-2 min-h-9 bg-brand-600 border-none rounded-lg text-13px font-medium text-white cursor-pointer transition-all duration-200 hover:bg-brand-700 shadow-brand hover:shadow-brand-lg"
-                  @click="handleDbBackup"
-                >
-                  备份
-                </button>
+                <button class="btn-brand px-4 py-2 min-h-9" @click="handleDbBackup">备份</button>
               </div>
             </div>
             <div class="setting-item flex items-center justify-between gap-4 py-3">
@@ -485,18 +474,10 @@ const handleCheckUpdate = (): void => {
                 </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
-                <button
-                  class="btn-secondary px-4 py-2 min-h-9 bg-bg-tertiary border border-border rounded-lg text-13px font-medium text-text-secondary cursor-pointer transition-all duration-200 hover:bg-bg-quaternary hover:border-border-medium"
-                  @click="handleRestoreFull"
-                >
+                <button class="btn-secondary px-4 py-2 min-h-9" @click="handleRestoreFull">
                   恢复
                 </button>
-                <button
-                  class="btn-brand px-4 py-2 min-h-9 bg-brand-600 border-none rounded-lg text-13px font-medium text-white cursor-pointer transition-all duration-200 hover:bg-brand-700 shadow-brand hover:shadow-brand-lg"
-                  @click="handleFullBackup"
-                >
-                  备份
-                </button>
+                <button class="btn-brand px-4 py-2 min-h-9" @click="handleFullBackup">备份</button>
               </div>
             </div>
           </div>
@@ -505,7 +486,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 应用更新 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('update') }"
       >
         <div
@@ -559,10 +540,7 @@ const handleCheckUpdate = (): void => {
                 <h3 class="text-sm font-medium text-text-primary m-0 mb-1">检查更新</h3>
                 <p class="text-13px text-text-tertiary m-0">手动检查应用更新</p>
               </div>
-              <button
-                class="btn-brand px-4 py-2 min-h-9 bg-brand-600 border-none rounded-lg text-13px font-medium text-white cursor-pointer transition-all duration-200 hover:bg-brand-700 shadow-brand hover:shadow-brand-lg"
-                @click="handleCheckUpdate"
-              >
+              <button class="btn-brand px-4 py-2 min-h-9" @click="handleCheckUpdate">
                 检查更新
               </button>
             </div>
@@ -572,7 +550,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 应用数据 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('data') }"
       >
         <div
@@ -606,24 +584,14 @@ const handleCheckUpdate = (): void => {
                 <h3 class="text-sm font-medium text-text-primary m-0 mb-1">清除缓存</h3>
                 <p class="text-13px text-text-tertiary m-0">清除应用缓存数据</p>
               </div>
-              <button
-                class="btn-secondary px-4 py-2 min-h-9 bg-bg-tertiary border border-border rounded-lg text-13px font-medium text-text-secondary cursor-pointer transition-all duration-200 hover:bg-bg-quaternary hover:border-border-medium"
-                @click="clearCache"
-              >
-                清除缓存
-              </button>
+              <button class="btn-secondary px-4 py-2 min-h-9" @click="clearCache">清除缓存</button>
             </div>
             <div class="setting-item flex items-center justify-between gap-4 py-3">
               <div class="setting-info flex-1 min-w-0">
                 <h3 class="text-sm font-medium text-text-primary m-0 mb-1">重置设置</h3>
                 <p class="text-13px text-text-tertiary m-0">恢复默认设置</p>
               </div>
-              <button
-                class="btn-danger px-4 py-2 min-h-9 bg-danger-500 border-none rounded-lg text-13px font-medium text-white cursor-pointer transition-all duration-200 hover:bg-danger-600 shadow-danger hover:shadow-danger-lg"
-                @click="resetSettings"
-              >
-                重置设置
-              </button>
+              <button class="btn-danger px-4 py-2 min-h-9" @click="resetSettings">重置设置</button>
             </div>
           </div>
         </div>

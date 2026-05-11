@@ -68,11 +68,6 @@ const currentSubtitle = computed(() => {
   return ''
 })
 
-// 是否显示返回按钮
-const showBackButton = computed(() => {
-  return selectedGame.value !== null
-})
-
 // 模拟游戏数据
 const mockGames = ref<Game[]>([
   {

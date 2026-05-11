@@ -145,42 +145,27 @@ const handleGameClick = (game: Game): void => {
   width: 100%;
   height: 40px;
   padding: 0 12px 0 40px;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 14px;
   transition: all 200ms ease;
 }
 
 .search-input::placeholder {
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary-500);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-html.dark .search-input {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #f8fafc;
-}
-
-html.dark .search-input::placeholder {
-  color: #64748b;
-}
-
-html.dark .search-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
 .game-card {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
@@ -190,16 +175,7 @@ html.dark .search-input:focus {
 .game-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  border-color: #cbd5e1;
-}
-
-html.dark .game-card {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-}
-
-html.dark .game-card:hover {
-  border-color: rgba(148, 163, 184, 0.3);
+  border-color: var(--border-color-medium);
 }
 
 svg {

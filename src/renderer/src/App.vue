@@ -58,17 +58,20 @@ html {
   --bg-hover: #f8fafc;
   --bg-input: #f8fafc;
   --bg-button: #f1f5f9;
+  --bg-active: #e8e0fc;
 
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-tertiary: #64748b;
   --text-muted: #94a3b8;
   --text-inverse: #ffffff;
+  --text-brand: #7c6ad4;
 
   --border-color: #e2e8f0;
   --border-color-light: #f1f5f9;
   --border-color-medium: #cbd5e1;
   --border-color-strong: #94a3b8;
+  --border-brand: #a78bfa;
 
   --primary-500: #6366f1;
   --primary-600: #4f46e5;
@@ -95,17 +98,20 @@ html.dark {
   --bg-hover: #334155;
   --bg-input: #334155;
   --bg-button: #334155;
+  --bg-active: #3730a3;
 
   --text-primary: #f8fafc;
   --text-secondary: #e2e8f0;
   --text-tertiary: #cbd5e1;
   --text-muted: #94a3b8;
   --text-inverse: #0f172a;
+  --text-brand: #a78bfa;
 
   --border-color: #334155;
   --border-color-light: #1e293b;
   --border-color-medium: #475569;
   --border-color-strong: #64748b;
+  --border-brand: #7c6ad4;
 
   --primary-500: #818cf8;
   --primary-600: #6366f1;

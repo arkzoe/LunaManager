@@ -447,7 +447,7 @@ const topGamesChartOptions: ChartOptions<'bar'> = {
 }
 
 .stats-view::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border-color-medium);
   border-radius: 3px;
 }
 
@@ -464,23 +464,23 @@ const topGamesChartOptions: ChartOptions<'bar'> = {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-tertiary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .range-btn:hover {
-  border-color: #cbd5e1;
-  color: #334155;
+  border-color: var(--border-color-medium);
+  color: var(--text-secondary);
 }
 
 .range-btn.active {
-  background: #6366f1;
-  border-color: #6366f1;
+  background: var(--primary-600);
+  border-color: var(--primary-600);
   color: white;
 }
 
@@ -501,20 +501,20 @@ const topGamesChartOptions: ChartOptions<'bar'> = {
 .stat-card {
   width: 200px;
   height: 80px;
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   padding: 16px;
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   transition: all 0.2s ease;
   flex-shrink: 0;
   box-sizing: border-box;
 }
 
 .stat-card:hover {
-  border-color: #cbd5e1;
+  border-color: var(--border-color-medium);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -557,7 +557,7 @@ const topGamesChartOptions: ChartOptions<'bar'> = {
 .stat-value {
   font-size: 20px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -566,7 +566,7 @@ const topGamesChartOptions: ChartOptions<'bar'> = {
 
 .stat-label {
   font-size: 13px;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 /* 图表区域 */
@@ -578,10 +578,10 @@ const topGamesChartOptions: ChartOptions<'bar'> = {
 }
 
 .chart-card {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   padding: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
 }
 
 .category-chart {
@@ -607,14 +607,14 @@ const topGamesChartOptions: ChartOptions<'bar'> = {
   gap: 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
   margin: 0 0 16px 0;
 }
 
 .title-icon {
   width: 20px;
   height: 20px;
-  fill: #64748b;
+  fill: var(--text-tertiary);
 }
 
 .chart-container {
@@ -631,7 +631,7 @@ const topGamesChartOptions: ChartOptions<'bar'> = {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 14px;
 }
 </style>
