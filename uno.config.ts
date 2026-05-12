@@ -29,35 +29,35 @@ export default defineConfig({
       },
 
       // ========== 中性色系统 ==========
-      // 背景层级 - 增强对比度，确保视觉层次清晰
+      // 背景层级 - 更柔和的灰色调，降低对比度
       bg: {
-        base: 'var(--bg-base)',
-        sidebar: 'var(--bg-sidebar)',
-        primary: 'var(--bg-primary)',
-        secondary: 'var(--bg-secondary)',
-        tertiary: 'var(--bg-tertiary)',
-        quaternary: 'var(--bg-quaternary)',
-        hover: 'var(--bg-hover)',
-        active: 'var(--bg-active)',
+        base: '#f8f9fa',        // 最底层背景（页面背景）- 暖灰
+        sidebar: '#ffffff',     // 侧边栏背景
+        primary: '#ffffff',     // 主要卡片背景
+        secondary: '#f9fafb',   // 次级卡片/模块背景
+        tertiary: '#f3f4f6',    // 第三层级背景（输入框、按钮等）
+        quaternary: '#e5e7eb',  // 第四层级（分隔区域、禁用状态）
+        hover: '#f9fafb',       // 悬停状态
+        active: '#ede9fe',      // 激活状态（品牌色浅色调）
       },
 
-      // 文字颜色 - 引用 CSS 变量以支持暗色模式切换
+      // 文字颜色 - 柔和灰色调，降低刺眼感
       text: {
-        primary: 'var(--text-primary)',
-        secondary: 'var(--text-secondary)',
-        tertiary: 'var(--text-tertiary)',
-        muted: 'var(--text-muted)',
-        inverse: 'var(--text-inverse)',
-        brand: 'var(--text-brand)',
+        primary: '#374151',     // 主要文字 - 柔和深灰
+        secondary: '#4b5563',   // 次要文字 - 中深灰
+        tertiary: '#6b7280',    // 辅助文字 - 中灰
+        muted: '#9ca3af',       // 弱化文字 - 浅灰
+        inverse: '#ffffff',     // 反色文字（用于深色背景）
+        brand: '#7c6ad4',       // 品牌色文字 - 与主色协调
       },
 
-      // 边框颜色 - 引用 CSS 变量以支持暗色模式切换
+      // 边框颜色 - 更柔和的边框，降低视觉干扰
       border: {
-        DEFAULT: 'var(--border-color)',
-        light: 'var(--border-color-light)',
-        medium: 'var(--border-color-medium)',
-        strong: 'var(--border-color-strong)',
-        brand: 'var(--border-brand)',
+        DEFAULT: '#e5e7eb',     // 默认边框 - 柔和灰
+        light: '#f3f4f6',       // 浅色边框（分隔线）
+        medium: '#d1d5db',      // 中等边框（悬停状态）
+        strong: '#9ca3af',      // 强调边框（聚焦状态）
+        brand: '#c4b5fd',       // 品牌色边框 - 柔和紫
       },
 
       // ========== 功能色系统 ==========
@@ -238,10 +238,10 @@ export default defineConfig({
     'btn-icon': 'w-9 h-9 p-0 rounded-lg',
 
     // ===== 卡片组件 =====
-    'card': 'bg-bg-primary rounded-xl border border-border shadow-sm',
-    'card-hover': 'card hover:border-border-medium hover:shadow-md transition-all duration-200',
+    'card': 'bg-bg-primary rounded-xl border border-border',
+    'card-hover': 'card hover:border-border-medium transition-all duration-200',
     'card-interactive': 'card-hover cursor-pointer',
-    'card-elevated': 'bg-bg-primary rounded-xl border border-border shadow-md',
+    'card-elevated': 'bg-bg-primary rounded-xl border border-border',
     'card-filled': 'bg-bg-secondary rounded-xl border border-border-light',
 
     // ===== 输入框组件 =====
@@ -266,13 +266,13 @@ export default defineConfig({
     'scrollbar-thin': 'scrollbar:w-2 scrollbar:h-2 scrollbar-track:bg-transparent scrollbar-thumb:bg-border-medium scrollbar-thumb:rounded',
 
     // ===== 游戏卡片 =====
-    'game-card': 'bg-bg-primary rounded-xl border border-border shadow-sm overflow-hidden cursor-pointer transition-all duration-250 hover:-translate-y-1 hover:border-border-medium hover:shadow-md',
+    'game-card': 'bg-bg-primary rounded-xl border border-border overflow-hidden cursor-pointer transition-all duration-250 hover:-translate-y-1 hover:border-border-medium',
     'game-cover': 'w-full aspect-[4/3] bg-gradient-to-br from-bg-secondary to-bg-tertiary flex items-center justify-center',
 
     // ===== 侧边栏导航 =====
     'nav-item': 'w-full h-10 flex items-center gap-3 px-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
-    'nav-item-active': 'nav-item bg-white shadow-sm border border-border text-brand-700',
-    'nav-item-inactive': 'nav-item text-text-secondary hover:bg-white hover:shadow-sm hover:text-text-primary',
+    'nav-item-active': 'nav-item bg-brand-100 text-brand-700',
+    'nav-item-inactive': 'nav-item text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
 
     // ===== 标签组件 =====
     'tag': 'inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full',
