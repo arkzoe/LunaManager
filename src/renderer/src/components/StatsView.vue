@@ -1,637 +1,507 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { ChartOptions } from 'chart.js'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js'
-import { Line, Bar, Doughnut } from 'vue-chartjs'
+import { computed, onMounted, ref } from 'vue'
+import { useGameStore } from '../stores/useGameStore'
 
-// 注册 Chart.js 组件
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-)
+const store = useGameStore()
+const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
+const rankRange = ref<'week' | 'month'>('week')
+const showLibraryOverview = ref(true)
 
-interface Game {
-  id: string
-  title: string
-  cover: string
-  category: string
-  rating: number
-  size: string
-  installed: boolean
-  favorite: boolean
-  lastPlayed?: string
-  playtime?: string
-}
-
-const props = defineProps<{
-  games: Game[]
-}>()
-
-const timeRange = ref<'week' | 'month' | 'custom'>('week')
-
-// 概览数据
-// const totalGames = computed(() => props.games.length)
-const installedGames = computed(() => props.games.filter((g) => g.installed).length)
-// const favoriteGames = computed(() => props.games.filter((g) => g.favorite).length)
-
-// 计算总游戏时长（分钟）
-const totalPlaytimeMinutes = computed(() => {
-  let total = 0
-  props.games.forEach((game) => {
-    if (game.playtime && game.playtime !== '未知') {
-      const match = game.playtime.match(/(\d+)/)
-      if (match) {
-        total += parseInt(match[1]) * 60
-      }
-    }
-  })
-  return total
+onMounted(() => {
+  if (store.games.length === 0) store.loadGames()
 })
 
-// 格式化游戏时长显示
-const formatPlaytime = (minutes: number): string => {
-  if (minutes < 60) return `${minutes}分钟`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}小时`
-  const days = Math.floor(hours / 24)
-  const remainingHours = hours % 24
-  if (remainingHours === 0) return `${days}天`
-  return `${days}天${remainingHours}小时`
-}
-
-// 分类统计
-const categoryStats = computed(() => {
-  const stats: Record<string, number> = {}
-  props.games.forEach((game) => {
-    stats[game.category] = (stats[game.category] || 0) + 1
-  })
-  return stats
-})
-
-const getCategoryLabel = (category: string): string => {
-  const labels: Record<string, string> = {
-    action: '动作',
-    rpg: '角色扮演',
-    strategy: '策略',
-    sports: '体育',
-    adventure: '冒险',
-    simulation: '模拟'
-  }
-  return labels[category] || category
-}
-
-// 获取分类颜色 - 使用更鲜明的配色
-const getCategoryColor = (index: number): string => {
-  const colors = [
-    '#4f46e5', // accent-600
-    '#7c3aed', // purple-600
-    '#db2777', // pink-600
-    '#ea580c', // warning-600
-    '#059669', // success-600
-    '#0891b2', // info-600
-    '#dc2626', // danger-600
-    '#4338ca' // accent-700
-  ]
-  return colors[index % colors.length]
-}
-
-// 分类饼图数据
-const categoryChartData = computed(() => {
-  const entries = Object.entries(categoryStats.value)
+const libraryStats = computed(() => {
+  const totalGames = store.allGames.length
+  const totalMinutes = store.allGames.reduce((sum, g) => {
+    const m = g.playtime?.match(/(\d+)/)
+    return sum + (m ? parseInt(m[1]) : 0)
+  }, 0)
+  const totalHours = Math.floor(totalMinutes / 60) || 0
+  const completedGames = store.allGames.filter((g) => g.status === 'played').length
   return {
-    labels: entries.map(([cat]) => getCategoryLabel(cat)),
-    datasets: [
-      {
-        data: entries.map(([, count]) => count),
-        backgroundColor: entries.map((_, i) => getCategoryColor(i)),
-        borderWidth: 0,
-        hoverOffset: 4
-      }
-    ]
+    totalGames,
+    totalHours,
+    completedGames,
+    avgPerDay: total.value > 0 ? Math.round(totalHours / Math.max(totalGames, 1)) : 0
   }
 })
 
-const categoryChartOptions: ChartOptions<'doughnut'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: 'right',
-      labels: {
-        usePointStyle: true,
-        padding: 16,
-        font: { size: 12 }
-      }
-    }
-  },
-  cutout: '60%'
-}
+const total = computed(() => store.allGames.length)
 
-// 生成最近7天的日期
-const generateDates = (days: number): string[] => {
-  const dates: string[] = []
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
-    dates.push(date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }))
-  }
-  return dates
-}
-
-// 模拟每日游戏时长数据（实际应从数据库获取）
-const generateDailyData = (days: number): number[] => {
-  return Array.from({ length: days }, () => Math.floor(Math.random() * 180))
-}
-
-// 游玩时长趋势图数据
-const trendChartData = computed(() => {
-  const days = timeRange.value === 'week' ? 7 : 30
-  const dates = generateDates(days)
-  const data = generateDailyData(days)
-
-  return {
-    labels: dates,
-    datasets: [
-      {
-        label: '游戏时长（分钟）',
-        data: data,
-        borderColor: '#4f46e5',
-        backgroundColor: 'rgba(79, 70, 229, 0.15)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: '#4f46e5',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointHoverRadius: 6
-      }
-    ]
-  }
-})
-
-const trendChartOptions: ChartOptions<'line'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false }
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { font: { size: 11 }, color: '#6b7280' }
-    },
-    y: {
-      beginAtZero: true,
-      grid: { color: 'rgba(0,0,0,0.05)' },
-      ticks: {
-        font: { size: 11 },
-        color: '#6b7280',
-        callback: (value: number | string) => `${value}分`
-      }
-    }
-  }
-}
-
-// 游戏时长排行榜数据
-const topGamesChartData = computed(() => {
-  const sortedGames = [...props.games]
+const rankings = computed(() => {
+  const sorted = [...store.allGames]
     .filter((g) => g.playtime && g.playtime !== '未知')
     .sort((a, b) => {
-      const aMatch = a.playtime?.match(/(\d+)/)
-      const bMatch = b.playtime?.match(/(\d+)/)
-      const aHours = aMatch ? parseInt(aMatch[1]) : 0
-      const bHours = bMatch ? parseInt(bMatch[1]) : 0
-      return bHours - aHours
+      const getMins = (p: string) => {
+        const m = p.match(/(\d+)/)
+        return m ? parseInt(m[1]) : 0
+      }
+      return getMins(b.playtime || '') - getMins(a.playtime || '')
     })
     .slice(0, 5)
 
-  return {
-    labels: sortedGames.map((g) => (g.title.length > 8 ? g.title.slice(0, 8) + '...' : g.title)),
-    datasets: [
-      {
-        label: '游戏时长（小时）',
-        data: sortedGames.map((g) => {
-          const match = g.playtime?.match(/(\d+)/)
-          return match ? parseInt(match[1]) : 0
-        }),
-        backgroundColor: '#4f46e5',
-        borderRadius: 6,
-        barThickness: 24,
-        hoverBackgroundColor: '#4338ca'
-      }
+  if (sorted.length === 0) {
+    return [
+      { rank: 1, title: '-', playtime: '-' },
+      { rank: 2, title: '-', playtime: '-' }
     ]
   }
+  return sorted.map((g, idx) => ({
+    rank: idx + 1,
+    title: g.title_cn || g.title,
+    playtime: g.playtime
+  }))
 })
 
-const topGamesChartOptions: ChartOptions<'bar'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  indexAxis: 'y',
-  plugins: {
-    legend: { display: false }
-  },
-  scales: {
-    x: {
-      beginAtZero: true,
-      grid: { color: 'rgba(0,0,0,0.05)' },
-      ticks: { font: { size: 11 }, color: '#6b7280' }
-    },
-    y: {
-      grid: { display: false },
-      ticks: { font: { size: 12 }, color: '#374151' }
-    }
-  }
-}
+const topGame = computed(() => rankings.value[0])
 
-// 最近游玩游戏
-// const recentlyPlayed = computed(() => {
-//   return props.games
-//     .filter((g) => g.lastPlayed && g.installed)
-//     .sort((a, b) => {
-//       const order = ['天前', '周前', '月前']
-//       const getPriority = (str: string | undefined): number => {
-//         if (!str) return 999
-//         for (let i = 0; i < order.length; i++) {
-//           if (str.includes(order[i])) return i
-//         }
-//         return 999
-//       }
-//       return getPriority(a.lastPlayed) - getPriority(b.lastPlayed)
-//     })
-//     .slice(0, 5)
-// })
+const timeRanges = [
+  { id: 'week' as const, label: '周' },
+  { id: 'month' as const, label: '月' },
+  { id: 'year' as const, label: '年' },
+  { id: 'all' as const, label: '全部' }
+]
 </script>
 
 <template>
-  <div class="stats-view">
-    <!-- 时间范围选择 -->
-    <div class="time-range-selector">
-      <button
-        class="range-btn"
-        :class="{ active: timeRange === 'week' }"
-        @click="timeRange = 'week'"
-      >
-        周
-      </button>
-      <button
-        class="range-btn"
-        :class="{ active: timeRange === 'month' }"
-        @click="timeRange = 'month'"
-      >
-        月
-      </button>
-      <button
-        class="range-btn"
-        :class="{ active: timeRange === 'custom' }"
-        @click="timeRange = 'custom'"
-      >
-        <svg viewBox="0 0 24 24" class="calendar-icon">
-          <path
-            d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
-          />
-        </svg>
-        自定义
-      </button>
-    </div>
-
-    <!-- 概览卡片 -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon total">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-            />
-          </svg>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">0</span>
-          <span class="stat-label">总游玩次数</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon playtime">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
-            />
-          </svg>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ formatPlaytime(totalPlaytimeMinutes) }}</span>
-          <span class="stat-label">总游玩时长</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon games">
-          <svg viewBox="0 0 24 24">
+  <div class="stats-page">
+    <!-- 总览卡片行 -->
+    <div class="overview-row">
+      <div class="ov-card">
+        <div class="ov-icon ac">
+          <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path
               d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
             />
           </svg>
         </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ installedGames }}</span>
-          <span class="stat-label">游玩游戏数量</span>
-        </div>
+        <div class="ov-num">{{ libraryStats.totalGames }}</div>
+        <div class="ov-lbl">游戏总数</div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-icon completed">
-          <svg viewBox="0 0 24 24">
+      <div class="ov-card">
+        <div class="ov-icon gr">
+          <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path
-              d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+              d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
             />
           </svg>
         </div>
-        <div class="stat-info">
-          <span class="stat-value">0</span>
-          <span class="stat-label">通关游戏</span>
-        </div>
+        <div class="ov-num">{{ libraryStats.totalHours }}<span class="ov-u">h</span></div>
+        <div class="ov-lbl">总时长</div>
       </div>
-    </div>
-
-    <!-- 图表区域 -->
-    <div class="charts-section">
-      <!-- 分类统计饼图 -->
-      <div class="chart-card category-chart">
-        <h3 class="chart-title">
-          <svg viewBox="0 0 24 24" class="title-icon">
+      <div class="ov-card">
+        <div class="ov-icon am">
+          <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+              d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
             />
           </svg>
-          游戏分类分布
-        </h3>
-        <div class="chart-container">
-          <Doughnut
-            v-if="Object.keys(categoryStats).length > 0"
-            :data="categoryChartData"
-            :options="categoryChartOptions"
-          />
-          <div v-else class="empty-chart">暂无数据</div>
         </div>
+        <div class="ov-num">{{ libraryStats.completedGames }}</div>
+        <div class="ov-lbl">已通关</div>
       </div>
-
-      <!-- 游玩时长趋势图 -->
-      <div class="chart-card trend-chart">
-        <h3 class="chart-title">
-          <svg viewBox="0 0 24 24" class="title-icon">
-            <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" />
+      <div class="ov-card">
+        <div class="ov-icon pu">
+          <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+            <path
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            />
           </svg>
-          游玩时长趋势
-        </h3>
-        <div class="chart-container">
-          <Line :data="trendChartData" :options="trendChartOptions" />
         </div>
+        <div class="ov-num">{{ libraryStats.avgPerDay }}<span class="ov-u">h</span></div>
+        <div class="ov-lbl">日均</div>
       </div>
     </div>
 
-    <!-- 游戏时长排行榜 -->
-    <div class="chart-card ranking-chart">
-      <h3 class="chart-title">
-        <svg viewBox="0 0 24 24" class="title-icon">
-          <path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z" />
+    <!-- 库概览折叠面板 -->
+    <div class="panel">
+      <div class="panel-header" @click="showLibraryOverview = !showLibraryOverview">
+        <span>库概览</span>
+        <svg
+          viewBox="0 0 24 24"
+          class="w-4 h-4 fill-text-tertiary transition-transform duration-300"
+          :class="{ 'rotate-180': showLibraryOverview }"
+        >
+          <path d="M7 10l5 5 5-5z" />
         </svg>
-        游玩时长排行榜
-      </h3>
-      <div class="chart-container ranking-container">
-        <Bar
-          v-if="props.games.some((g) => g.playtime && g.playtime !== '未知')"
-          :data="topGamesChartData"
-          :options="topGamesChartOptions"
-        />
-        <div v-else class="empty-chart">暂无数据</div>
+      </div>
+      <div v-show="showLibraryOverview" class="panel-body overview-grid">
+        <div class="og-item">
+          <div class="og-val">{{ libraryStats.totalGames }}</div>
+          <div class="og-lbl">库中所有游戏</div>
+        </div>
+        <div class="og-item">
+          <div class="og-val">-</div>
+          <div class="og-lbl">总游玩次数</div>
+        </div>
+        <div class="og-item">
+          <div class="og-val">{{ libraryStats.totalHours }}h</div>
+          <div class="og-lbl">总游玩时长</div>
+        </div>
+        <div class="og-item">
+          <div class="og-val">{{ libraryStats.completedGames }}</div>
+          <div class="og-lbl">通关游戏数</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 时间范围 + 时长趋势图表 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>游玩时长趋势</span>
+        <div class="time-toggle">
+          <button
+            v-for="r in timeRanges"
+            :key="r.id"
+            class="tt-btn"
+            :class="{ active: timeRange === r.id }"
+            @click="timeRange = r.id"
+          >
+            {{ r.label }}
+          </button>
+        </div>
+      </div>
+      <div class="chart-ph">
+        <svg viewBox="0 0 24 24" class="w-12 h-12 fill-text-muted opacity-15 mb-3">
+          <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" />
+        </svg>
+        <p>游玩时长趋势图将在接入真实数据后显示</p>
+      </div>
+    </div>
+
+    <!-- 排行榜 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>游戏时长排行</span>
+        <div class="time-toggle">
+          <button
+            class="tt-btn"
+            :class="{ active: rankRange === 'week' }"
+            @click="rankRange = 'week'"
+          >
+            本周
+          </button>
+          <button
+            class="tt-btn"
+            :class="{ active: rankRange === 'month' }"
+            @click="rankRange = 'month'"
+          >
+            本月
+          </button>
+        </div>
+      </div>
+      <div class="rankings">
+        <!-- Top 1 -->
+        <div v-if="topGame" class="rank-top">
+          <div class="rt-badge">#1</div>
+          <div class="rt-cover">
+            <svg viewBox="0 0 24 24" class="w-8 h-8 fill-text-muted opacity-25">
+              <path
+                d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+              />
+            </svg>
+          </div>
+          <div class="rt-name">{{ topGame.title }}</div>
+          <div class="rt-time">{{ topGame.playtime }}</div>
+        </div>
+
+        <!-- Rank list -->
+        <div class="rank-list">
+          <div class="rl-header">
+            <span class="rl-rank">#</span>
+            <span class="rl-title">游戏</span>
+            <span class="rl-time">时长</span>
+          </div>
+          <div v-for="g in rankings.slice(1)" :key="g.rank" class="rl-row">
+            <span class="rl-rank">{{ g.rank }}</span>
+            <span class="rl-title">{{ g.title }}</span>
+            <span class="rl-time">{{ g.playtime }}</span>
+          </div>
+          <div v-if="rankings.length <= 1" class="rl-empty">暂无排行数据</div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.stats-view {
-  height: 100%;
-  min-height: 400px;
-  overflow-y: auto;
-  padding: 0 8px 8px 0;
-}
-
-.stats-view::-webkit-scrollbar {
-  width: 6px;
-}
-
-.stats-view::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.stats-view::-webkit-scrollbar-thumb {
-  background: var(--border-color-medium);
-  border-radius: 3px;
-}
-
-/* 时间范围选择器 */
-.time-range-selector {
+.stats-page {
+  max-width: 860px;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.range-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.range-btn:hover {
-  border-color: var(--border-color-medium);
-  color: var(--text-secondary);
-}
-
-.range-btn.active {
-  background: var(--primary-600);
-  border-color: var(--primary-600);
-  color: white;
-}
-
-.calendar-icon {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-}
-
-/* 概览卡片 */
-.stats-grid {
-  display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 16px;
-  margin-bottom: 24px;
 }
 
-.stat-card {
-  width: 200px;
-  height: 80px;
-  background: var(--bg-primary);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
+/* ===== 总览卡片 ===== */
+.overview-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
+}
+
+.ov-card {
+  background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  box-sizing: border-box;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: border-color 0.15s;
+  cursor: default;
 }
 
-.stat-card:hover {
+.ov-card:hover {
   border-color: var(--border-color-medium);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.stat-icon {
-  width: 48px;
-  height: 48px;
+.ov-icon {
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  margin-bottom: 10px;
 }
 
-.stat-icon svg {
-  width: 24px;
-  height: 24px;
-  fill: white;
+.ov-icon.ac {
+  background: var(--bg-active);
+  color: var(--accent-primary);
+}
+.ov-icon.gr {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+.ov-icon.am {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+.ov-icon.pu {
+  background: rgba(139, 124, 232, 0.1);
+  color: var(--accent-primary);
 }
 
-.stat-icon.total {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-}
-.stat-icon.playtime {
-  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
-}
-.stat-icon.games {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-}
-.stat-icon.completed {
-  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+.ov-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.ov-u {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-left: 2px;
+}
+
+.ov-lbl {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* ===== 面板 ===== */
+.panel {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   overflow: hidden;
 }
 
-.stat-value {
-  font-size: 20px;
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.panel-header:hover {
+  background: var(--bg-hover);
+}
+
+.panel-body {
+  padding: 18px;
+  border-top: 1px solid var(--border-color-light);
+}
+
+/* 库概览网格 */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  text-align: center;
+}
+
+.og-val {
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.og-lbl {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* 时间切换 */
+.time-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.tt-btn {
+  padding: 4px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.tt-btn:hover {
+  color: var(--text-primary);
+}
+
+.tt-btn.active {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* ===== 图表占位 ===== */
+.chart-ph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.chart-ph p {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+/* ===== 排行榜 ===== */
+.rankings {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--border-color-light);
+}
+
+.rank-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0 20px;
+  text-align: center;
+}
+
+.rt-badge {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.rt-cover {
+  width: 100px;
+  height: 140px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.rt-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.rt-time {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.rank-list {
+  margin-top: 8px;
+}
+
+.rl-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rl-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background 0.1s;
+}
+
+.rl-row:hover {
+  background: var(--bg-hover);
+}
+
+.rl-rank {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.rl-title {
+  font-size: 13px;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.stat-label {
+.rl-time {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.rl-empty {
+  padding: 30px 0;
+  text-align: center;
   font-size: 13px;
   color: var(--text-tertiary);
-}
-
-/* 图表区域 */
-.charts-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.chart-card {
-  background: var(--bg-primary);
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid var(--border-color);
-}
-
-.category-chart {
-  width: 380px;
-  height: 280px;
-  flex-shrink: 0;
-}
-
-.trend-chart {
-  flex: 1;
-  min-width: 400px;
-  height: 280px;
-}
-
-.ranking-chart {
-  width: 100%;
-  height: 320px;
-}
-
-.chart-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 16px 0;
-}
-
-.title-icon {
-  width: 20px;
-  height: 20px;
-  fill: var(--text-tertiary);
-}
-
-.chart-container {
-  height: calc(100% - 40px);
-  position: relative;
-}
-
-.ranking-container {
-  height: calc(100% - 40px);
-}
-
-.empty-chart {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 14px;
 }
 </style>

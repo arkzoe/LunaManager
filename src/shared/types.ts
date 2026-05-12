@@ -1,0 +1,126 @@
+export interface GameRecord {
+  id: string
+  title: string
+  title_cn: string
+  cover: string
+  category: string
+  rating: number
+  size: string
+  installed: number
+  favorite: number
+  status: GameStatus
+  personal_rating: number
+  last_played: string
+  description: string
+  developer: string
+  publisher: string
+  release_date: string
+  playtime: string
+  executable_path: string
+  save_path: string
+  vndb_id: string
+  bangumi_id: string
+  notes: string
+  custom_tags: string
+  last_launch_method: LaunchMode
+  created_at: number
+  updated_at: number
+}
+
+export interface PlaySession {
+  id: string
+  game_id: string
+  start_time: number
+  end_time: number
+  duration: number
+}
+
+export interface Collection {
+  id: string
+  name: string
+  parent_id: string
+  sort_order: number
+  created_at: number
+}
+
+export interface GameCollection {
+  game_id: string
+  collection_id: string
+}
+
+export interface SaveSnapshot {
+  id: string
+  game_id: string
+  snapshot_path: string
+  file_size: number
+  notes: string
+  created_at: number
+}
+
+export type GameStatus = 'want' | 'playing' | 'played' | 'shelved' | 'abandoned'
+export type LaunchMode = 'normal' | 'le' | 'magpie'
+export type ViewMode = 'grid' | 'list'
+export type TimeRange = 'week' | 'month' | 'year' | 'all'
+export type Theme = 'light' | 'dark'
+
+export interface AppConfig {
+  windowBounds: { width: number; height: number; x?: number; y?: number }
+  autoStart: boolean
+  autoUpdate: boolean
+  downloadPath: string
+  metadataSource: 'vndb' | 'bangumi'
+  autoSyncMetadata: boolean
+  theme: Theme
+  language: 'zh-CN' | 'en-US'
+  sidebarCollapsed: boolean
+  showGameCover: boolean
+  trackPlaytime: boolean
+  recordHistory: boolean
+  dbPath: string
+  lePath: string
+  magpiePath: string
+  magpieScale: string
+  bangumiToken: string
+  vndbApiKey: string
+  backupDir: string
+  autoBackup: boolean
+  backupFrequency: 'daily' | 'weekly' | 'monthly'
+  backupMaxCopies: number
+}
+
+export interface IElectronAPI {
+  getGames: () => Promise<GameRecord[]>
+  getGameById: (id: string) => Promise<GameRecord | null>
+  createGame: (game: Omit<GameRecord, 'created_at' | 'updated_at'>) => Promise<GameRecord>
+  updateGame: (id: string, updates: Partial<GameRecord>) => Promise<void>
+  deleteGame: (id: string) => Promise<void>
+  searchGames: (query: string) => Promise<GameRecord[]>
+  getGamesByCategory: (category: string) => Promise<GameRecord[]>
+  getGamesByStatus: (status: GameStatus) => Promise<GameRecord[]>
+
+  getConfig: <K extends keyof AppConfig>(key: K) => Promise<AppConfig[K]>
+  setConfig: <K extends keyof AppConfig>(key: K, value: AppConfig[K]) => Promise<void>
+  getAllConfig: () => Promise<AppConfig>
+  setAllConfig: (config: Partial<AppConfig>) => Promise<void>
+
+  startPlaySession: (gameId: string) => Promise<PlaySession>
+  endPlaySession: (sessionId: string) => Promise<void>
+  getGamePlaytime: (gameId: string) => Promise<number>
+  getSessionsByGame: (gameId: string) => Promise<PlaySession[]>
+  getRecentSessions: (limit?: number) => Promise<PlaySession[]>
+
+  getCollections: () => Promise<Collection[]>
+  createCollection: (name: string) => Promise<Collection>
+  renameCollection: (id: string, name: string) => Promise<void>
+  deleteCollection: (id: string) => Promise<void>
+  addGameToCollection: (gameId: string, collectionId: string) => Promise<void>
+  removeGameFromCollection: (gameId: string, collectionId: string) => Promise<void>
+  getCollectionGames: (collectionId: string) => Promise<GameRecord[]>
+  reorderCollections: (ids: string[]) => Promise<void>
+
+  getSnapshots: (gameId: string) => Promise<SaveSnapshot[]>
+  createSnapshot: (gameId: string, notes?: string) => Promise<SaveSnapshot>
+  deleteSnapshot: (id: string) => Promise<void>
+  restoreSnapshot: (id: string) => Promise<void>
+  detectSavePath: (gameId: string) => Promise<string | null>
+}

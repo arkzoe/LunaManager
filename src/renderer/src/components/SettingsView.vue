@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+﻿﻿<script setup lang="ts">
 import { ref } from 'vue'
 import { useThemeStore } from '../stores'
 
@@ -39,6 +39,21 @@ const lastFullBackup = ref('未备份')
 const currentVersion = ref('1.0.0')
 const checkUpdateOnStart = ref(true)
 
+// 启动器配置
+const lePath = ref('')
+const magpiePath = ref('')
+const magpieScale = ref('2.0')
+
+// 数据源配置
+const bangumiToken = ref('')
+const vndbApiKey = ref('')
+
+// 备份配置
+const backupDir = ref('')
+const autoBackup = ref(false)
+const backupFrequency = ref<'daily' | 'weekly' | 'monthly'>('weekly')
+const backupMaxCopies = ref(5)
+
 // 应用数据
 const clearCache = (): void => {
   console.log('清除缓存')
@@ -46,6 +61,26 @@ const clearCache = (): void => {
 
 const resetSettings = (): void => {
   console.log('重置设置')
+}
+
+const handleSelectLEPath = (): void => {
+  console.log('选择 LE 路径')
+}
+
+const handleSelectMagpiePath = (): void => {
+  console.log('选择 Magpie 路径')
+}
+
+const handleSelectBackupDir = (): void => {
+  console.log('选择备份目录')
+}
+
+const handleTestBangumi = (): void => {
+  console.log('测试 Bangumi 连接')
+}
+
+const handleTestVNDB = (): void => {
+  console.log('测试 VNDB 连接')
 }
 
 const toggleSection = (section: string): void => {
@@ -93,7 +128,7 @@ const handleCheckUpdate = (): void => {
     <div class="settings-list flex flex-col gap-3 max-w-200">
       <!-- 基础配置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('basic') }"
       >
         <div
@@ -161,7 +196,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 元数据设置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('metadata') }"
       >
         <div
@@ -220,7 +255,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 外观设置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('appearance') }"
       >
         <div
@@ -307,7 +342,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 游玩配置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('play') }"
       >
         <div
@@ -360,7 +395,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 下载配置 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('download') }"
       >
         <div
@@ -419,9 +454,260 @@ const handleCheckUpdate = (): void => {
         </div>
       </div>
 
+      <!-- 数据源配置 -->
+      <div
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        :class="{ expanded: isExpanded('datasource') }"
+      >
+        <div
+          class="section-header flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-200 select-none hover:bg-bg-secondary"
+          @click="toggleSection('datasource')"
+        >
+          <div class="section-title flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-info-100 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" class="w-5 h-5 fill-info-600">
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+                />
+              </svg>
+            </div>
+            <span class="text-15px font-semibold text-text-primary">数据源配置</span>
+          </div>
+          <svg
+            viewBox="0 0 24 24"
+            class="w-5 h-5 fill-text-muted transition-transform duration-300"
+            :class="{ 'rotate-180': isExpanded('datasource') }"
+          >
+            <path d="M7 10l5 5 5-5z" />
+          </svg>
+        </div>
+        <div class="section-content overflow-hidden transition-all duration-300">
+          <div class="px-5 pb-5">
+            <div
+              class="setting-item flex items-center justify-between gap-4 py-3 border-b border-border-light"
+            >
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">Bangumi Token</h3>
+                <p class="text-13px text-text-tertiary m-0">用于访问 Bangumi API 的用户令牌</p>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <input
+                  v-model="bangumiToken"
+                  type="password"
+                  placeholder="输入 Token"
+                  class="token-input"
+                />
+                <button class="btn-secondary btn-sm px-3 py-1.5 min-h-8" @click="handleTestBangumi">
+                  测试
+                </button>
+              </div>
+            </div>
+            <div class="setting-item flex items-center justify-between gap-4 py-3">
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">VNDB API Key</h3>
+                <p class="text-13px text-text-tertiary m-0">用于访问 VNDB API 的密钥</p>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <input
+                  v-model="vndbApiKey"
+                  type="password"
+                  placeholder="输入 API Key"
+                  class="token-input"
+                />
+                <button class="btn-secondary btn-sm px-3 py-1.5 min-h-8" @click="handleTestVNDB">
+                  测试
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 启动器配置 -->
+      <div
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        :class="{ expanded: isExpanded('launcher') }"
+      >
+        <div
+          class="section-header flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-200 select-none hover:bg-bg-secondary"
+          @click="toggleSection('launcher')"
+        >
+          <div class="section-title flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" class="w-5 h-5 fill-teal-600">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+            <span class="text-15px font-semibold text-text-primary">启动器配置</span>
+          </div>
+          <svg
+            viewBox="0 0 24 24"
+            class="w-5 h-5 fill-text-muted transition-transform duration-300"
+            :class="{ 'rotate-180': isExpanded('launcher') }"
+          >
+            <path d="M7 10l5 5 5-5z" />
+          </svg>
+        </div>
+        <div class="section-content overflow-hidden transition-all duration-300">
+          <div class="px-5 pb-5">
+            <div
+              class="setting-item flex items-center justify-between gap-4 py-3 border-b border-border-light"
+            >
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">Locale Emulator 路径</h3>
+                <p class="text-13px text-text-tertiary m-0">
+                  LEProc.exe 所在路径，用于转区启动游戏
+                </p>
+                <p
+                  v-if="lePath"
+                  class="path-text font-mono text-xs text-text-muted break-all m-0 mt-1"
+                >
+                  {{ lePath }}
+                </p>
+              </div>
+              <button
+                class="btn-secondary px-4 py-2 min-h-9 flex-shrink-0"
+                @click="handleSelectLEPath"
+              >
+                选择路径
+              </button>
+            </div>
+            <div
+              class="setting-item flex items-center justify-between gap-4 py-3 border-b border-border-light"
+            >
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">Magpie 路径</h3>
+                <p class="text-13px text-text-tertiary m-0">
+                  Magpie.exe 所在路径，用于超分放大游戏窗口
+                </p>
+                <p
+                  v-if="magpiePath"
+                  class="path-text font-mono text-xs text-text-muted break-all m-0 mt-1"
+                >
+                  {{ magpiePath }}
+                </p>
+              </div>
+              <button
+                class="btn-secondary px-4 py-2 min-h-9 flex-shrink-0"
+                @click="handleSelectMagpiePath"
+              >
+                选择路径
+              </button>
+            </div>
+            <div class="setting-item flex items-center justify-between gap-4 py-3">
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">缩放参数</h3>
+                <p class="text-13px text-text-tertiary m-0">Magpie 缩放倍数（1.0 – 4.0）</p>
+              </div>
+              <input
+                v-model="magpieScale"
+                type="text"
+                class="number-input w-20 h-9 px-3 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary text-center transition-all duration-200 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 数据备份配置 -->
+      <div
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
+        :class="{ expanded: isExpanded('autobackup') }"
+      >
+        <div
+          class="section-header flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-200 select-none hover:bg-bg-secondary"
+          @click="toggleSection('autobackup')"
+        >
+          <div class="section-title flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-success-100 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" class="w-5 h-5 fill-success-600">
+                <path
+                  d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"
+                />
+              </svg>
+            </div>
+            <span class="text-15px font-semibold text-text-primary">自动备份</span>
+          </div>
+          <svg
+            viewBox="0 0 24 24"
+            class="w-5 h-5 fill-text-muted transition-transform duration-300"
+            :class="{ 'rotate-180': isExpanded('autobackup') }"
+          >
+            <path d="M7 10l5 5 5-5z" />
+          </svg>
+        </div>
+        <div class="section-content overflow-hidden transition-all duration-300">
+          <div class="px-5 pb-5">
+            <div
+              class="setting-item flex items-center justify-between gap-4 py-3 border-b border-border-light"
+            >
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">自动备份</h3>
+                <p class="text-13px text-text-tertiary m-0">定期自动备份数据库与封面</p>
+              </div>
+              <label class="toggle-switch relative w-12 h-6.5 min-w-12 min-h-6.5 cursor-pointer">
+                <input v-model="autoBackup" type="checkbox" class="opacity-0 w-0 h-0" />
+                <span class="toggle-slider" />
+              </label>
+            </div>
+            <div
+              class="setting-item flex items-center justify-between gap-4 py-3 border-b border-border-light"
+            >
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">备份目录</h3>
+                <p class="text-13px text-text-tertiary m-0">自动备份文件存储路径</p>
+                <p
+                  v-if="backupDir"
+                  class="path-text font-mono text-xs text-text-muted break-all m-0 mt-1"
+                >
+                  {{ backupDir }}
+                </p>
+              </div>
+              <button
+                class="btn-secondary px-4 py-2 min-h-9 flex-shrink-0"
+                @click="handleSelectBackupDir"
+              >
+                选择目录
+              </button>
+            </div>
+            <div
+              class="setting-item flex items-center justify-between gap-4 py-3 border-b border-border-light"
+            >
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">备份频率</h3>
+                <p class="text-13px text-text-tertiary m-0">自动备份的执行频率</p>
+              </div>
+              <select
+                v-model="backupFrequency"
+                class="select-box h-9 px-3 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary cursor-pointer flex-shrink-0"
+              >
+                <option value="daily">每天</option>
+                <option value="weekly">每周</option>
+                <option value="monthly">每月</option>
+              </select>
+            </div>
+            <div class="setting-item flex items-center justify-between gap-4 py-3">
+              <div class="setting-info flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-text-primary m-0 mb-1">最大备份数</h3>
+                <p class="text-13px text-text-tertiary m-0">
+                  保留的最大备份份数，超出自动删除旧备份
+                </p>
+              </div>
+              <input
+                v-model.number="backupMaxCopies"
+                type="number"
+                min="1"
+                max="100"
+                class="number-input w-20 h-9 px-3 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary text-center transition-all duration-200 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 数据库备份 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('dbbackup') }"
       >
         <div
@@ -486,7 +772,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 应用更新 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('update') }"
       >
         <div
@@ -550,7 +836,7 @@ const handleCheckUpdate = (): void => {
 
       <!-- 应用数据 -->
       <div
-        class="settings-section bg-bg-primary border border-border rounded-xl shadow-sm overflow-hidden transition-all duration-200"
+        class="settings-section bg-bg-primary border border-border rounded-xl overflow-hidden transition-all duration-200"
         :class="{ expanded: isExpanded('data') }"
       >
         <div
@@ -619,7 +905,7 @@ const handleCheckUpdate = (): void => {
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background-color: var(--primary-500);
+  background-color: var(--accent-primary);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
@@ -666,6 +952,29 @@ const handleCheckUpdate = (): void => {
 
 .number-input {
   -moz-appearance: textfield;
+}
+
+.token-input {
+  width: 180px;
+  height: 34px;
+  padding: 0 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: monospace;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.token-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.token-input::placeholder {
+  color: var(--text-muted);
+  font-family: inherit;
 }
 
 .select-box {
