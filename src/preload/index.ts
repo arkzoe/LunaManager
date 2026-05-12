@@ -1,50 +1,49 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
-import type { GameRecord, PlaySession, AppConfig } from './index.d'
+import type { IElectronAPI } from '../shared/types'
 
-// Custom APIs for renderer
-const api = {
-  // 游戏数据操作
-  getGames: (): Promise<GameRecord[]> => ipcRenderer.invoke('db:getGames'),
-  getGameById: (id: string): Promise<GameRecord | null> => ipcRenderer.invoke('db:getGameById', id),
-  createGame: (game: Omit<GameRecord, 'created_at' | 'updated_at'>): Promise<GameRecord> => 
-    ipcRenderer.invoke('db:createGame', game),
-  updateGame: (id: string, updates: Partial<GameRecord>): Promise<void> => 
-    ipcRenderer.invoke('db:updateGame', id, updates),
-  deleteGame: (id: string): Promise<void> => ipcRenderer.invoke('db:deleteGame', id),
-  searchGames: (query: string): Promise<GameRecord[]> => ipcRenderer.invoke('db:searchGames', query),
-  
-  // 配置操作
-  getConfig: <K extends keyof AppConfig>(key: K): Promise<AppConfig[K]> => 
-    ipcRenderer.invoke('config:get', key),
-  setConfig: <K extends keyof AppConfig>(key: K, value: AppConfig[K]): Promise<void> => 
-    ipcRenderer.invoke('config:set', key, value),
-  getAllConfig: (): Promise<AppConfig> => ipcRenderer.invoke('config:getAll'),
-  setAllConfig: (config: Partial<AppConfig>): Promise<void> => 
-    ipcRenderer.invoke('config:setAll', config),
-  
-  // 游玩记录
-  startPlaySession: (gameId: string): Promise<PlaySession> => 
-    ipcRenderer.invoke('play:startSession', gameId),
-  endPlaySession: (sessionId: string): Promise<void> => 
-    ipcRenderer.invoke('play:endSession', sessionId),
-  getGamePlaytime: (gameId: string): Promise<number> => 
-    ipcRenderer.invoke('play:getTotalPlaytime', gameId)
+const api: IElectronAPI = {
+  getGames: () => ipcRenderer.invoke('db:getGames'),
+  getGameById: (id) => ipcRenderer.invoke('db:getGameById', id),
+  createGame: (game) => ipcRenderer.invoke('db:createGame', game),
+  updateGame: (id, updates) => ipcRenderer.invoke('db:updateGame', id, updates),
+  deleteGame: (id) => ipcRenderer.invoke('db:deleteGame', id),
+  searchGames: (query) => ipcRenderer.invoke('db:searchGames', query),
+  getGamesByCategory: (cat) => ipcRenderer.invoke('db:getGamesByCategory', cat),
+  getGamesByStatus: (status) => ipcRenderer.invoke('db:getGamesByStatus', status),
+
+  getConfig: (key) => ipcRenderer.invoke('config:get', key),
+  setConfig: (key, value) => ipcRenderer.invoke('config:set', key, value),
+  getAllConfig: () => ipcRenderer.invoke('config:getAll'),
+  setAllConfig: (config) => ipcRenderer.invoke('config:setAll', config),
+
+  startPlaySession: (gameId) => ipcRenderer.invoke('play:startSession', gameId),
+  endPlaySession: (sessionId) => ipcRenderer.invoke('play:endSession', sessionId),
+  getGamePlaytime: (gameId) => ipcRenderer.invoke('play:getTotalPlaytime', gameId),
+  getSessionsByGame: (gameId) => ipcRenderer.invoke('play:getSessionsByGame', gameId),
+  getRecentSessions: (limit) => ipcRenderer.invoke('play:getRecentSessions', limit),
+
+  getCollections: () => ipcRenderer.invoke('col:getAll'),
+  createCollection: (name) => ipcRenderer.invoke('col:create', name),
+  renameCollection: (id, name) => ipcRenderer.invoke('col:rename', id, name),
+  deleteCollection: (id) => ipcRenderer.invoke('col:delete', id),
+  addGameToCollection: (gameId, colId) => ipcRenderer.invoke('col:addGame', gameId, colId),
+  removeGameFromCollection: (gameId, colId) => ipcRenderer.invoke('col:removeGame', gameId, colId),
+  getCollectionGames: (colId) => ipcRenderer.invoke('col:getGameIds', colId),
+  reorderCollections: (ids) => ipcRenderer.invoke('col:reorder', ids),
+
+  getSnapshots: (gameId) => ipcRenderer.invoke('snap:getByGame', gameId),
+  createSnapshot: (gameId, notes) => ipcRenderer.invoke('snap:create', gameId, notes),
+  deleteSnapshot: (id) => ipcRenderer.invoke('snap:delete', id),
+  restoreSnapshot: () => Promise.reject(new Error('Not implemented')),
+  detectSavePath: () => Promise.resolve(null)
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
+  ;(window as any).api = api
 }
