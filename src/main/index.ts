@@ -2,19 +2,16 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { initDatabase, closeDatabase, gameOperations, playSessionOperations } from './db/database'
+import { initDatabase, closeDatabase, gameOps, sessionOps, collectionOps, snapshotOps } from './database'
 import { getConfig, setConfig, getAllConfig, setAllConfig } from './config/store'
 
 function createWindow(): void {
-  // 获取保存的窗口大小
-  const windowBounds = getConfig('windowBounds')
-  
-  // Create the browser window.
+  const bounds = getConfig('windowBounds')
   const mainWindow = new BrowserWindow({
-    width: windowBounds.width,
-    height: windowBounds.height,
-    x: windowBounds.x,
-    y: windowBounds.y,
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
     minWidth: 1024,
     minHeight: 700,
     show: false,
@@ -28,29 +25,15 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+  mainWindow.on('ready-to-show', () => mainWindow.show())
 
-  // 保存窗口大小
   mainWindow.on('resize', () => {
-    const bounds = mainWindow.getBounds()
-    setConfig('windowBounds', {
-      width: bounds.width,
-      height: bounds.height,
-      x: bounds.x,
-      y: bounds.y
-    })
+    const b = mainWindow.getBounds()
+    setConfig('windowBounds', { width: b.width, height: b.height, x: b.x, y: b.y })
   })
-
   mainWindow.on('move', () => {
-    const bounds = mainWindow.getBounds()
-    setConfig('windowBounds', {
-      width: bounds.width,
-      height: bounds.height,
-      x: bounds.x,
-      y: bounds.y
-    })
+    const b = mainWindow.getBounds()
+    setConfig('windowBounds', { width: b.width, height: b.height, x: b.x, y: b.y })
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -58,8 +41,6 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -67,108 +48,61 @@ function createWindow(): void {
   }
 }
 
-// 设置 IPC 处理器
 function setupIpcHandlers(): void {
-  // 数据库操作
-  ipcMain.handle('db:getGames', () => {
-    return gameOperations.getAll()
-  })
+  // ===== Games =====
+  ipcMain.handle('db:getGames', () => gameOps.getAll())
+  ipcMain.handle('db:getGameById', (_, id: string) => gameOps.getById(id) || null)
+  ipcMain.handle('db:createGame', (_, game) => gameOps.create(game))
+  ipcMain.handle('db:updateGame', (_, id: string, updates) => gameOps.update(id, updates))
+  ipcMain.handle('db:deleteGame', (_, id: string) => gameOps.delete(id))
+  ipcMain.handle('db:searchGames', (_, q: string) => gameOps.search(q))
+  ipcMain.handle('db:getGamesByCategory', (_, cat: string) => gameOps.getByCategory(cat))
+  ipcMain.handle('db:getGamesByStatus', (_, status: string) => gameOps.getByStatus(status as any))
 
-  ipcMain.handle('db:getGameById', (_, id: string) => {
-    return gameOperations.getById(id) || null
-  })
+  // ===== Config =====
+  ipcMain.handle('config:get', <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K) => getConfig(key))
+  ipcMain.handle('config:set', <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K, value: AppConfig[K]) => setConfig(key, value))
+  ipcMain.handle('config:getAll', () => getAllConfig())
+  ipcMain.handle('config:setAll', (_, config) => setAllConfig(config))
 
-  ipcMain.handle('db:createGame', (_, game) => {
-    return gameOperations.create(game)
-  })
+  // ===== Play Sessions =====
+  ipcMain.handle('play:startSession', (_, gameId: string) => sessionOps.start(gameId))
+  ipcMain.handle('play:endSession', (_, sessionId: string) => sessionOps.end(sessionId))
+  ipcMain.handle('play:getTotalPlaytime', (_, gameId: string) => sessionOps.getTotalPlaytime(gameId))
+  ipcMain.handle('play:getSessionsByGame', (_, gameId: string) => sessionOps.getByGameId(gameId))
+  ipcMain.handle('play:getRecentSessions', (_, limit?: number) => sessionOps.getRecent(limit))
 
-  ipcMain.handle('db:updateGame', (_, id: string, updates) => {
-    gameOperations.update(id, updates)
-  })
+  // ===== Collections =====
+  ipcMain.handle('col:getAll', () => collectionOps.getAll())
+  ipcMain.handle('col:create', (_, name: string) => collectionOps.create(name))
+  ipcMain.handle('col:rename', (_, id: string, name: string) => collectionOps.rename(id, name))
+  ipcMain.handle('col:delete', (_, id: string) => collectionOps.delete(id))
+  ipcMain.handle('col:addGame', (_, gameId: string, colId: string) => collectionOps.addGame(gameId, colId))
+  ipcMain.handle('col:removeGame', (_, gameId: string, colId: string) => collectionOps.removeGame(gameId, colId))
+  ipcMain.handle('col:getGameIds', (_, colId: string) => collectionOps.getGameIds(colId))
+  ipcMain.handle('col:reorder', (_, ids: string[]) => collectionOps.reorder(ids))
 
-  ipcMain.handle('db:deleteGame', (_, id: string) => {
-    gameOperations.delete(id)
-  })
-
-  ipcMain.handle('db:searchGames', (_, query: string) => {
-    return gameOperations.search(query)
-  })
-
-  // 配置操作
-  ipcMain.handle('config:get', <K extends keyof AppConfig>(_event: Electron.IpcMainInvokeEvent, key: K) => {
-    return getConfig(key)
-  })
-
-  ipcMain.handle('config:set', <K extends keyof AppConfig>(_event: Electron.IpcMainInvokeEvent, key: K, value: AppConfig[K]) => {
-    setConfig(key, value)
-  })
-
-  ipcMain.handle('config:getAll', () => {
-    return getAllConfig()
-  })
-
-  ipcMain.handle('config:setAll', (_, config) => {
-    setAllConfig(config)
-  })
-
-  // 游玩记录
-  ipcMain.handle('play:startSession', (_, gameId: string) => {
-    return playSessionOperations.start(gameId)
-  })
-
-  ipcMain.handle('play:endSession', (_, sessionId: string) => {
-    playSessionOperations.end(sessionId)
-  })
-
-  ipcMain.handle('play:getTotalPlaytime', (_, gameId: string) => {
-    return playSessionOperations.getTotalPlaytime(gameId)
-  })
+  // ===== Save Snapshots =====
+  ipcMain.handle('snap:getByGame', (_, gameId: string) => snapshotOps.getByGameId(gameId))
+  ipcMain.handle('snap:create', (_, gameId: string, notes?: string) => snapshotOps.create(gameId, notes))
+  ipcMain.handle('snap:delete', (_, id: string) => snapshotOps.delete(id))
 }
 
-// 类型导入
 import type { AppConfig } from './config/store'
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
-
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
-
-  // 初始化数据库
+  app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
   initDatabase()
-  
-  // 设置 IPC 处理器
   setupIpcHandlers()
-
   createWindow()
-
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for the application and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    // 关闭数据库连接
-    closeDatabase()
-    app.quit()
-  }
+  if (process.platform !== 'darwin') { closeDatabase(); app.quit() }
 })
 
-app.on('before-quit', () => {
-  // 确保在退出前关闭数据库
-  closeDatabase()
-})
+app.on('before-quit', () => closeDatabase())
