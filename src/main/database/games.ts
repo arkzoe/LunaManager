@@ -30,8 +30,10 @@ export const gameOps = {
   },
 
   update: (id: string, updates: Partial<Omit<GameRecord, 'id' | 'created_at'>>): void => {
+    const keys = Object.keys(updates)
+    if (keys.length === 0) return
     const db = getDatabase()
-    const fields = Object.keys(updates).map(k => `${k} = @${k}`).join(', ')
+    const fields = keys.map(k => `${k} = @${k}`).join(', ')
     db.prepare(`UPDATE games SET ${fields}, updated_at = @updated_at WHERE id = @id`).run({
       ...updates, updated_at: Date.now(), id
     })
@@ -44,8 +46,8 @@ export const gameOps = {
   search: (query: string): GameRecord[] => {
     const p = `%${query}%`
     return getDatabase().prepare(
-      'SELECT * FROM games WHERE title LIKE ? OR developer LIKE ? ORDER BY title ASC'
-    ).all(p, p) as GameRecord[]
+      'SELECT * FROM games WHERE title LIKE ? OR title_cn LIKE ? OR developer LIKE ? ORDER BY title ASC'
+    ).all(p, p, p) as GameRecord[]
   },
 
   getByCategory: (category: string): GameRecord[] => {
