@@ -8,7 +8,6 @@ const api: IElectronAPI = {
   updateGame: (id, updates) => ipcRenderer.invoke('db:updateGame', id, updates),
   deleteGame: (id) => ipcRenderer.invoke('db:deleteGame', id),
   searchGames: (query) => ipcRenderer.invoke('db:searchGames', query),
-  getGamesByCategory: (cat) => ipcRenderer.invoke('db:getGamesByCategory', cat),
   getGamesByStatus: (status) => ipcRenderer.invoke('db:getGamesByStatus', status),
 
   getConfig: (key) => ipcRenderer.invoke('config:get', key),
@@ -35,7 +34,12 @@ const api: IElectronAPI = {
   createSnapshot: (gameId, notes) => ipcRenderer.invoke('snap:create', gameId, notes),
   deleteSnapshot: (id) => ipcRenderer.invoke('snap:delete', id),
   restoreSnapshot: (id) => ipcRenderer.invoke('snap:restore', id),
-  detectSavePath: (gameId) => ipcRenderer.invoke('snap:detectSavePath', gameId)
+  detectSavePath: (gameId) => ipcRenderer.invoke('snap:detectSavePath', gameId),
+
+  getGameByExecutablePath: (path) => ipcRenderer.invoke('db:getGameByExecutablePath', path),
+
+  pickImportFolder: () => ipcRenderer.invoke('import:pickFolder'),
+  pickBatchImportFolder: () => ipcRenderer.invoke('import:pickBatchFolder')
 }
 
 if (process.contextIsolated) {

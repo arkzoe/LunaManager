@@ -116,10 +116,6 @@ const iconPaths: Record<string, string> = {
             <span class="meta-k">发行日期</span>
             <span class="meta-v">{{ game.release_date }}</span>
           </div>
-          <div v-if="game.category" class="meta-item">
-            <span class="meta-k">类型</span>
-            <span class="meta-v">{{ game.category }}</span>
-          </div>
           <div v-if="game.size" class="meta-item">
             <span class="meta-k">大小</span>
             <span class="meta-v">{{ game.size }}</span>
@@ -262,10 +258,6 @@ const iconPaths: Record<string, string> = {
             <div class="form-field">
               <label>发行日期</label>
               <input type="text" :value="game.release_date" class="form-input" />
-            </div>
-            <div class="form-field">
-              <label>类型</label>
-              <input type="text" :value="game.category" class="form-input" />
             </div>
           </div>
           <div class="form-field">

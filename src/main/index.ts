@@ -56,8 +56,8 @@ function setupIpcHandlers(): void {
   ipcMain.handle('db:updateGame', (_, id: string, updates) => gameOps.update(id, updates))
   ipcMain.handle('db:deleteGame', (_, id: string) => gameOps.delete(id))
   ipcMain.handle('db:searchGames', (_, q: string) => gameOps.search(q))
-  ipcMain.handle('db:getGamesByCategory', (_, cat: string) => gameOps.getByCategory(cat))
   ipcMain.handle('db:getGamesByStatus', (_, status: string) => gameOps.getByStatus(status as GameStatus))
+  ipcMain.handle('db:getGameByExecutablePath', (_, path: string) => gameOps.getByExecutablePath(path) || null)
 
   // ===== Config =====
   ipcMain.handle('config:get', <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K) => getConfig(key))
@@ -90,10 +90,15 @@ function setupIpcHandlers(): void {
     throw new Error('Not implemented')
   })
   ipcMain.handle('snap:detectSavePath', (_, _gameId: string) => null)
+
+  // ===== Import =====
+  ipcMain.handle('import:pickFolder', () => pickFolderAndScan())
+  ipcMain.handle('import:pickBatchFolder', () => pickBatchFolderAndScan())
 }
 
 import type { AppConfig } from './config/store'
 import type { GameStatus } from '../shared/types'
+import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')

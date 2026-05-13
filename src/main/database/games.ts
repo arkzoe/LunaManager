@@ -17,11 +17,11 @@ export const gameOps = {
     const now = Date.now()
     const record = { ...game, created_at: now, updated_at: now }
     db.prepare(`
-      INSERT INTO games (id, title, title_cn, cover, category, rating, size, installed, favorite,
+      INSERT INTO games (id, title, title_cn, cover, rating, size, installed, favorite,
         status, personal_rating, last_played, description, developer, publisher, release_date,
         playtime, executable_path, save_path, vndb_id, bangumi_id, notes, custom_tags,
         last_launch_method, created_at, updated_at)
-      VALUES (@id, @title, @title_cn, @cover, @category, @rating, @size, @installed, @favorite,
+      VALUES (@id, @title, @title_cn, @cover, @rating, @size, @installed, @favorite,
         @status, @personal_rating, @last_played, @description, @developer, @publisher, @release_date,
         @playtime, @executable_path, @save_path, @vndb_id, @bangumi_id, @notes, @custom_tags,
         @last_launch_method, @created_at, @updated_at)
@@ -50,12 +50,6 @@ export const gameOps = {
     ).all(p, p, p) as GameRecord[]
   },
 
-  getByCategory: (category: string): GameRecord[] => {
-    return getDatabase().prepare(
-      'SELECT * FROM games WHERE category = ? ORDER BY title ASC'
-    ).all(category) as GameRecord[]
-  },
-
   getByStatus: (status: GameStatus): GameRecord[] => {
     return getDatabase().prepare(
       'SELECT * FROM games WHERE status = ? ORDER BY title ASC'
@@ -72,5 +66,11 @@ export const gameOps = {
     return getDatabase().prepare(
       'SELECT * FROM games WHERE installed = 1 ORDER BY title ASC'
     ).all() as GameRecord[]
+  },
+
+  getByExecutablePath: (path: string): GameRecord | undefined => {
+    return getDatabase().prepare(
+      'SELECT * FROM games WHERE executable_path = ?'
+    ).get(path) as GameRecord | undefined
   }
 }

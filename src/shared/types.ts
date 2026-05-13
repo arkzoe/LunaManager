@@ -3,7 +3,6 @@ export interface GameRecord {
   title: string
   title_cn: string
   cover: string
-  category: string
   rating: number
   size: string
   installed: number
@@ -46,6 +45,24 @@ export interface Collection {
 export interface GameCollection {
   game_id: string
   collection_id: string
+}
+
+export interface ImportScanResult {
+  folderPath: string
+  folderName: string
+  executables: { name: string; fullPath: string }[]
+  totalSize: string
+}
+
+export interface BatchScanItem {
+  folderPath: string
+  folderName: string
+  executables: { name: string; fullPath: string }[]
+  totalSize: string
+}
+
+export interface BatchScanResult {
+  items: BatchScanItem[]
 }
 
 export interface SaveSnapshot {
@@ -95,7 +112,6 @@ export interface IElectronAPI {
   updateGame: (id: string, updates: Partial<GameRecord>) => Promise<void>
   deleteGame: (id: string) => Promise<void>
   searchGames: (query: string) => Promise<GameRecord[]>
-  getGamesByCategory: (category: string) => Promise<GameRecord[]>
   getGamesByStatus: (status: GameStatus) => Promise<GameRecord[]>
 
   getConfig: <K extends keyof AppConfig>(key: K) => Promise<AppConfig[K]>
@@ -123,4 +139,9 @@ export interface IElectronAPI {
   deleteSnapshot: (id: string) => Promise<void>
   restoreSnapshot: (id: string) => Promise<void>
   detectSavePath: (gameId: string) => Promise<string | null>
+
+  getGameByExecutablePath: (path: string) => Promise<GameRecord | null>
+
+  pickImportFolder: () => Promise<ImportScanResult | null>
+  pickBatchImportFolder: () => Promise<BatchScanResult | null>
 }

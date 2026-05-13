@@ -4,6 +4,8 @@ import { useGameStore } from '../stores/useGameStore'
 import GameCard from './shared/GameCard.vue'
 import type { GameRecord, GameStatus } from '../../../shared/types'
 import { formatRelativeTime } from '../utils/format'
+import ImportDialog from './ImportDialog.vue'
+import BatchImportDialog from './BatchImportDialog.vue'
 
 const emit = defineEmits<{ (e: 'selectGame', game: GameRecord): void }>()
 
@@ -15,6 +17,14 @@ const viewMode = ref<'grid' | 'list'>('grid')
 // 右键菜单
 const ctxMenu = ref<{ x: number; y: number; game: GameRecord } | null>(null)
 const showCtxMenu = ref(false)
+
+// 导入菜单
+const showImportMenu = ref(false)
+const importBtnRef = ref<HTMLElement | null>(null)
+
+// 导入对话框
+const showImportDialog = ref(false)
+const showBatchImportDialog = ref(false)
 
 onMounted(() => {
   if (store.games.length === 0) store.loadGames()
@@ -42,6 +52,15 @@ const filteredGames = computed(() => {
     )
   }
   return list
+})
+
+const importMenuStyle = computed(() => {
+  if (!showImportMenu.value || !importBtnRef.value) return {}
+  const rect = importBtnRef.value.getBoundingClientRect()
+  return {
+    left: rect.left + 'px',
+    top: rect.bottom + 4 + 'px'
+  }
 })
 
 const handleContextMenu = (e: MouseEvent, game: GameRecord): void => {
@@ -79,8 +98,39 @@ const handleStatusChange = async (game: GameRecord, status: GameStatus): Promise
   closeContextMenu()
 }
 
-const handleImport = (): void => {
-  // TODO: 打开导入对话框 (Phase 2)
+const toggleImportMenu = (): void => {
+  showImportMenu.value = !showImportMenu.value
+}
+
+const closeImportMenu = (): void => {
+  showImportMenu.value = false
+}
+
+const handleManualImport = (): void => {
+  showImportMenu.value = false
+  showImportDialog.value = true
+}
+
+const handleBatchImport = (): void => {
+  showImportMenu.value = false
+  showBatchImportDialog.value = true
+}
+
+const handleImportClose = (): void => {
+  showImportDialog.value = false
+}
+
+const handleImported = (game: GameRecord): void => {
+  showImportDialog.value = false
+  emit('selectGame', game)
+}
+
+const handleBatchImportClose = (): void => {
+  showBatchImportDialog.value = false
+}
+
+const handleBatchImported = (_count: number): void => {
+  showBatchImportDialog.value = false
 }
 </script>
 
@@ -127,13 +177,48 @@ const handleImport = (): void => {
           </button>
         </div>
 
-        <!-- 导入按钮 -->
-        <button class="btn-brand btn-sm" @click="handleImport">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-          </svg>
-          导入游戏
-        </button>
+        <!-- 导入按钮下拉菜单 -->
+        <div class="import-dropdown">
+          <button
+            ref="importBtnRef"
+            class="btn-brand btn-sm"
+            @click="toggleImportMenu"
+          >
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+            </svg>
+            导入
+            <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current dropdown-arrow">
+              <path d="M7 10l5 5 5-5z" />
+            </svg>
+          </button>
+          <Teleport to="body">
+            <div
+              v-if="showImportMenu"
+              class="context-overlay"
+              @click="closeImportMenu"
+              @contextmenu.prevent="closeImportMenu"
+            />
+            <div
+              v-if="showImportMenu"
+              class="import-menu"
+              :style="importMenuStyle"
+            >
+              <button class="ctx-item" @click="handleManualImport">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                </svg>
+                手动导入
+              </button>
+              <button class="ctx-item" @click="handleBatchImport">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                  <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm0-4H6v-2h8v2z" />
+                </svg>
+                批量导入
+              </button>
+            </div>
+          </Teleport>
+        </div>
       </div>
     </div>
 
@@ -227,10 +312,7 @@ const handleImport = (): void => {
         class="context-menu"
         :style="{ left: ctxMenu.x + 'px', top: ctxMenu.y + 'px' }"
       >
-        <button
-          class="ctx-item"
-          @click="handleViewDetail"
-        >
+        <button class="ctx-item" @click="handleViewDetail">
           <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
             <path
               d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
@@ -260,6 +342,16 @@ const handleImport = (): void => {
         </button>
       </div>
     </Teleport>
+
+    <!-- 手动导入对话框 -->
+    <ImportDialog v-if="showImportDialog" @close="handleImportClose" @imported="handleImported" />
+
+    <!-- 批量导入对话框 -->
+    <BatchImportDialog
+      v-if="showBatchImportDialog"
+      @close="handleBatchImportClose"
+      @imported="handleBatchImported"
+    />
   </div>
 </template>
 
@@ -355,6 +447,27 @@ const handleImport = (): void => {
 .vt-btn.active {
   background: var(--bg-active);
   color: var(--accent-primary);
+}
+
+/* ===== 导入下拉菜单 ===== */
+.import-dropdown {
+  position: relative;
+}
+
+.dropdown-arrow {
+  margin-left: 2px;
+}
+
+.import-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 140px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  overflow: hidden;
 }
 
 /* ===== 筛选栏 ===== */

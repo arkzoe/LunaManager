@@ -13,15 +13,6 @@ export const useGameStore = defineStore('games', () => {
   const favoriteGames = computed(() => games.value.filter(g => g.favorite))
   const selectedGame = computed(() => games.value.find(g => g.id === selectedGameId.value) || null)
 
-  const gamesByCategory = computed(() => {
-    const map: Record<string, GameRecord[]> = {}
-    games.value.forEach(g => {
-      if (!map[g.category]) map[g.category] = []
-      map[g.category].push(g)
-    })
-    return map
-  })
-
   const recentlyPlayed = computed(() =>
     games.value.filter(g => g.last_played).sort((a, b) => (b.last_played || '').localeCompare(a.last_played || '')).slice(0, 5)
   )
@@ -87,7 +78,7 @@ export const useGameStore = defineStore('games', () => {
 
   return {
     games, selectedGameId, isLoading, error,
-    allGames, installedGames, favoriteGames, selectedGame, gamesByCategory, recentlyPlayed, totalPlaytimeMinutes,
+    allGames, installedGames, favoriteGames, selectedGame, recentlyPlayed, totalPlaytimeMinutes,
     loadGames, addGame, updateGame, deleteGame, searchGames, selectGame, toggleFavorite,
     setLoading, setError
   }
