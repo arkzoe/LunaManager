@@ -169,7 +169,10 @@ const activities = computed(() => {
         <div class="section-head">
           <h2>最近添加</h2>
         </div>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+        <div
+          class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3"
+          :style="{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }"
+        >
           <div
             v-for="game in recentAdded"
             :key="game.id"
