@@ -28,14 +28,14 @@ const api: IElectronAPI = {
   deleteCollection: (id) => ipcRenderer.invoke('col:delete', id),
   addGameToCollection: (gameId, colId) => ipcRenderer.invoke('col:addGame', gameId, colId),
   removeGameFromCollection: (gameId, colId) => ipcRenderer.invoke('col:removeGame', gameId, colId),
-  getCollectionGames: (colId) => ipcRenderer.invoke('col:getGameIds', colId),
+  getCollectionGames: (colId) => ipcRenderer.invoke('col:getCollectionGames', colId),
   reorderCollections: (ids) => ipcRenderer.invoke('col:reorder', ids),
 
   getSnapshots: (gameId) => ipcRenderer.invoke('snap:getByGame', gameId),
   createSnapshot: (gameId, notes) => ipcRenderer.invoke('snap:create', gameId, notes),
   deleteSnapshot: (id) => ipcRenderer.invoke('snap:delete', id),
-  restoreSnapshot: () => Promise.reject(new Error('Not implemented')),
-  detectSavePath: () => Promise.resolve(null)
+  restoreSnapshot: (id) => ipcRenderer.invoke('snap:restore', id),
+  detectSavePath: (gameId) => ipcRenderer.invoke('snap:detectSavePath', gameId)
 }
 
 if (process.contextIsolated) {
