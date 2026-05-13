@@ -570,8 +570,8 @@ const getIconSvg = (name: string): string => {
 }
 
 .flc-info h2 {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   color: var(--text-primary);
   margin: 0 0 2px;
 }
@@ -583,13 +583,18 @@ const getIconSvg = (name: string): string => {
 
 .flc-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
 }
 
 .flc-game {
   position: relative;
   cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.flc-game:hover {
+  transform: translateY(-2px);
 }
 
 .flc-move {

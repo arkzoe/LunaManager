@@ -18,7 +18,7 @@ const emit = defineEmits<{ (e: 'click'): void }>()
     </div>
     <div class="info">
       <div class="title">{{ game.title }}</div>
-      <div class="meta">{{ game.size || '-' }} · {{ game.category }}</div>
+      <div class="meta">{{ game.size || '-' }}</div>
     </div>
   </div>
 </template>
@@ -26,22 +26,20 @@ const emit = defineEmits<{ (e: 'click'): void }>()
 <style scoped>
 .game-card {
   background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .game-card:hover {
-  border-color: var(--border-color-medium);
   box-shadow: var(--shadow-sm);
 }
 
 .cover {
   position: relative;
   width: 100%;
-  aspect-ratio: 4/3;
+  aspect-ratio: 3/4;
   background: var(--bg-secondary);
   overflow: hidden;
 }
@@ -56,27 +54,27 @@ const emit = defineEmits<{ (e: 'click'): void }>()
 }
 
 .cover-placeholder svg {
-  width: 32px;
-  height: 32px;
-  opacity: 0.4;
+  width: 28px;
+  height: 28px;
+  opacity: 0.35;
 }
 
 .info {
-  padding: 8px 10px;
+  padding: 6px 8px;
 }
 
 .title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .meta {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;

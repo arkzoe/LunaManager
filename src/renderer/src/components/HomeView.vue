@@ -2,6 +2,8 @@
 import { computed, onMounted } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord } from '../../../shared/types'
+import GameCard from './shared/GameCard.vue'
+import { formatRelativeTime } from '../utils/format'
 
 const store = useGameStore()
 
@@ -49,7 +51,7 @@ const activities = computed(() => {
     .sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
     .slice(0, 3)
     .forEach((g) => {
-      list.push({ type: 'played', game: g, time: g.last_played || '' })
+      list.push({ type: 'played', game: g, time: formatRelativeTime(g.last_played || '') })
     })
 
   store.allGames
@@ -60,7 +62,7 @@ const activities = computed(() => {
       list.push({
         type: 'added',
         game: g,
-        time: new Date(g.created_at).toLocaleDateString('zh-CN')
+        time: formatRelativeTime(g.created_at)
       })
     })
 
@@ -154,21 +156,10 @@ const activities = computed(() => {
           <div
             v-for="game in recentGames"
             :key="game.id"
-            class="recent-card"
+            class="scroll-card"
             @click="emit('selectGame', game)"
           >
-            <div class="rc-cover">
-              <img v-if="game.cover" :src="game.cover" :alt="game.title" class="rc-cover-img" />
-              <svg v-else viewBox="0 0 24 24" class="w-8 h-8 fill-text-muted opacity-30">
-                <path
-                  d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-                />
-              </svg>
-            </div>
-            <div class="rc-info">
-              <div class="rc-title" :title="game.title">{{ game.title_cn || game.title }}</div>
-              <div class="rc-meta">{{ game.last_played }}</div>
-            </div>
+            <GameCard :game="game" />
           </div>
         </div>
       </section>
@@ -178,23 +169,14 @@ const activities = computed(() => {
         <div class="section-head">
           <h2>最近添加</h2>
         </div>
-        <div class="cover-wall">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
           <div
             v-for="game in recentAdded"
             :key="game.id"
-            class="cw-item"
-            :title="game.title"
             @click="emit('selectGame', game)"
+            :title="game.title"
           >
-            <img v-if="game.cover" :src="game.cover" :alt="game.title" class="cw-cover" />
-            <div v-else class="cw-placeholder">
-              <svg viewBox="0 0 24 24" class="w-6 h-6 fill-text-muted opacity-30">
-                <path
-                  d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-                />
-              </svg>
-            </div>
-            <div class="cw-name">{{ game.title_cn || game.title }}</div>
+            <GameCard :game="game" />
           </div>
         </div>
       </section>
@@ -377,102 +359,10 @@ const activities = computed(() => {
   border-radius: 2px;
 }
 
-.recent-card {
+.scroll-card {
   flex-shrink: 0;
-  width: 144px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s;
+  width: 150px;
   scroll-snap-align: start;
-}
-
-.recent-card:hover {
-  border-color: var(--border-color-medium);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-}
-
-.rc-cover {
-  width: 100%;
-  aspect-ratio: 16/10;
-  background: var(--bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.rc-cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.rc-info {
-  padding: 10px;
-}
-
-.rc-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 3px;
-}
-
-.rc-meta {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-/* ===== 封面墙 ===== */
-.cover-wall {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
-}
-
-.cw-item {
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.cw-item:hover {
-  transform: translateY(-3px);
-}
-
-.cw-cover {
-  width: 100%;
-  aspect-ratio: 3/4;
-  object-fit: cover;
-  border-radius: 8px;
-  display: block;
-}
-
-.cw-placeholder {
-  width: 100%;
-  aspect-ratio: 3/4;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-color-light);
-}
-
-.cw-name {
-  font-size: 11px;
-  color: var(--text-secondary);
-  text-align: center;
-  margin-top: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ===== 时间线 ===== */

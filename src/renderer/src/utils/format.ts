@@ -29,7 +29,11 @@ export const formatDateTime = (ts: number): string => {
   return `${formatDate(ts)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-export const formatRelativeTime = (ts: number): string => {
+const toTime = (v: string | number): number => (typeof v === 'string' ? new Date(v).getTime() : v)
+
+export const formatRelativeTime = (v: string | number): string => {
+  const ts = toTime(v)
+  if (isNaN(ts)) return ''
   const diff = Date.now() - ts
   const s = Math.floor(diff / 1000)
   const m = Math.floor(s / 60)

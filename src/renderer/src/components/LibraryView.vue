@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import GameCard from './shared/GameCard.vue'
 import type { GameRecord, GameStatus } from '../../../shared/types'
+import { formatRelativeTime } from '../utils/format'
 
 const emit = defineEmits<{ (e: 'selectGame', game: GameRecord): void }>()
 
@@ -52,6 +53,11 @@ const handleContextMenu = (e: MouseEvent, game: GameRecord): void => {
 const closeContextMenu = (): void => {
   showCtxMenu.value = false
   ctxMenu.value = null
+}
+
+const handleViewDetail = (): void => {
+  if (ctxMenu.value) emit('selectGame', ctxMenu.value.game)
+  closeContextMenu()
 }
 
 const statusLabels: Record<GameStatus, string> = {
@@ -194,7 +200,7 @@ const handleImport = (): void => {
             game.personal_rating ? game.personal_rating + '/10' : '-'
           }}</span>
           <span class="lr-playtime">{{ game.playtime || '-' }}</span>
-          <span class="lr-last">{{ game.last_played || '-' }}</span>
+          <span class="lr-last">{{ formatRelativeTime(game.last_played) || '-' }}</span>
         </div>
       </div>
     </div>
@@ -223,10 +229,7 @@ const handleImport = (): void => {
       >
         <button
           class="ctx-item"
-          @click="
-            emit('selectGame', ctxMenu.game)
-            closeContextMenu()
-          "
+          @click="handleViewDetail"
         >
           <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
             <path
@@ -242,7 +245,7 @@ const handleImport = (): void => {
           :key="s.id"
           class="ctx-item"
           :class="{ current: ctxMenu.game.status === s.id }"
-          @click="handleStatusChange(ctxMenu.game, s.id as GameStatus)"
+          @click="handleStatusChange(ctxMenu.game, s.id)"
         >
           {{ s.label }}
         </button>
@@ -387,8 +390,8 @@ const handleImport = (): void => {
 /* ===== 游戏网格 ===== */
 .game-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
 }
 
 .grid-item {

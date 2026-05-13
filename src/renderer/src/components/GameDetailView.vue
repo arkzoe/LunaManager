@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { GameRecord, GameStatus } from '../../../shared/types'
+import { formatRelativeTime } from '../utils/format'
 
 const props = defineProps<{ game: GameRecord }>()
 const emit = defineEmits<{ (e: 'back'): void }>()
@@ -223,7 +224,7 @@ const iconPaths: Record<string, string> = {
             <div class="sb-label">总启动次数</div>
           </div>
           <div class="stat-box">
-            <div class="sb-value">{{ game.last_played || '-' }}</div>
+            <div class="sb-value">{{ formatRelativeTime(game.last_played) || '-' }}</div>
             <div class="sb-label">最后游玩</div>
           </div>
         </div>
