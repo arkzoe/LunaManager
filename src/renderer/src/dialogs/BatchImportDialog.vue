@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import type { BatchScanResult, GameRecord } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import BatchImportRow from './BatchImportRow.vue'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -139,9 +140,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
           <div v-if="!scanResult" class="folder-pick-area">
             <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
               <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-                <path
-                  d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
-                />
+                <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" />
               </svg>
               {{ isLoading ? '扫描中...' : '选择游戏库根文件夹' }}
             </button>
@@ -155,37 +154,14 @@ const handleOverlayClick = (e: MouseEvent): void => {
             </div>
 
             <div class="batch-list">
-              <div
+              <BatchImportRow
                 v-for="row in rows"
                 :key="row.folderPath"
-                class="batch-row"
-                :class="{ disabled: !row.selectedExe || row.isDuplicate }"
-              >
-                <div class="br-check">
-                  <input
-                    v-model="row.selected"
-                    type="checkbox"
-                    :disabled="!row.selectedExe || row.isDuplicate"
-                    class="br-cb"
-                  />
-                </div>
-
-                <div class="br-title">
-                  <input v-model="row.title" class="br-input" :placeholder="row.folderName" />
-                </div>
-
-                <div class="br-exe">
-                  <select v-model="row.selectedExe" class="br-select" :disabled="row.executables.length === 0">
-                    <option v-for="exe in row.executables" :key="exe.fullPath" :value="exe.fullPath">
-                      {{ exe.name }}
-                    </option>
-                  </select>
-                  <span v-if="row.executables.length === 0" class="br-warning">未检测到可执行文件</span>
-                  <span v-if="row.isDuplicate" class="br-duplicate">已存在</span>
-                </div>
-
-                <div class="br-size">{{ row.totalSize }}</div>
-              </div>
+                :row="row"
+                @update:selected="row.selected = $event"
+                @update:title="row.title = $event"
+                @update:selectedExe="row.selectedExe = $event"
+              />
             </div>
 
             <div v-if="totalCount === 0" class="empty-hint">该文件夹下没有子目录</div>
@@ -196,11 +172,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
               </div>
               <div class="ba-buttons">
                 <button class="btn-cancel" :disabled="isImporting" @click="handleClose">取消</button>
-                <button
-                  class="btn-brand"
-                  :disabled="isImporting || selectedCount === 0"
-                  @click="handleImportAll"
-                >
+                <button class="btn-brand" :disabled="isImporting || selectedCount === 0" @click="handleImportAll">
                   {{ isImporting ? '导入中...' : '导入选中' }}
                 </button>
               </div>
@@ -311,102 +283,6 @@ const handleOverlayClick = (e: MouseEvent): void => {
   flex-direction: column;
   gap: 6px;
   margin-bottom: 16px;
-}
-
-.batch-row {
-  display: grid;
-  grid-template-columns: 32px 1fr 1fr 70px;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  transition: border-color 0.15s;
-}
-
-.batch-row.disabled {
-  opacity: 0.5;
-  border-style: dashed;
-}
-
-.br-check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.br-cb {
-  accent-color: var(--accent-primary);
-}
-
-.br-input {
-  width: 100%;
-  height: 30px;
-  padding: 0 8px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--text-primary);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.br-input:focus {
-  border-color: var(--accent-primary);
-}
-
-.br-select {
-  width: 100%;
-  height: 30px;
-  padding: 0 24px 0 8px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--text-primary);
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-}
-
-.br-select:hover {
-  border-color: var(--border-color-medium);
-}
-
-.br-select:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
-}
-
-.br-select:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.br-warning {
-  font-size: 11px;
-  color: var(--danger);
-}
-
-.br-duplicate {
-  font-size: 11px;
-  color: var(--warning);
-  font-weight: 600;
-}
-
-.br-size {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  text-align: right;
-  white-space: nowrap;
 }
 
 .empty-hint {

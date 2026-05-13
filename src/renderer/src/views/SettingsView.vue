@@ -1,18 +1,34 @@
 ﻿<script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useThemeStore } from '../stores'
-import type { AppConfig } from '../../../shared/types'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useSettings } from '../composables/useSettings'
+import SettingBasic from './settings/SettingBasic.vue'
+import SettingAppearance from './settings/SettingAppearance.vue'
+import SettingDatasource from './settings/SettingDatasource.vue'
+import SettingLauncher from './settings/SettingLauncher.vue'
+import SettingBackup from './settings/SettingBackup.vue'
+import SettingAbout from './settings/SettingAbout.vue'
 
-const themeStore = useThemeStore()
+const {
+  autoStart, autoUpdate, downloadPath, language,
+  vndbApiKey, bangumiToken, lePath, magpiePath, magpieScale,
+  autoBackup, backupDir, backupFrequency, backupMaxCopies,
+  showGameCover, trackPlaytime, recordHistory, autoSyncMetadata, metadataSource,
+  loadConfig, setupPersistence,
+  handleSelectLEPath, handleSelectMagpiePath, handleChangeDownloadPath, handleSelectBackupDir
+} = useSettings()
 
-// helper: persist a reactive value to electron-store
-const persist = <K extends keyof AppConfig>(
-  key: K,
-  r: ReturnType<typeof ref<AppConfig[K]>>
-): void => {
-  watch(r, (v) => {
-    if (v !== undefined) window.api.setConfig(key, v)
-  })
+const currentVersion = ref('1.0.0')
+
+const handleTestBangumi = (): void => {
+  console.log('测试 Bangumi 连接')
+}
+
+const handleTestVNDB = (): void => {
+  console.log('测试 VNDB 连接')
+}
+
+const handleCheckUpdate = (): void => {
+  console.log('检查更新')
 }
 
 interface SettingSection {
@@ -61,30 +77,8 @@ const setSectionRef = (id: string) => (el: unknown) => {
 }
 
 onMounted(async () => {
-  // load persisted config
-  try {
-    const cfg = await window.api.getAllConfig()
-    autoStart.value = cfg.autoStart ?? false
-    autoUpdate.value = cfg.autoUpdate ?? true
-    downloadPath.value = cfg.downloadPath ?? ''
-    language.value = cfg.language ?? 'zh-CN'
-    vndbApiKey.value = cfg.vndbApiKey ?? ''
-    bangumiToken.value = cfg.bangumiToken ?? ''
-    lePath.value = cfg.lePath ?? ''
-    magpiePath.value = cfg.magpiePath ?? ''
-    magpieScale.value = cfg.magpieScale ?? '2.0'
-    autoBackup.value = cfg.autoBackup ?? false
-    backupDir.value = cfg.backupDir ?? ''
-    backupFrequency.value = cfg.backupFrequency ?? 'weekly'
-    backupMaxCopies.value = cfg.backupMaxCopies ?? 5
-    showGameCover.value = cfg.showGameCover ?? true
-    trackPlaytime.value = cfg.trackPlaytime ?? true
-    recordHistory.value = cfg.recordHistory ?? true
-    autoSyncMetadata.value = cfg.autoSyncMetadata ?? false
-    metadataSource.value = cfg.metadataSource ?? 'vndb'
-  } catch {
-    /* use defaults */
-  }
+  await loadConfig()
+  setupPersistence()
 
   await nextTick()
   if (!contentRef.value) return
@@ -117,86 +111,10 @@ const scrollToSection = (id: string): void => {
   activeSection.value = id
   sectionRefs.value[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
-
-// ---- config state ----
-const autoStart = ref(false)
-const autoUpdate = ref(true)
-const downloadPath = ref('')
-const language = ref<'zh-CN' | 'en-US'>('zh-CN')
-
-const vndbApiKey = ref('')
-const bangumiToken = ref('')
-
-const lePath = ref('')
-const magpiePath = ref('')
-const magpieScale = ref('2.0')
-
-const autoBackup = ref(false)
-const backupDir = ref('')
-const backupFrequency = ref<'daily' | 'weekly' | 'monthly'>('weekly')
-const backupMaxCopies = ref(5)
-
-const currentVersion = ref('1.0.0')
-
-// persist all settings to electron-store
-persist('autoStart', autoStart)
-persist('autoUpdate', autoUpdate)
-persist('downloadPath', downloadPath)
-persist('language', language)
-persist('vndbApiKey', vndbApiKey)
-persist('bangumiToken', bangumiToken)
-persist('lePath', lePath)
-persist('magpiePath', magpiePath)
-persist('magpieScale', magpieScale)
-persist('autoBackup', autoBackup)
-persist('backupDir', backupDir)
-persist('backupFrequency', backupFrequency)
-persist('backupMaxCopies', backupMaxCopies)
-
-// ---- missing config items ----
-const showGameCover = ref(true)
-const trackPlaytime = ref(true)
-const recordHistory = ref(true)
-const autoSyncMetadata = ref(false)
-const metadataSource = ref<'vndb' | 'bangumi'>('vndb')
-
-persist('showGameCover', showGameCover)
-persist('trackPlaytime', trackPlaytime)
-persist('recordHistory', recordHistory)
-persist('autoSyncMetadata', autoSyncMetadata)
-persist('metadataSource', metadataSource)
-
-// ---- handlers ----
-const handleSelectLEPath = async (): Promise<void> => {
-  const p = await window.api.pickFile([{ name: 'Executable', extensions: ['exe'] }])
-  if (p) lePath.value = p
-}
-const handleSelectMagpiePath = async (): Promise<void> => {
-  const p = await window.api.pickFile([{ name: 'Executable', extensions: ['exe'] }])
-  if (p) magpiePath.value = p
-}
-const handleChangeDownloadPath = async (): Promise<void> => {
-  const result = await window.api.pickFile([])
-  if (result) downloadPath.value = result
-}
-const handleSelectBackupDir = async (): Promise<void> => {
-  const result = await window.api.pickFile([])
-  if (result) backupDir.value = result
-}
-const handleTestBangumi = (): void => {
-  console.log('测试 Bangumi 连接')
-}
-const handleTestVNDB = (): void => {
-  console.log('测试 VNDB 连接')
-}
-const handleCheckUpdate = (): void => {
-  console.log('检查更新')
-}
 </script>
 
 <template>
   <div class="settings-layout">
-    <!-- ====== 左侧导航 ====== -->
     <nav class="settings-nav">
       <div class="nav-header">
         <svg viewBox="0 0 24 24" class="w-5 h-5 fill-text-secondary">
@@ -222,284 +140,84 @@ const handleCheckUpdate = (): void => {
       </div>
     </nav>
 
-    <!-- ====== 右侧内容 ====== -->
     <div ref="contentRef" class="settings-content">
-      <!-- 基础 -->
-      <section :ref="setSectionRef('basic')" data-section="basic" class="setting-group">
-        <h3 class="group-title">基础</h3>
-        <div class="group-card">
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">开机启动</span>
-              <span class="setting-desc">系统启动时自动运行 LunaManager</span>
-            </div>
-            <label class="toggle">
-              <input v-model="autoStart" type="checkbox" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">自动更新</span>
-              <span class="setting-desc">自动检查并安装应用更新</span>
-            </div>
-            <label class="toggle">
-              <input v-model="autoUpdate" type="checkbox" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">下载路径</span>
-              <span class="setting-desc">{{ downloadPath || '未设置' }}</span>
-            </div>
-            <button class="sbtn sbtn-secondary" @click="handleChangeDownloadPath">更改</button>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">显示游戏封面</span>
-              <span class="setting-desc">在游戏库中显示封面图片</span>
-            </div>
-            <label class="toggle">
-              <input v-model="showGameCover" type="checkbox" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">追踪游玩时长</span>
-              <span class="setting-desc">记录每次游玩的时长数据</span>
-            </div>
-            <label class="toggle">
-              <input v-model="trackPlaytime" type="checkbox" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">记录游玩历史</span>
-              <span class="setting-desc">保留完整的游玩会话记录</span>
-            </div>
-            <label class="toggle">
-              <input v-model="recordHistory" type="checkbox" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">语言</span>
-              <span class="setting-desc">选择界面显示语言</span>
-            </div>
-            <select v-model="language" class="sselect">
-              <option value="zh-CN">简体中文</option>
-              <option value="en-US">English</option>
-            </select>
-          </div>
-        </div>
-      </section>
+      <SettingBasic
+        :section-ref="setSectionRef('basic')"
+        :auto-start="autoStart"
+        :auto-update="autoUpdate"
+        :download-path="downloadPath"
+        :show-game-cover="showGameCover"
+        :track-playtime="trackPlaytime"
+        :record-history="recordHistory"
+        :language="language"
+        @update:auto-start="autoStart = $event"
+        @update:auto-update="autoUpdate = $event"
+        @update:show-game-cover="showGameCover = $event"
+        @update:track-playtime="trackPlaytime = $event"
+        @update:record-history="recordHistory = $event"
+        @update:language="language = $event"
+        @select-download-path="handleChangeDownloadPath"
+      />
 
-      <!-- 外观 -->
-      <section :ref="setSectionRef('appearance')" data-section="appearance" class="setting-group">
-        <h3 class="group-title">外观</h3>
-        <div class="group-card">
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">深色模式</span>
-              <span class="setting-desc">使用深色主题保护眼睛</span>
-            </div>
-            <label class="toggle">
-              <input
-                type="checkbox"
-                :checked="themeStore.isDark"
-                @change="themeStore.toggleTheme"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </section>
+      <SettingAppearance :section-ref="setSectionRef('appearance')" />
 
-      <!-- 数据源 -->
-      <section :ref="setSectionRef('datasource')" data-section="datasource" class="setting-group">
-        <h3 class="group-title">数据源</h3>
-        <div class="group-card">
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">默认数据源</span>
-              <span class="setting-desc">元数据刮削的首选数据源</span>
-            </div>
-            <select v-model="metadataSource" class="sselect">
-              <option value="vndb">VNDB</option>
-              <option value="bangumi">Bangumi</option>
-            </select>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">自动同步元数据</span>
-              <span class="setting-desc">导入游戏时自动从数据源获取信息</span>
-            </div>
-            <label class="toggle">
-              <input v-model="autoSyncMetadata" type="checkbox" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">VNDB API Key</span>
-              <span class="setting-desc">用于访问 VNDB 数据库的 API 密钥</span>
-            </div>
-            <div class="setting-actions">
-              <input
-                v-model="vndbApiKey"
-                type="password"
-                placeholder="输入 API Key"
-                class="sinput token"
-              />
-              <button class="sbtn sbtn-secondary" @click="handleTestVNDB">测试</button>
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">Bangumi Token</span>
-              <span class="setting-desc">用于访问 Bangumi API 的用户令牌</span>
-            </div>
-            <div class="setting-actions">
-              <input
-                v-model="bangumiToken"
-                type="password"
-                placeholder="输入 Token"
-                class="sinput token"
-              />
-              <button class="sbtn sbtn-secondary" @click="handleTestBangumi">测试</button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <SettingDatasource
+        :section-ref="setSectionRef('datasource')"
+        :metadata-source="metadataSource"
+        :auto-sync-metadata="autoSyncMetadata"
+        :vndb-api-key="vndbApiKey"
+        :bangumi-token="bangumiToken"
+        @update:metadata-source="metadataSource = $event"
+        @update:auto-sync-metadata="autoSyncMetadata = $event"
+        @update:vndb-api-key="vndbApiKey = $event"
+        @update:bangumi-token="bangumiToken = $event"
+        @test-bangumi="handleTestBangumi"
+        @test-vndb="handleTestVNDB"
+      />
 
-      <!-- 启动器 -->
-      <section :ref="setSectionRef('launcher')" data-section="launcher" class="setting-group">
-        <h3 class="group-title">启动器</h3>
-        <div class="group-card">
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">Locale Emulator 路径</span>
-              <span class="setting-desc">{{
-                lePath || 'LEProc.exe 所在路径，用于转区启动游戏'
-              }}</span>
-            </div>
-            <button class="sbtn sbtn-secondary" @click="handleSelectLEPath">选择路径</button>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">Magpie 路径</span>
-              <span class="setting-desc">{{
-                magpiePath || 'Magpie.exe 所在路径，用于超分放大游戏窗口'
-              }}</span>
-            </div>
-            <button class="sbtn sbtn-secondary" @click="handleSelectMagpiePath">选择路径</button>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">缩放参数</span>
-              <span class="setting-desc">Magpie 缩放倍数（1.0 – 4.0）</span>
-            </div>
-            <input v-model="magpieScale" type="text" class="sinput narrow" />
-          </div>
-        </div>
-      </section>
+      <SettingLauncher
+        :section-ref="setSectionRef('launcher')"
+        :le-path="lePath"
+        :magpie-path="magpiePath"
+        :magpie-scale="magpieScale"
+        @update:le-path="lePath = $event"
+        @update:magpie-path="magpiePath = $event"
+        @update:magpie-scale="magpieScale = $event"
+        @select-l-e-path="handleSelectLEPath"
+        @select-magpie-path="handleSelectMagpiePath"
+      />
 
-      <!-- 备份 -->
-      <section :ref="setSectionRef('backup')" data-section="backup" class="setting-group">
-        <h3 class="group-title">备份</h3>
-        <div class="group-card">
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">自动备份</span>
-              <span class="setting-desc">定期自动备份数据库与封面</span>
-            </div>
-            <label class="toggle">
-              <input v-model="autoBackup" type="checkbox" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">备份目录</span>
-              <span class="setting-desc">{{ backupDir || '自动备份文件存储路径' }}</span>
-            </div>
-            <button class="sbtn sbtn-secondary" @click="handleSelectBackupDir">选择目录</button>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">备份频率</span>
-              <span class="setting-desc">自动备份的执行频率</span>
-            </div>
-            <select v-model="backupFrequency" class="sselect">
-              <option value="daily">每天</option>
-              <option value="weekly">每周</option>
-              <option value="monthly">每月</option>
-            </select>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">最大保留份数</span>
-              <span class="setting-desc">保留的最大备份份数，超出自动删除旧备份</span>
-            </div>
-            <select v-model="backupMaxCopies" class="sselect">
-              <option v-for="n in [3, 5, 10, 20, 50]" :key="n" :value="n">{{ n }}</option>
-            </select>
-          </div>
-        </div>
-      </section>
+      <SettingBackup
+        :section-ref="setSectionRef('backup')"
+        :auto-backup="autoBackup"
+        :backup-dir="backupDir"
+        :backup-frequency="backupFrequency"
+        :backup-max-copies="backupMaxCopies"
+        @update:auto-backup="autoBackup = $event"
+        @update:backup-dir="backupDir = $event"
+        @update:backup-frequency="backupFrequency = $event"
+        @update:backup-max-copies="backupMaxCopies = $event"
+        @select-backup-dir="handleSelectBackupDir"
+      />
 
-      <!-- 关于 -->
-      <section :ref="setSectionRef('about')" data-section="about" class="setting-group">
-        <h3 class="group-title">关于</h3>
-        <div class="group-card">
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">当前版本</span>
-              <span class="setting-desc">v{{ currentVersion }}</span>
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">检查更新</span>
-              <span class="setting-desc">手动检查是否有新版本可用</span>
-            </div>
-            <button class="sbtn sbtn-primary" @click="handleCheckUpdate">检查更新</button>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-label">LunaManager</span>
-              <span class="setting-desc">Built with ❤️</span>
-            </div>
-            <a
-              href="https://github.com"
-              target="_blank"
-              class="sbtn sbtn-secondary"
-              style="text-decoration: none"
-              >GitHub</a
-            >
-          </div>
-        </div>
-      </section>
+      <SettingAbout
+        :section-ref="setSectionRef('about')"
+        :current-version="currentVersion"
+        @check-update="handleCheckUpdate"
+      />
 
-      <!-- 底部留白 -->
       <div class="settings-bottom-spacer"></div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* ===== 整体布局 ===== */
 .settings-layout {
   display: flex;
   height: 100%;
   gap: 0;
 }
 
-/* ===== 左侧导航 ===== */
 .settings-nav {
   width: 160px;
   min-width: 160px;
@@ -554,209 +272,11 @@ const handleCheckUpdate = (): void => {
   font-weight: 600;
 }
 
-/* ===== 右侧内容 ===== */
 .settings-content {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
   padding-right: 8px;
-}
-
-.setting-group {
-  margin-bottom: 32px;
-}
-
-.group-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.group-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.setting-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-color-light);
-}
-
-.setting-row:last-child {
-  border-bottom: none;
-}
-
-.setting-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.setting-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.setting-desc {
-  display: block;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.setting-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-/* ===== 控件 ===== */
-
-/* toggle */
-.toggle {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  min-width: 44px;
-  cursor: pointer;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  inset: 0;
-  background: var(--border-color-medium);
-  border-radius: 24px;
-  transition: background 0.2s;
-}
-
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  left: 3px;
-  bottom: 3px;
-  background: #fff;
-  border-radius: 50%;
-  transition: transform 0.2s;
-}
-
-.toggle input:checked + .toggle-slider {
-  background: var(--accent-primary);
-}
-
-.toggle input:checked + .toggle-slider::before {
-  transform: translateX(20px);
-}
-
-/* input */
-.sinput {
-  height: 32px;
-  padding: 0 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 7px;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--text-primary);
-  outline: none;
-  transition: border-color 0.15s;
-  flex-shrink: 0;
-}
-
-.sinput:focus {
-  border-color: var(--accent-primary);
-}
-
-.sinput::placeholder {
-  color: var(--text-muted);
-}
-
-.sinput.narrow {
-  width: 80px;
-  text-align: center;
-}
-
-.sinput.token {
-  width: 160px;
-  font-family: monospace;
-}
-
-/* select */
-.sselect {
-  height: 32px;
-  padding: 0 28px 0 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 7px;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--text-primary);
-  outline: none;
-  cursor: pointer;
-  flex-shrink: 0;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%236b7280'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  transition: border-color 0.15s;
-}
-
-.sselect:focus {
-  border-color: var(--accent-primary);
-}
-
-/* button */
-.sbtn {
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 7px;
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-
-.sbtn-primary {
-  background: var(--accent-primary);
-  color: #fff;
-  border-color: var(--accent-primary);
-}
-
-.sbtn-primary:hover {
-  filter: brightness(1.1);
-}
-
-.sbtn-secondary {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.sbtn-secondary:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-color-medium);
 }
 
 .settings-bottom-spacer {

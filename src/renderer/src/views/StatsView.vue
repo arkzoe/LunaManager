@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
+import StatsRanking from './stats/StatsRanking.vue'
 
 const store = useGameStore()
 const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
@@ -71,9 +72,7 @@ const timeRanges = [
       <div class="ov-card">
         <div class="ov-icon ac">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
-            <path
-              d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
-            />
+            <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
           </svg>
         </div>
         <div class="ov-num">{{ libraryStats.totalGames }}</div>
@@ -82,9 +81,7 @@ const timeRanges = [
       <div class="ov-card">
         <div class="ov-icon gr">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
-            <path
-              d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
-            />
+            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
           </svg>
         </div>
         <div class="ov-num">{{ libraryStats.totalHours }}<span class="ov-u">h</span></div>
@@ -93,9 +90,7 @@ const timeRanges = [
       <div class="ov-card">
         <div class="ov-icon am">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
-            <path
-              d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
-            />
+            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z" />
           </svg>
         </div>
         <div class="ov-num">{{ libraryStats.completedGames }}</div>
@@ -104,9 +99,7 @@ const timeRanges = [
       <div class="ov-card">
         <div class="ov-icon pu">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
-            <path
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-            />
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         </div>
         <div class="ov-num">{{ libraryStats.avgPerDay }}<span class="ov-u">h</span></div>
@@ -118,11 +111,7 @@ const timeRanges = [
     <div class="panel">
       <div class="panel-header" @click="showLibraryOverview = !showLibraryOverview">
         <span>库概览</span>
-        <svg
-          viewBox="0 0 24 24"
-          class="w-4 h-4 fill-text-tertiary transition-transform duration-300"
-          :class="{ 'rotate-180': showLibraryOverview }"
-        >
+        <svg viewBox="0 0 24 24" class="w-4 h-4 fill-text-tertiary transition-transform duration-300" :class="{ 'rotate-180': showLibraryOverview }">
           <path d="M7 10l5 5 5-5z" />
         </svg>
       </div>
@@ -151,13 +140,7 @@ const timeRanges = [
       <div class="panel-header">
         <span>游玩时长趋势</span>
         <div class="time-toggle">
-          <button
-            v-for="r in timeRanges"
-            :key="r.id"
-            class="tt-btn"
-            :class="{ active: timeRange === r.id }"
-            @click="timeRange = r.id"
-          >
+          <button v-for="r in timeRanges" :key="r.id" class="tt-btn" :class="{ active: timeRange === r.id }" @click="timeRange = r.id">
             {{ r.label }}
           </button>
         </div>
@@ -171,57 +154,7 @@ const timeRanges = [
     </div>
 
     <!-- 排行榜 -->
-    <div class="panel">
-      <div class="panel-header">
-        <span>游戏时长排行</span>
-        <div class="time-toggle">
-          <button
-            class="tt-btn"
-            :class="{ active: rankRange === 'week' }"
-            @click="rankRange = 'week'"
-          >
-            本周
-          </button>
-          <button
-            class="tt-btn"
-            :class="{ active: rankRange === 'month' }"
-            @click="rankRange = 'month'"
-          >
-            本月
-          </button>
-        </div>
-      </div>
-      <div class="rankings">
-        <!-- Top 1 -->
-        <div v-if="topGame" class="rank-top">
-          <div class="rt-badge">#1</div>
-          <div class="rt-cover">
-            <svg viewBox="0 0 24 24" class="w-8 h-8 fill-text-muted opacity-25">
-              <path
-                d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-              />
-            </svg>
-          </div>
-          <div class="rt-name">{{ topGame.title }}</div>
-          <div class="rt-time">{{ topGame.playtime }}</div>
-        </div>
-
-        <!-- Rank list -->
-        <div class="rank-list">
-          <div class="rl-header">
-            <span class="rl-rank">#</span>
-            <span class="rl-title">游戏</span>
-            <span class="rl-time">时长</span>
-          </div>
-          <div v-for="g in rankings.slice(1)" :key="g.rank" class="rl-row">
-            <span class="rl-rank">{{ g.rank }}</span>
-            <span class="rl-title">{{ g.title }}</span>
-            <span class="rl-time">{{ g.playtime }}</span>
-          </div>
-          <div v-if="rankings.length <= 1" class="rl-empty">暂无排行数据</div>
-        </div>
-      </div>
-    </div>
+    <StatsRanking :rankings="rankings" :topGame="topGame" v-model:rankRange="rankRange" />
   </div>
 </template>
 
@@ -398,110 +331,5 @@ const timeRanges = [
   font-size: 13px;
   color: var(--text-tertiary);
   margin: 0;
-}
-
-/* ===== 排行榜 ===== */
-.rankings {
-  padding: 0 18px 18px;
-  border-top: 1px solid var(--border-color-light);
-}
-
-.rank-top {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 0 20px;
-  text-align: center;
-}
-
-.rt-badge {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 14px;
-  font-weight: 800;
-  margin-bottom: 12px;
-}
-
-.rt-cover {
-  width: 100px;
-  height: 140px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
-  border: 1px solid var(--border-color);
-}
-
-.rt-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 3px;
-}
-
-.rt-time {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.rank-list {
-  margin-top: 8px;
-}
-
-.rl-header {
-  display: grid;
-  grid-template-columns: 40px 1fr 80px;
-  padding: 8px 12px;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.rl-row {
-  display: grid;
-  grid-template-columns: 40px 1fr 80px;
-  align-items: center;
-  padding: 10px 12px;
-  border-radius: 8px;
-  transition: background 0.1s;
-}
-
-.rl-row:hover {
-  background: var(--bg-hover);
-}
-
-.rl-rank {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.rl-title {
-  font-size: 13px;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rl-time {
-  font-size: 13px;
-  color: var(--text-secondary);
-  text-align: right;
-}
-
-.rl-empty {
-  padding: 30px 0;
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-tertiary);
 }
 </style>
