@@ -1,8 +1,14 @@
 ﻿<script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useThemeStore } from '../stores'
+import type { AppConfig } from '../../../shared/types'
 
 const themeStore = useThemeStore()
+
+// helper: persist a reactive value to electron-store
+const persist = <K extends keyof AppConfig>(key: K, r: ReturnType<typeof ref<AppConfig[K]>>) => {
+  watch(r, (v) => window.api.setConfig(key, v))
+}
 
 interface SettingSection {
   id: string
@@ -50,6 +56,24 @@ const setSectionRef = (id: string) => (el: Element | null) => {
 }
 
 onMounted(async () => {
+  // load persisted config
+  try {
+    const cfg = await window.api.getAllConfig()
+    autoStart.value = cfg.autoStart ?? false
+    autoUpdate.value = cfg.autoUpdate ?? true
+    downloadPath.value = cfg.downloadPath ?? ''
+    language.value = cfg.language ?? 'zh-CN'
+    vndbApiKey.value = cfg.vndbApiKey ?? ''
+    bangumiToken.value = cfg.bangumiToken ?? ''
+    lePath.value = cfg.lePath ?? ''
+    magpiePath.value = cfg.magpiePath ?? ''
+    magpieScale.value = cfg.magpieScale ?? '2.0'
+    autoBackup.value = cfg.autoBackup ?? false
+    backupDir.value = cfg.backupDir ?? ''
+    backupFrequency.value = cfg.backupFrequency ?? 'weekly'
+    backupMaxCopies.value = cfg.backupMaxCopies ?? 5
+  } catch { /* use defaults */ }
+
   await nextTick()
   if (!contentRef.value) return
 
@@ -101,6 +125,21 @@ const backupFrequency = ref<'daily' | 'weekly' | 'monthly'>('weekly')
 const backupMaxCopies = ref(5)
 
 const currentVersion = ref('1.0.0')
+
+// persist all settings to electron-store
+persist('autoStart', autoStart)
+persist('autoUpdate', autoUpdate)
+persist('downloadPath', downloadPath)
+persist('language', language)
+persist('vndbApiKey', vndbApiKey)
+persist('bangumiToken', bangumiToken)
+persist('lePath', lePath)
+persist('magpiePath', magpiePath)
+persist('magpieScale', magpieScale)
+persist('autoBackup', autoBackup)
+persist('backupDir', backupDir)
+persist('backupFrequency', backupFrequency)
+persist('backupMaxCopies', backupMaxCopies)
 
 // ---- handlers ----
 const handleSelectLEPath = (): void => {
