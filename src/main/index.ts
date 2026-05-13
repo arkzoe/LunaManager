@@ -57,7 +57,7 @@ function setupIpcHandlers(): void {
   ipcMain.handle('db:deleteGame', (_, id: string) => gameOps.delete(id))
   ipcMain.handle('db:searchGames', (_, q: string) => gameOps.search(q))
   ipcMain.handle('db:getGamesByCategory', (_, cat: string) => gameOps.getByCategory(cat))
-  ipcMain.handle('db:getGamesByStatus', (_, status: string) => gameOps.getByStatus(status as any))
+  ipcMain.handle('db:getGamesByStatus', (_, status: string) => gameOps.getByStatus(status as GameStatus))
 
   // ===== Config =====
   ipcMain.handle('config:get', <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K) => getConfig(key))
@@ -79,16 +79,21 @@ function setupIpcHandlers(): void {
   ipcMain.handle('col:delete', (_, id: string) => collectionOps.delete(id))
   ipcMain.handle('col:addGame', (_, gameId: string, colId: string) => collectionOps.addGame(gameId, colId))
   ipcMain.handle('col:removeGame', (_, gameId: string, colId: string) => collectionOps.removeGame(gameId, colId))
-  ipcMain.handle('col:getGameIds', (_, colId: string) => collectionOps.getGameIds(colId))
+  ipcMain.handle('col:getCollectionGames', (_, colId: string) => collectionOps.getCollectionGames(colId))
   ipcMain.handle('col:reorder', (_, ids: string[]) => collectionOps.reorder(ids))
 
   // ===== Save Snapshots =====
   ipcMain.handle('snap:getByGame', (_, gameId: string) => snapshotOps.getByGameId(gameId))
   ipcMain.handle('snap:create', (_, gameId: string, notes?: string) => snapshotOps.create(gameId, notes))
   ipcMain.handle('snap:delete', (_, id: string) => snapshotOps.delete(id))
+  ipcMain.handle('snap:restore', (_, _id: string) => {
+    throw new Error('Not implemented')
+  })
+  ipcMain.handle('snap:detectSavePath', (_, _gameId: string) => null)
 }
 
 import type { AppConfig } from './config/store'
+import type { GameStatus } from '../shared/types'
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')

@@ -1,4 +1,4 @@
-import type { Collection } from '../../shared/types'
+import type { Collection, GameRecord } from '../../shared/types'
 import { getDatabase } from './init'
 
 export const collectionOps = {
@@ -54,10 +54,12 @@ export const collectionOps = {
     ).run({ g: gameId, c: collectionId })
   },
 
-  getGameIds: (collectionId: string): string[] => {
-    const rows = getDatabase().prepare(
-      'SELECT game_id FROM game_collections WHERE collection_id = ?'
-    ).all(collectionId) as { game_id: string }[]
-    return rows.map(r => r.game_id)
+  getCollectionGames: (collectionId: string): GameRecord[] => {
+    return getDatabase().prepare(`
+      SELECT g.* FROM games g
+      INNER JOIN game_collections gc ON g.id = gc.game_id
+      WHERE gc.collection_id = ?
+      ORDER BY g.title ASC
+    `).all(collectionId) as GameRecord[]
   }
 }
