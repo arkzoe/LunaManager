@@ -6,6 +6,7 @@ import type { GameRecord, GameStatus } from '../../../shared/types'
 import { formatRelativeTime } from '../utils/format'
 import ImportDialog from './ImportDialog.vue'
 import BatchImportDialog from './BatchImportDialog.vue'
+import ToastNotification from './ToastNotification.vue'
 
 const emit = defineEmits<{ (e: 'selectGame', game: GameRecord): void }>()
 
@@ -26,6 +27,164 @@ const importBtnRef = ref<HTMLElement | null>(null)
 const showImportDialog = ref(false)
 const showBatchImportDialog = ref(false)
 
+// 批量操作
+const batchMode = ref(false)
+const selectedIds = ref<Set<string>>(new Set())
+const showBatchStatusMenu = ref(false)
+const showCollectionPicker = ref(false)
+const showDeleteConfirm = ref(false)
+
+// Toast 通知
+const showToast = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error'>('success')
+const showToastMsg = (msg: string, type: 'success' | 'error'): void => {
+  toastMessage.value = msg
+  toastType.value = type
+  showToast.value = true
+}
+
+interface CollectionItem {
+  id: string
+  name: string
+  gameIds: string[]
+}
+
+const collections = ref<CollectionItem[]>([])
+
+const loadCollections = async (): Promise<void> => {
+  try {
+    const dbCols = await window.api.getCollections()
+    const items: CollectionItem[] = []
+    for (const c of dbCols) {
+      const games = await window.api.getCollectionGames(c.id)
+      items.push({ id: c.id, name: c.name, gameIds: games.map((g) => g.id) })
+    }
+    collections.value = items
+  } catch { collections.value = [] }
+}
+
+const batchCount = computed(() => selectedIds.value.size)
+const allFilteredSelected = computed(() =>
+  filteredGames.value.length > 0 && filteredGames.value.every((g) => selectedIds.value.has(g.id))
+)
+
+const handleGameClick = (game: GameRecord): void => {
+  if (batchMode.value) {
+    toggleSelectGame(game.id)
+  } else {
+    emit('selectGame', game)
+  }
+}
+
+const toggleBatchMode = (): void => {
+  batchMode.value = !batchMode.value
+  if (!batchMode.value) {
+    selectedIds.value = new Set()
+  }
+}
+
+const toggleSelectGame = (id: string): void => {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selectedIds.value = next
+}
+
+const toggleSelectAll = (): void => {
+  if (allFilteredSelected.value) {
+    selectedIds.value = new Set()
+  } else {
+    selectedIds.value = new Set(filteredGames.value.map((g) => g.id))
+  }
+}
+
+const closeBatchStatusMenu = (): void => {
+  showBatchStatusMenu.value = false
+}
+
+const handleBatchStatus = async (status: GameStatus): Promise<void> => {
+  showBatchStatusMenu.value = false
+  const ids = [...selectedIds.value]
+  const failed: string[] = []
+  for (const id of ids) {
+    try {
+      await window.api.updateGame(id, { status } as any)
+      const g = store.allGames.find((x) => x.id === id)
+      if (g) g.status = status
+    } catch {
+      failed.push(id)
+    }
+  }
+  if (failed.length > 0) {
+    selectedIds.value = new Set(failed)
+    showToastMsg(`${failed.length}/${ids.length} 个操作失败`, 'error')
+  } else {
+    showToastMsg(`已将 ${ids.length} 个游戏改为「${statusLabels[status]}」`, 'success')
+    selectedIds.value = new Set()
+    batchMode.value = false
+  }
+}
+
+const openCollectionPicker = async (): Promise<void> => {
+  await loadCollections()
+  showCollectionPicker.value = true
+}
+
+const closeCollectionPicker = (): void => {
+  showCollectionPicker.value = false
+}
+
+const handleAddToCollection = async (collectionId: string): Promise<void> => {
+  const col = collections.value.find((c) => c.id === collectionId)
+  if (!col) return
+  const ids = [...selectedIds.value]
+  let added = 0
+  for (const id of ids) {
+    if (!col.gameIds.includes(id)) {
+      try {
+        await window.api.addGameToCollection(id, collectionId)
+        col.gameIds.push(id)
+        added++
+      } catch { /* skip */ }
+    }
+  }
+  showCollectionPicker.value = false
+  selectedIds.value = new Set()
+  batchMode.value = false
+  showToastMsg(`已将 ${added} 个游戏添加到「${col.name}」`, 'success')
+}
+
+const openDeleteConfirm = (): void => {
+  showDeleteConfirm.value = true
+}
+
+const closeDeleteConfirm = (): void => {
+  showDeleteConfirm.value = false
+}
+
+const confirmBatchDelete = async (): Promise<void> => {
+  showDeleteConfirm.value = false
+  const ids = [...selectedIds.value]
+  const failed: string[] = []
+  for (const id of ids) {
+    try {
+      await window.api.deleteGame(id)
+      store.games = store.games.filter((g) => g.id !== id) as any
+    } catch {
+      failed.push(id)
+    }
+  }
+  if (failed.length > 0) {
+    selectedIds.value = new Set(failed)
+    showToastMsg(`${failed.length}/${ids.length} 个删除失败`, 'error')
+  } else {
+    showToastMsg(`已删除 ${ids.length} 个游戏`, 'success')
+    selectedIds.value = new Set()
+    batchMode.value = false
+  }
+}
+
 onMounted(() => {
   if (store.games.length === 0) store.loadGames()
 })
@@ -38,6 +197,10 @@ const filters: { id: GameStatus | 'all'; label: string }[] = [
   { id: 'shelved', label: '搁置' },
   { id: 'abandoned', label: '抛弃' }
 ]
+
+const statusFilters = computed(() =>
+  filters.filter((f): f is { id: GameStatus; label: string } => f.id !== 'all')
+)
 
 const filteredGames = computed(() => {
   let list = store.allGames
@@ -52,15 +215,6 @@ const filteredGames = computed(() => {
     )
   }
   return list
-})
-
-const importMenuStyle = computed(() => {
-  if (!showImportMenu.value || !importBtnRef.value) return {}
-  const rect = importBtnRef.value.getBoundingClientRect()
-  return {
-    left: rect.left + 'px',
-    top: rect.bottom + 4 + 'px'
-  }
 })
 
 const handleContextMenu = (e: MouseEvent, game: GameRecord): void => {
@@ -177,6 +331,18 @@ const handleBatchImported = (_count: number): void => {
           </button>
         </div>
 
+        <!-- 批量操作按钮 -->
+        <button
+          class="btn-outline btn-sm"
+          :class="{ active: batchMode }"
+          @click="toggleBatchMode"
+        >
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+            <path d="M4 6h4v2H4zm0 5h4v2H4zm0 5h4v2H4zm6-10h10v2H10zm0 5h10v2H10zm0 5h10v2H10z" />
+          </svg>
+          批量操作
+        </button>
+
         <!-- 导入按钮下拉菜单 -->
         <div class="import-dropdown">
           <button
@@ -192,32 +358,23 @@ const handleBatchImported = (_count: number): void => {
               <path d="M7 10l5 5 5-5z" />
             </svg>
           </button>
-          <Teleport to="body">
-            <div
-              v-if="showImportMenu"
-              class="context-overlay"
-              @click="closeImportMenu"
-              @contextmenu.prevent="closeImportMenu"
-            />
-            <div
-              v-if="showImportMenu"
-              class="import-menu"
-              :style="importMenuStyle"
-            >
-              <button class="ctx-item" @click="handleManualImport">
-                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                </svg>
-                手动导入
-              </button>
-              <button class="ctx-item" @click="handleBatchImport">
-                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-                  <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm0-4H6v-2h8v2z" />
-                </svg>
-                批量导入
-              </button>
-            </div>
-          </Teleport>
+          <div
+            v-if="showImportMenu"
+            class="import-menu-local"
+          >
+            <button class="ctx-item" @click="handleManualImport">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+              </svg>
+              手动导入
+            </button>
+            <button class="ctx-item" @click="handleBatchImport">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm0-4H6v-2h8v2z" />
+              </svg>
+              批量导入
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -235,24 +392,70 @@ const handleBatchImported = (_count: number): void => {
       </button>
     </div>
 
+    <!-- 批量操作栏 -->
+    <div v-if="batchMode" class="batch-bar">
+      <span class="bb-count">已选 {{ batchCount }} 项</span>
+      <button class="bb-btn" @click="toggleSelectAll">
+        {{ allFilteredSelected ? '取消全选' : '全选' }}
+      </button>
+      <div class="bb-status-wrap">
+        <button class="bb-btn" @click="showBatchStatusMenu = !showBatchStatusMenu" :disabled="batchCount === 0">
+          修改状态
+          <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current"><path d="M7 10l5 5 5-5z" /></svg>
+        </button>
+        <Teleport to="body">
+          <div v-if="showBatchStatusMenu" class="context-overlay" @click="closeBatchStatusMenu" />
+          <div v-if="showBatchStatusMenu" class="batch-status-menu">
+            <button
+              v-for="f in statusFilters"
+              :key="f.id"
+              class="ctx-item"
+              @click="handleBatchStatus(f.id)"
+            >
+              {{ f.label }}
+            </button>
+          </div>
+        </Teleport>
+      </div>
+      <button class="bb-btn" :disabled="batchCount === 0" @click="openCollectionPicker">添加到收藏夹</button>
+      <button class="bb-btn bb-danger" :disabled="batchCount === 0" @click="openDeleteConfirm">删除</button>
+    </div>
+
+    <!-- 骨架屏 -->
+    <div v-if="store.isLoading" class="skeleton-grid">
+      <div v-for="i in 8" :key="i" class="skeleton-card" />
+    </div>
+
     <!-- 游戏列表 / 网格 -->
-    <div v-if="filteredGames.length > 0">
+    <div v-else-if="filteredGames.length > 0">
       <!-- 网格视图 -->
       <div v-if="viewMode === 'grid'" class="game-grid">
         <div
           v-for="game in filteredGames"
           :key="game.id"
           class="grid-item"
-          @click="emit('selectGame', game)"
+          :class="{ 'batch-active': batchMode }"
+          @click="handleGameClick(game)"
           @contextmenu="handleContextMenu($event, game)"
         >
+          <label v-if="batchMode" class="grid-check">
+            <input
+              type="checkbox"
+              :checked="selectedIds.has(game.id)"
+              @change="toggleSelectGame(game.id)"
+              class="grid-cb"
+            />
+          </label>
           <GameCard :game="game" />
         </div>
       </div>
 
       <!-- 列表视图 -->
       <div v-else class="game-list">
-        <div class="list-header">
+        <div class="list-header" :class="{ 'has-check': batchMode }">
+          <span v-if="batchMode" class="lh-check">
+            <input type="checkbox" :checked="allFilteredSelected" @change="toggleSelectAll" class="list-cb" />
+          </span>
           <span class="lh-col lh-cover">&nbsp;</span>
           <span class="lh-col lh-name">名称</span>
           <span class="lh-col lh-status">状态</span>
@@ -264,9 +467,18 @@ const handleBatchImported = (_count: number): void => {
           v-for="game in filteredGames"
           :key="game.id"
           class="list-row"
-          @click="emit('selectGame', game)"
+          :class="{ 'has-check': batchMode }"
+          @click="handleGameClick(game)"
           @contextmenu="handleContextMenu($event, game)"
         >
+          <div v-if="batchMode" class="lr-check">
+            <input
+              type="checkbox"
+              :checked="selectedIds.has(game.id)"
+              @change="toggleSelectGame(game.id)"
+              class="list-cb"
+            />
+          </div>
           <div class="lr-cover">
             <img v-if="game.cover" :src="game.cover" :alt="game.title" class="lr-cover-img" />
             <div v-else class="lr-cover-ph">
@@ -290,7 +502,18 @@ const handleBatchImported = (_count: number): void => {
       </div>
     </div>
 
-    <!-- 空状态 -->
+    <!-- 空状态：游戏库为空 -->
+    <div v-else-if="store.games.length === 0" class="empty-state">
+      <svg viewBox="0 0 24 24" class="w-12 h-12 fill-text-muted opacity-25 mb-4">
+        <path
+          d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+        />
+      </svg>
+      <p>游戏库还是空的</p>
+      <button class="btn-brand btn-sm" @click="handleManualImport">导入你的第一个游戏</button>
+    </div>
+
+    <!-- 空状态：搜索无结果 -->
     <div v-else class="empty-state">
       <svg viewBox="0 0 24 24" class="w-12 h-12 fill-text-muted opacity-25 mb-4">
         <circle cx="11" cy="11" r="8" />
@@ -323,7 +546,7 @@ const handleBatchImported = (_count: number): void => {
         <div class="ctx-divider" />
         <div class="ctx-label">更改状态</div>
         <button
-          v-for="s in filters.filter((f) => f.id !== 'all')"
+          v-for="s in statusFilters"
           :key="s.id"
           class="ctx-item"
           :class="{ current: ctxMenu.game.status === s.id }"
@@ -351,6 +574,52 @@ const handleBatchImported = (_count: number): void => {
       v-if="showBatchImportDialog"
       @close="handleBatchImportClose"
       @imported="handleBatchImported"
+    />
+
+    <!-- 收藏夹选择弹窗 -->
+    <Teleport to="body">
+      <div v-if="showCollectionPicker" class="modal-overlay" @click.self="closeCollectionPicker">
+        <div class="modal-card">
+          <h3 class="modal-title">添加到收藏夹</h3>
+          <div class="modal-list">
+            <button
+              v-for="col in collections"
+              :key="col.id"
+              class="modal-list-item"
+              @click="handleAddToCollection(col.id)"
+            >
+              <span class="modal-list-name">{{ col.name }}</span>
+              <span class="modal-list-count">{{ col.gameIds.length }} 个游戏</span>
+            </button>
+            <div v-if="collections.length === 0" class="modal-empty">暂无收藏夹，请先在收藏页面创建</div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="closeCollectionPicker">取消</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 删除确认弹窗 -->
+    <Teleport to="body">
+      <div v-if="showDeleteConfirm" class="modal-overlay" @click.self="closeDeleteConfirm">
+        <div class="modal-card">
+          <h3 class="modal-title">确认删除</h3>
+          <p class="modal-desc">确定要删除选中的 <strong>{{ batchCount }}</strong> 个游戏吗？此操作不可恢复。</p>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="closeDeleteConfirm">取消</button>
+            <button class="btn-danger" @click="confirmBatchDelete">确认删除</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Toast 通知 -->
+    <ToastNotification
+      v-if="showToast"
+      :message="toastMessage"
+      :type="toastType"
+      @close="showToast = false"
     />
   </div>
 </template>
@@ -458,9 +727,12 @@ const handleBatchImported = (_count: number): void => {
   margin-left: 2px;
 }
 
-.import-menu {
-  position: fixed;
-  z-index: 1000;
+.import-menu-local {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  z-index: 100;
   min-width: 140px;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -699,5 +971,290 @@ const handleBatchImported = (_count: number): void => {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* ===== 批量操作按钮 ===== */
+.btn-outline {
+  height: 34px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-outline:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.btn-outline.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+/* ===== 批量操作栏 ===== */
+.batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.bb-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-right: 4px;
+}
+
+.bb-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.bb-btn:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.bb-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.bb-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.bb-status-wrap {
+  position: relative;
+}
+
+.batch-status-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 120px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 4px;
+  overflow: hidden;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ===== 网格勾选框 ===== */
+.grid-item {
+  position: relative;
+  cursor: pointer;
+}
+
+.grid-item.batch-active {
+  cursor: default;
+}
+
+.grid-check {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.grid-cb {
+  accent-color: var(--accent-primary);
+}
+
+/* ===== 列表勾选框 ===== */
+.lh-check {
+  display: flex;
+  align-items: center;
+}
+
+.lr-check {
+  display: flex;
+  align-items: center;
+}
+
+.list-cb {
+  accent-color: var(--accent-primary);
+}
+
+.list-header.has-check {
+  grid-template-columns: 36px 40px 2fr 80px 60px 70px 100px;
+}
+
+.list-row.has-check {
+  grid-template-columns: 36px 40px 2fr 80px 60px 70px 100px;
+}
+
+/* ===== 弹窗 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-card {
+  width: 360px;
+  max-width: 90vw;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.modal-list {
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.1s;
+  text-align: left;
+}
+
+.modal-list-item:hover {
+  border-color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.modal-list-name {
+  font-weight: 600;
+}
+
+.modal-list-count {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.modal-empty {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-danger {
+  height: 34px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--danger);
+  color: white;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-danger:hover {
+  opacity: 0.85;
+}
+
+/* ===== 骨架屏 ===== */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.skeleton-card {
+  aspect-ratio: 3/4;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 </style>

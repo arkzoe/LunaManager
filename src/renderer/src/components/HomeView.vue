@@ -72,8 +72,21 @@ const activities = computed(() => {
 
 <template>
   <div class="home-view">
+    <!-- 骨架屏 -->
+    <template v-if="store.isLoading && store.games.length === 0">
+      <div class="skeleton-grid">
+        <div v-for="i in 4" :key="i" class="skeleton-ov-card" />
+      </div>
+      <div class="skeleton-section">
+        <div class="skeleton-title" />
+        <div class="skeleton-row">
+          <div v-for="i in 5" :key="i" class="skeleton-scroll-card" />
+        </div>
+      </div>
+    </template>
+
     <!-- 全局概览卡片 -->
-    <div class="overview-cards">
+    <div v-else class="overview-cards">
       <div class="ov-card">
         <div class="ov-icon" style="background: var(--bg-active); color: var(--accent-primary)">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
@@ -132,7 +145,7 @@ const activities = computed(() => {
     </div>
 
     <!-- 空状态 -->
-    <div v-if="overview.totalGames === 0" class="empty-state">
+    <div v-if="!store.isLoading && overview.totalGames === 0" class="empty-state">
       <div class="empty-icon">
         <svg viewBox="0 0 24 24" class="w-12 h-12 fill-brand-300">
           <path
@@ -430,5 +443,74 @@ const activities = computed(() => {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 2px;
+}
+
+/* ===== 骨架屏 ===== */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.skeleton-ov-card {
+  height: 74px;
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-section {
+  margin-bottom: 28px;
+}
+
+.skeleton-title {
+  width: 120px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  margin-bottom: 14px;
+}
+
+.skeleton-row {
+  display: flex;
+  gap: 12px;
+}
+
+.skeleton-scroll-card {
+  width: 150px;
+  aspect-ratio: 3/4;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 </style>

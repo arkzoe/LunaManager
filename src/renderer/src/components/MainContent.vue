@@ -49,16 +49,19 @@ const handleBack = (): void => {
       </div>
     </header>
     <div class="content">
-      <GameDetailView v-if="selectedGame" :game="selectedGame" @back="handleBack" />
-      <HomeView
-        v-else-if="activeTab === 'home'"
-        @select-game="handleSelectGame"
-        @navigate-library="() => emit('update:activeTab', 'library')"
-      />
-      <LibraryView v-else-if="activeTab === 'library'" @select-game="handleSelectGame" />
-      <FavoritesView v-else-if="activeTab === 'favorites'" @select-game="handleSelectGame" />
-      <StatsView v-else-if="activeTab === 'stats'" />
-      <SettingsView v-else-if="activeTab === 'settings'" />
+      <Transition name="page" mode="out-in">
+        <GameDetailView v-if="selectedGame" :key="'detail-'+selectedGame.id" :game="selectedGame" @back="handleBack" />
+        <HomeView
+          v-else-if="activeTab === 'home'"
+          key="home"
+          @select-game="handleSelectGame"
+          @navigate-library="() => emit('update:activeTab', 'library')"
+        />
+        <LibraryView v-else-if="activeTab === 'library'" key="library" @select-game="handleSelectGame" />
+        <FavoritesView v-else-if="activeTab === 'favorites'" key="favorites" @select-game="handleSelectGame" />
+        <StatsView v-else-if="activeTab === 'stats'" key="stats" />
+        <SettingsView v-else-if="activeTab === 'settings'" key="settings" />
+      </Transition>
     </div>
   </main>
 </template>
@@ -116,5 +119,21 @@ const handleBack = (): void => {
   overflow-y: auto;
   padding: 16px 24px 24px;
   min-height: 0;
+}
+
+/* ===== 页面过渡 ===== */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

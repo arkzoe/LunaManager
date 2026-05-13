@@ -77,6 +77,11 @@ onMounted(async () => {
     backupDir.value = cfg.backupDir ?? ''
     backupFrequency.value = cfg.backupFrequency ?? 'weekly'
     backupMaxCopies.value = cfg.backupMaxCopies ?? 5
+    showGameCover.value = cfg.showGameCover ?? true
+    trackPlaytime.value = cfg.trackPlaytime ?? true
+    recordHistory.value = cfg.recordHistory ?? true
+    autoSyncMetadata.value = cfg.autoSyncMetadata ?? false
+    metadataSource.value = cfg.metadataSource ?? 'vndb'
   } catch {
     /* use defaults */
   }
@@ -148,18 +153,35 @@ persist('backupDir', backupDir)
 persist('backupFrequency', backupFrequency)
 persist('backupMaxCopies', backupMaxCopies)
 
+// ---- missing config items ----
+const showGameCover = ref(true)
+const trackPlaytime = ref(true)
+const recordHistory = ref(true)
+const autoSyncMetadata = ref(false)
+const metadataSource = ref<'vndb' | 'bangumi'>('vndb')
+
+persist('showGameCover', showGameCover)
+persist('trackPlaytime', trackPlaytime)
+persist('recordHistory', recordHistory)
+persist('autoSyncMetadata', autoSyncMetadata)
+persist('metadataSource', metadataSource)
+
 // ---- handlers ----
-const handleSelectLEPath = (): void => {
-  console.log('选择 LE 路径')
+const handleSelectLEPath = async (): Promise<void> => {
+  const p = await window.api.pickFile([{ name: 'Executable', extensions: ['exe'] }])
+  if (p) lePath.value = p
 }
-const handleSelectMagpiePath = (): void => {
-  console.log('选择 Magpie 路径')
+const handleSelectMagpiePath = async (): Promise<void> => {
+  const p = await window.api.pickFile([{ name: 'Executable', extensions: ['exe'] }])
+  if (p) magpiePath.value = p
 }
-const handleChangeDownloadPath = (): void => {
-  console.log('更改下载路径')
+const handleChangeDownloadPath = async (): Promise<void> => {
+  const result = await window.api.pickFile([])
+  if (result) downloadPath.value = result
 }
-const handleSelectBackupDir = (): void => {
-  console.log('选择备份目录')
+const handleSelectBackupDir = async (): Promise<void> => {
+  const result = await window.api.pickFile([])
+  if (result) backupDir.value = result
 }
 const handleTestBangumi = (): void => {
   console.log('测试 Bangumi 连接')
@@ -235,6 +257,36 @@ const handleCheckUpdate = (): void => {
           </div>
           <div class="setting-row">
             <div class="setting-info">
+              <span class="setting-label">显示游戏封面</span>
+              <span class="setting-desc">在游戏库中显示封面图片</span>
+            </div>
+            <label class="toggle">
+              <input v-model="showGameCover" type="checkbox" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">追踪游玩时长</span>
+              <span class="setting-desc">记录每次游玩的时长数据</span>
+            </div>
+            <label class="toggle">
+              <input v-model="trackPlaytime" type="checkbox" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">记录游玩历史</span>
+              <span class="setting-desc">保留完整的游玩会话记录</span>
+            </div>
+            <label class="toggle">
+              <input v-model="recordHistory" type="checkbox" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
               <span class="setting-label">语言</span>
               <span class="setting-desc">选择界面显示语言</span>
             </div>
@@ -271,6 +323,26 @@ const handleCheckUpdate = (): void => {
       <section :ref="setSectionRef('datasource')" data-section="datasource" class="setting-group">
         <h3 class="group-title">数据源</h3>
         <div class="group-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">默认数据源</span>
+              <span class="setting-desc">元数据刮削的首选数据源</span>
+            </div>
+            <select v-model="metadataSource" class="sselect">
+              <option value="vndb">VNDB</option>
+              <option value="bangumi">Bangumi</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">自动同步元数据</span>
+              <span class="setting-desc">导入游戏时自动从数据源获取信息</span>
+            </div>
+            <label class="toggle">
+              <input v-model="autoSyncMetadata" type="checkbox" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
           <div class="setting-row">
             <div class="setting-info">
               <span class="setting-label">VNDB API Key</span>

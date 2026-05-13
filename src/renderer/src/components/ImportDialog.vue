@@ -86,7 +86,7 @@ const handleConfirm = async (): Promise<void> => {
       custom_tags: '[]',
       last_launch_method: 'normal'
     }
-    const game = await window.api.createGame(gameData as any)
+    const game = await window.api.createGame(gameData)
     store.games.unshift(game)
     emit('imported', game)
   } catch (e: any) {

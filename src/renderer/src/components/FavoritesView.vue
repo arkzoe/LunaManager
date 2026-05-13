@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import type { GameRecord } from '../../../shared/types'
+import { computed, ref, watch, onMounted } from 'vue'
+import type { GameRecord, Collection as DBCollection } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import GameCard from './shared/GameCard.vue'
 
-interface Collection {
+interface UICollection {
   id: string
   name: string
   icon: string
@@ -25,195 +25,193 @@ const emit = defineEmits<{
 
 const effectiveGames = computed(() => props.games || store.allGames)
 
-// 搜索和视图状态
 const searchQuery = ref('')
 const viewMode = ref<'collections' | 'games'>('collections')
 const selectedCollectionId = ref<string | null>(null)
 
-// 分组管理状态
 const showCreateModal = ref(false)
 const showRenameModal = ref(false)
 const showDeleteModal = ref(false)
 const showMoveModal = ref(false)
-// const showAddToCollectionModal = ref(false)
 const newCollectionName = ref('')
 const renameCollectionName = ref('')
 const selectedGameForMove = ref<GameRecord | null>(null)
-// const selectedGamesForAdd = ref<string[]>([])
-// const targetCollectionId = ref<string | null>(null)
 
-// 默认收藏夹数据
-const defaultCollections: Collection[] = [
-  {
-    id: 'default-favorites',
-    name: '最喜欢的游戏',
-    icon: 'heart',
-    iconColor: '#ec4899', // pink-500
-    gameIds: [],
-    createdAt: Date.now()
-  }
-]
+const collections = ref<UICollection[]>([])
+const collectionGames = ref<Map<string, GameRecord[]>>(new Map())
 
-// 从 localStorage 加载收藏夹
-const loadCollections = (): Collection[] => {
-  const saved = localStorage.getItem('game-collections')
-  if (saved) {
-    try {
-      return JSON.parse(saved) as Collection[]
-    } catch {
-      return defaultCollections
+const defaultIconColor = '#4f46e5'
+
+const mapDBCollection = (db: DBCollection): UICollection => ({
+  id: db.id,
+  name: db.name,
+  icon: 'folder',
+  iconColor: defaultIconColor,
+  gameIds: [],
+  createdAt: db.created_at
+})
+
+const loadCollections = async (): Promise<void> => {
+  try {
+    let dbCols = await window.api.getCollections()
+
+    // Find default favorites by name, not by hardcoded ID
+    const defaultName = '最喜欢的游戏'
+    let defaultCol = dbCols.find((c) => c.name === defaultName)
+    if (!defaultCol) {
+      defaultCol = await window.api.createCollection(defaultName)
+      dbCols = [...dbCols, defaultCol]
     }
+    // Remember the actual DB-assigned ID
+    const defaultId = defaultCol.id
+
+    collections.value = dbCols.map(mapDBCollection)
+
+    // Apply heart icon to the default collection
+    const def = collections.value.find((c) => c.id === defaultId)
+    if (def) {
+      def.icon = 'heart'
+      def.iconColor = '#ec4899'
+    }
+
+    // Load games for each collection
+    for (const col of collections.value) {
+      const games = await window.api.getCollectionGames(col.id)
+      collectionGames.value.set(col.id, games)
+      col.gameIds = games.map((g) => g.id)
+    }
+  } catch {
+    // DB not available, use empty
+    collections.value = []
   }
-  return defaultCollections
 }
 
-const collections = ref<Collection[]>(loadCollections())
+onMounted(() => {
+  loadCollections()
+})
 
-// 保存收藏夹到 localStorage
-const saveCollections = (): void => {
-  localStorage.setItem('game-collections', JSON.stringify(collections.value))
-}
-
-// 监听收藏夹变化并保存
-watch(collections, saveCollections, { deep: true })
-
-// 同步收藏游戏到默认收藏夹
+// Sync favorited games to default-favorites collection
 watch(
-  () => effectiveGames.value,
-  (games) => {
-    const favoriteGames = games.filter((g) => g.favorite)
-    const defaultCollection = collections.value.find((c) => c.id === 'default-favorites')
-    if (defaultCollection) {
-      defaultCollection.gameIds = favoriteGames.map((g) => g.id)
+  () => effectiveGames.value.filter((g) => g.favorite).map((g) => g.id),
+  async (favIds) => {
+    const defaultCol = collections.value.find((c) => c.name === '最喜欢的游戏')
+    if (!defaultCol) return
+    const colId = defaultCol.id
+    const currentIds = new Set(collectionGames.value.get(colId)?.map((g) => g.id) || [])
+    for (const id of favIds) {
+      if (!currentIds.has(id)) {
+        try { await window.api.addGameToCollection(id, colId) } catch { /* ignore */ }
+      }
     }
+    for (const id of currentIds) {
+      if (!favIds.includes(id)) {
+        try { await window.api.removeGameFromCollection(id, colId) } catch { /* ignore */ }
+      }
+    }
+    const games = await window.api.getCollectionGames(colId)
+    collectionGames.value.set(colId, games)
+    defaultCol.gameIds = games.map((g) => g.id)
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 )
 
-// 过滤后的收藏夹
 const filteredCollections = computed(() => {
   if (!searchQuery.value) return collections.value
   const query = searchQuery.value.toLowerCase()
   return collections.value.filter((c) => c.name.toLowerCase().includes(query))
 })
 
-// 当前选中的收藏夹
-const selectedCollection = computed(() => {
-  return collections.value.find((c) => c.id === selectedCollectionId.value)
-})
+const selectedCollection = computed(() =>
+  collections.value.find((c) => c.id === selectedCollectionId.value)
+)
 
-// 当前收藏夹中的游戏
-const currentCollectionGames = computed(() => {
-  if (!selectedCollection.value) return []
-  return effectiveGames.value.filter((g) => selectedCollection.value!.gameIds.includes(g.id))
-})
+const currentCollectionGames = computed(() =>
+  collectionGames.value.get(selectedCollectionId.value || '') || []
+)
 
-// 收藏游戏总数
-// const totalFavorites = computed(() => {
-//   return collections.value.reduce((sum, c) => sum + c.gameIds.length, 0)
-// })
-
-// 创建新收藏夹
-const createCollection = (): void => {
+const createCollection = async (): Promise<void> => {
   if (!newCollectionName.value.trim()) return
-
-  const newCollection: Collection = {
-    id: `collection-${Date.now()}`,
-    name: newCollectionName.value.trim(),
-    icon: 'folder',
-    iconColor: '#4f46e5', // accent-500
-    gameIds: [],
-    createdAt: Date.now()
-  }
-
-  collections.value.push(newCollection)
+  try {
+    const dbCol = await window.api.createCollection(newCollectionName.value.trim())
+    const ui = mapDBCollection(dbCol)
+    collections.value.push(ui)
+    collectionGames.value.set(ui.id, [])
+  } catch { /* ignore */ }
   newCollectionName.value = ''
   showCreateModal.value = false
 }
 
-// 重命名收藏夹
-const startRename = (collection: Collection): void => {
+const startRename = (collection: UICollection): void => {
   selectedCollectionId.value = collection.id
   renameCollectionName.value = collection.name
   showRenameModal.value = true
 }
 
-const confirmRename = (): void => {
+const confirmRename = async (): Promise<void> => {
   if (!renameCollectionName.value.trim() || !selectedCollectionId.value) return
-
-  const collection = collections.value.find((c) => c.id === selectedCollectionId.value)
-  if (collection) {
-    collection.name = renameCollectionName.value.trim()
-  }
-
+  try {
+    await window.api.renameCollection(selectedCollectionId.value, renameCollectionName.value.trim())
+    const col = collections.value.find((c) => c.id === selectedCollectionId.value)
+    if (col) col.name = renameCollectionName.value.trim()
+  } catch { /* ignore */ }
   renameCollectionName.value = ''
   showRenameModal.value = false
 }
 
-// 删除收藏夹
-const startDelete = (collection: Collection): void => {
+const startDelete = (collection: UICollection): void => {
   selectedCollectionId.value = collection.id
   showDeleteModal.value = true
 }
 
-const confirmDelete = (): void => {
+const confirmDelete = async (): Promise<void> => {
   if (!selectedCollectionId.value) return
-
-  collections.value = collections.value.filter((c) => c.id !== selectedCollectionId.value)
-
-  if (viewMode.value === 'games' && selectedCollectionId.value) {
-    viewMode.value = 'collections'
-  }
-
+  try {
+    await window.api.deleteCollection(selectedCollectionId.value)
+  } catch { /* ignore */ }
+  const id = selectedCollectionId.value
+  collections.value = collections.value.filter((c) => c.id !== id)
+  collectionGames.value.delete(id)
+  if (viewMode.value === 'games') viewMode.value = 'collections'
   selectedCollectionId.value = null
   showDeleteModal.value = false
 }
 
-// 打开收藏夹
-const openCollection = (collection: Collection): void => {
+const openCollection = (collection: UICollection): void => {
   selectedCollectionId.value = collection.id
   viewMode.value = 'games'
 }
 
-// 返回收藏夹列表
 const backToCollections = (): void => {
   viewMode.value = 'collections'
   selectedCollectionId.value = null
 }
 
-// 打开移动游戏对话框
 const openMoveModal = (game: GameRecord): void => {
   selectedGameForMove.value = game
   showMoveModal.value = true
 }
 
-// 移动游戏到指定收藏夹
-const moveGameToCollection = (targetId: string): void => {
+const moveGameToCollection = async (targetId: string): Promise<void> => {
   if (!selectedGameForMove.value) return
-
   const gameId = selectedGameForMove.value.id
-
-  // 从所有收藏夹中移除该游戏
-  collections.value.forEach((c) => {
-    c.gameIds = c.gameIds.filter((id) => id !== gameId)
-  })
-
-  // 添加到目标收藏夹
-  const targetCollection = collections.value.find((c) => c.id === targetId)
-  if (targetCollection && !targetCollection.gameIds.includes(gameId)) {
-    targetCollection.gameIds.push(gameId)
-  }
-
+  try {
+    // Remove from all collections
+    for (const col of collections.value) {
+      await window.api.removeGameFromCollection(gameId, col.id).catch(() => {})
+      const games = collectionGames.value.get(col.id)
+      if (games) collectionGames.value.set(col.id, games.filter((g) => g.id !== gameId))
+      col.gameIds = (collectionGames.value.get(col.id) || []).map((g) => g.id)
+    }
+    // Add to target
+    await window.api.addGameToCollection(gameId, targetId)
+    const targetGames = await window.api.getCollectionGames(targetId)
+    collectionGames.value.set(targetId, targetGames)
+    const targetCol = collections.value.find((c) => c.id === targetId)
+    if (targetCol) targetCol.gameIds = targetGames.map((g) => g.id)
+  } catch { /* ignore */ }
   selectedGameForMove.value = null
   showMoveModal.value = false
 }
-
-// 从收藏夹中移除游戏
-// const removeFromCollection = (gameId: string): void => {
-//   if (!selectedCollection.value) return
-//
-//   selectedCollection.value.gameIds = selectedCollection.value.gameIds.filter((id) => id !== gameId)
-// }
 
 // 获取图标SVG
 const getIconSvg = (iconName: string): string => {
@@ -310,7 +308,7 @@ const handleGameClick = (game: GameRecord): void => {
             @click.stop
           >
             <button
-              v-if="collection.id !== 'default-favorites'"
+              v-if="collection.name !== '最喜欢的游戏'"
               class="action-menu-btn"
               title="重命名"
               @click="startRename(collection)"
@@ -322,7 +320,7 @@ const handleGameClick = (game: GameRecord): void => {
               </svg>
             </button>
             <button
-              v-if="collection.id !== 'default-favorites'"
+              v-if="collection.name !== '最喜欢的游戏'"
               class="action-menu-btn delete"
               title="删除"
               @click="startDelete(collection)"
