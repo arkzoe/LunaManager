@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import Sidebar from './components/Sidebar.vue'
-import MainContent from './components/MainContent.vue'
+import Sidebar from './layout/Sidebar.vue'
+import MainContent from './layout/MainContent.vue'
 import { useThemeStore } from './stores'
 
 const activeTab = ref('home')

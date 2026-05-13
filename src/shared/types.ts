@@ -37,7 +37,7 @@ export interface PlaySession {
 export interface Collection {
   id: string
   name: string
-  parent_id: string
+  parent_id: string | null
   sort_order: number
   created_at: number
 }
@@ -144,4 +144,6 @@ export interface IElectronAPI {
 
   pickImportFolder: () => Promise<ImportScanResult | null>
   pickBatchImportFolder: () => Promise<BatchScanResult | null>
+
+  pickFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>
 }

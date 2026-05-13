@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { GameRecord } from '../../../shared/types'
-import LibraryView from './LibraryView.vue'
-import FavoritesView from './FavoritesView.vue'
-import StatsView from './StatsView.vue'
-import SettingsView from './SettingsView.vue'
-import GameDetailView from './GameDetailView.vue'
-import HomeView from './HomeView.vue'
+import LibraryView from '../views/LibraryView.vue'
+import FavoritesView from '../views/FavoritesView.vue'
+import StatsView from '../views/StatsView.vue'
+import SettingsView from '../views/SettingsView.vue'
+import GameDetailView from '../views/GameDetailView.vue'
+import HomeView from '../views/HomeView.vue'
 
 const props = defineProps<{ activeTab: string }>()
 const emit = defineEmits<{ (e: 'update:activeTab', tab: string): void }>()

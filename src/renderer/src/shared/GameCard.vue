@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { GameRecord } from '../../../../shared/types'
+import type { GameRecord } from '../../../shared/types'
 
 defineProps<{ game: GameRecord }>()
 const emit = defineEmits<{ (e: 'click'): void }>()

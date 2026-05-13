@@ -94,6 +94,16 @@ function setupIpcHandlers(): void {
   // ===== Import =====
   ipcMain.handle('import:pickFolder', () => pickFolderAndScan())
   ipcMain.handle('import:pickBatchFolder', () => pickBatchFolderAndScan())
+
+  // ===== File Picker =====
+  ipcMain.handle('import:pickFile', async (_e, filters?: { name: string; extensions: string[] }[]) => {
+    const { dialog } = await import('electron')
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: filters ?? [{ name: 'Executable', extensions: ['exe'] }]
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
 }
 
 import type { AppConfig } from './config/store'

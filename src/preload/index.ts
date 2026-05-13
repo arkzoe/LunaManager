@@ -39,7 +39,9 @@ const api: IElectronAPI = {
   getGameByExecutablePath: (path) => ipcRenderer.invoke('db:getGameByExecutablePath', path),
 
   pickImportFolder: () => ipcRenderer.invoke('import:pickFolder'),
-  pickBatchImportFolder: () => ipcRenderer.invoke('import:pickBatchFolder')
+  pickBatchImportFolder: () => ipcRenderer.invoke('import:pickBatchFolder'),
+
+  pickFile: (filters) => ipcRenderer.invoke('import:pickFile', filters)
 }
 
 if (process.contextIsolated) {

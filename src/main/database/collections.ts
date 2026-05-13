@@ -17,7 +17,7 @@ export const collectionOps = {
     const c: Collection = {
       id: `col-${Date.now()}`,
       name,
-      parent_id: '',
+      parent_id: null,
       sort_order: (db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM collections').get() as { n: number }).n,
       created_at: Date.now()
     }

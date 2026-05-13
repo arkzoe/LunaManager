@@ -2,7 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord } from '../../../shared/types'
-import GameCard from './shared/GameCard.vue'
+import GameCard from '../shared/GameCard.vue'
 import { formatRelativeTime } from '../utils/format'
 
 const store = useGameStore()

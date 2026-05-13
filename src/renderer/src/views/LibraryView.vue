@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
-import GameCard from './shared/GameCard.vue'
+import GameCard from '../shared/GameCard.vue'
 import type { GameRecord, GameStatus } from '../../../shared/types'
 import { formatRelativeTime } from '../utils/format'
-import ImportDialog from './ImportDialog.vue'
-import BatchImportDialog from './BatchImportDialog.vue'
-import ToastNotification from './ToastNotification.vue'
+import ImportDialog from '../dialogs/ImportDialog.vue'
+import BatchImportDialog from '../dialogs/BatchImportDialog.vue'
+import ToastNotification from '../shared/ToastNotification.vue'
 
 const emit = defineEmits<{ (e: 'selectGame', game: GameRecord): void }>()
 

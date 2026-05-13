@@ -17,16 +17,7 @@ export const useGameStore = defineStore('games', () => {
     games.value.filter(g => g.last_played).sort((a, b) => (b.last_played || '').localeCompare(a.last_played || '')).slice(0, 5)
   )
 
-  const totalPlaytimeMinutes = computed(() => {
-    let total = 0
-    games.value.forEach(g => {
-      if (g.playtime && g.playtime !== '未知') {
-        const m = g.playtime.match(/(\d+)/)
-        if (m) total += parseInt(m[1]) * 60
-      }
-    })
-    return total
-  })
+  const totalPlaytimeMinutes = ref(0)
 
   // ===== Actions =====
   const loadGames = async (): Promise<void> => {
@@ -34,6 +25,11 @@ export const useGameStore = defineStore('games', () => {
     error.value = null
     try {
       games.value = await window.api.getGames()
+      let total = 0
+      for (const g of games.value) {
+        total += await window.api.getGamePlaytime(g.id)
+      }
+      totalPlaytimeMinutes.value = total
     } catch (e: any) {
       error.value = e.message || '加载游戏失败'
     } finally {

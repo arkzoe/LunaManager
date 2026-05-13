@@ -2,7 +2,7 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import type { GameRecord, Collection as DBCollection } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
-import GameCard from './shared/GameCard.vue'
+import GameCard from '../shared/GameCard.vue'
 
 interface UICollection {
   id: string
