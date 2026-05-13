@@ -1,22 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-
-interface Game {
-  id: string
-  title: string
-  cover: string
-  category: string
-  rating: number
-  size: string
-  installed: boolean
-  favorite: boolean
-  lastPlayed?: string
-  description?: string
-  developer?: string
-  publisher?: string
-  releaseDate?: string
-  playtime?: string
-}
+import type { GameRecord } from '../../../shared/types'
+import { useGameStore } from '../stores/useGameStore'
+import GameCard from './shared/GameCard.vue'
 
 interface Collection {
   id: string
@@ -27,14 +13,17 @@ interface Collection {
   createdAt: number
 }
 
+const store = useGameStore()
+
 const props = defineProps<{
-  games: Game[]
+  games?: GameRecord[]
 }>()
 
 const emit = defineEmits<{
-  (e: 'selectGame', game: Game): void
-  (e: 'toggleFavorite', gameId: string): void
+  (e: 'selectGame', game: GameRecord): void
 }>()
+
+const effectiveGames = computed(() => props.games || store.allGames)
 
 // 搜索和视图状态
 const searchQuery = ref('')
@@ -49,7 +38,7 @@ const showMoveModal = ref(false)
 // const showAddToCollectionModal = ref(false)
 const newCollectionName = ref('')
 const renameCollectionName = ref('')
-const selectedGameForMove = ref<Game | null>(null)
+const selectedGameForMove = ref<GameRecord | null>(null)
 // const selectedGamesForAdd = ref<string[]>([])
 // const targetCollectionId = ref<string | null>(null)
 
@@ -90,7 +79,7 @@ watch(collections, saveCollections, { deep: true })
 
 // 同步收藏游戏到默认收藏夹
 watch(
-  () => props.games,
+  () => effectiveGames.value,
   (games) => {
     const favoriteGames = games.filter((g) => g.favorite)
     const defaultCollection = collections.value.find((c) => c.id === 'default-favorites')
@@ -116,7 +105,7 @@ const selectedCollection = computed(() => {
 // 当前收藏夹中的游戏
 const currentCollectionGames = computed(() => {
   if (!selectedCollection.value) return []
-  return props.games.filter((g) => selectedCollection.value!.gameIds.includes(g.id))
+  return effectiveGames.value.filter((g) => selectedCollection.value!.gameIds.includes(g.id))
 })
 
 // 收藏游戏总数
@@ -193,7 +182,7 @@ const backToCollections = (): void => {
 }
 
 // 打开移动游戏对话框
-const openMoveModal = (game: Game): void => {
+const openMoveModal = (game: GameRecord): void => {
   selectedGameForMove.value = game
   showMoveModal.value = true
 }
@@ -239,7 +228,7 @@ const getIconSvg = (iconName: string): string => {
   return icons[iconName] || icons.folder
 }
 
-const handleGameClick = (game: Game): void => {
+const handleGameClick = (game: GameRecord): void => {
   emit('selectGame', game)
 }
 </script>
@@ -384,45 +373,21 @@ const handleGameClick = (game: Game): void => {
       </div>
 
       <!-- 游戏网格 -->
-      <div
-        v-if="currentCollectionGames.length > 0"
-        class="flex flex-wrap gap-5 overflow-y-auto overflow-x-hidden pr-2 flex-1 content-start"
-      >
+      <div v-if="currentCollectionGames.length > 0" class="flc-grid">
         <div
           v-for="game in currentCollectionGames"
           :key="game.id"
-          class="game-card w-35 h-57 bg-bg-primary rounded-xl overflow-hidden cursor-pointer transition-all duration-250 flex-shrink-0 hover:-translate-y-1"
-          @click="handleGameClick(game)"
+          class="flc-game"
+          @click="emit('selectGame', game)"
         >
-          <div
-            class="relative w-full h-46.5 bg-gradient-to-br from-bg-secondary to-bg-tertiary overflow-hidden"
-          >
-            <div class="w-full h-full flex items-center justify-center">
-              <svg viewBox="0 0 24 24" class="w-10 h-10 fill-text-muted opacity-50">
-                <path
-                  d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-                />
-              </svg>
-            </div>
-            <button
-              class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center bg-black/50 border-none rounded-md text-white cursor-pointer opacity-0 transition-all duration-200 hover:bg-black/70 game-card:hover:opacity-100"
-              @click.stop="openMoveModal(game)"
-            >
-              <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-                <path
-                  d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-                />
-              </svg>
-            </button>
-          </div>
-          <div class="w-full h-10.5 p-3 box-border">
-            <h3
-              class="w-full h-4.5 text-13px font-semibold text-text-primary m-0 text-center whitespace-nowrap overflow-hidden text-ellipsis"
-              :title="game.title"
-            >
-              {{ game.title }}
-            </h3>
-          </div>
+          <GameCard :game="game" />
+          <button class="flc-move" title="移动" @click.stop="openMoveModal(game)">
+            <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current">
+              <path
+                d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+              />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -730,8 +695,40 @@ const handleGameClick = (game: Game): void => {
   color: var(--text-primary);
 }
 
-.game-card:hover .more-btn {
+.flc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.flc-game {
+  position: relative;
+}
+
+.flc-move {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.flc-game:hover .flc-move {
   opacity: 1;
+}
+
+.flc-move:hover {
+  background: rgba(0, 0, 0, 0.6);
 }
 
 svg {

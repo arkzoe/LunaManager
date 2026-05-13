@@ -6,8 +6,13 @@ import type { AppConfig } from '../../../shared/types'
 const themeStore = useThemeStore()
 
 // helper: persist a reactive value to electron-store
-const persist = <K extends keyof AppConfig>(key: K, r: ReturnType<typeof ref<AppConfig[K]>>) => {
-  watch(r, (v) => window.api.setConfig(key, v))
+const persist = <K extends keyof AppConfig>(
+  key: K,
+  r: ReturnType<typeof ref<AppConfig[K]>>
+): void => {
+  watch(r, (v) => {
+    if (v !== undefined) window.api.setConfig(key, v)
+  })
 }
 
 interface SettingSection {
@@ -51,8 +56,8 @@ const sectionRefs = ref<Record<string, HTMLElement>>({})
 
 let observer: IntersectionObserver | null = null
 
-const setSectionRef = (id: string) => (el: Element | null) => {
-  if (el) sectionRefs.value[id] = el as HTMLElement
+const setSectionRef = (id: string) => (el: unknown) => {
+  if (el instanceof HTMLElement) sectionRefs.value[id] = el
 }
 
 onMounted(async () => {
@@ -72,7 +77,9 @@ onMounted(async () => {
     backupDir.value = cfg.backupDir ?? ''
     backupFrequency.value = cfg.backupFrequency ?? 'weekly'
     backupMaxCopies.value = cfg.backupMaxCopies ?? 5
-  } catch { /* use defaults */ }
+  } catch {
+    /* use defaults */
+  }
 
   await nextTick()
   if (!contentRef.value) return
@@ -110,7 +117,7 @@ const scrollToSection = (id: string): void => {
 const autoStart = ref(false)
 const autoUpdate = ref(true)
 const downloadPath = ref('')
-const language = ref('zh-CN')
+const language = ref<'zh-CN' | 'en-US'>('zh-CN')
 
 const vndbApiKey = ref('')
 const bangumiToken = ref('')

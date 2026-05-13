@@ -176,8 +176,8 @@ const activities = computed(() => {
           <div
             v-for="game in recentAdded"
             :key="game.id"
-            @click="emit('selectGame', game)"
             :title="game.title"
+            @click="emit('selectGame', game)"
           >
             <GameCard :game="game" />
           </div>
