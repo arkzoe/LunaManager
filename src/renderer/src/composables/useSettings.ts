@@ -1,4 +1,4 @@
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import type { AppConfig } from '../../../shared/types'
 
 const persist = <K extends keyof AppConfig>(

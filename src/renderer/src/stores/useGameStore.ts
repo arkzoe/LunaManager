@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { GameRecord, GameStatus } from '../../../shared/types'
+import type { GameRecord } from '../../../shared/types'
 
 export const useGameStore = defineStore('games', () => {
   const games = ref<GameRecord[]>([])
