@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { GameRecord, GameStatus } from '../../../../shared/types'
-import { formatDateTime } from '../../utils/format'
+import { formatDate } from '../../utils/format'
 
 const props = defineProps<{
   game: GameRecord
-  showFullSummary: boolean
+  isRunning: boolean
   tempRating: number
   tempStatus: GameStatus
   showLaunchMenu: boolean
@@ -16,9 +16,9 @@ const props = defineProps<{
 defineEmits<{
   (e: 'update:tempRating', val: number): void
   (e: 'update:tempStatus', val: GameStatus): void
-  (e: 'update:showFullSummary', val: boolean): void
   (e: 'toggleLaunchMenu'): void
   (e: 'launch', mode: string): void
+  (e: 'stop'): void
 }>()
 
 const dataSourceLabel = computed(() => {
@@ -87,10 +87,6 @@ const hasMetadata = computed(() => {
           <span class="meta-k">开发商</span>
           <span class="meta-v">{{ game.developer }}</span>
         </div>
-        <div v-if="game.publisher" class="meta-item">
-          <span class="meta-k">发行商</span>
-          <span class="meta-v">{{ game.publisher }}</span>
-        </div>
         <div v-if="game.release_date" class="meta-item">
           <span class="meta-k">发行日期</span>
           <span class="meta-v">{{ game.release_date }}</span>
@@ -103,62 +99,51 @@ const hasMetadata = computed(() => {
           <span class="meta-k">时长</span>
           <span class="meta-v">{{ game.playtime }}</span>
         </div>
-        <div v-if="game.vndb_id" class="meta-item">
-          <span class="meta-k">VNDB 页面</span>
-          <a
-            class="meta-v link"
-            :href="'https://vndb.org/' + game.vndb_id"
-            target="_blank"
-            @click.stop
-          >{{ game.vndb_id }}</a>
-        </div>
-        <div v-if="game.bangumi_id" class="meta-item">
-          <span class="meta-k">Bangumi 页面</span>
-          <a
-            class="meta-v link"
-            :href="'https://bgm.tv/subject/' + game.bangumi_id"
-            target="_blank"
-            @click.stop
-          >{{ game.bangumi_id }}</a>
-        </div>
         <div v-if="hasMetadata" class="meta-item">
           <span class="meta-k">数据源</span>
           <span class="meta-v">{{ dataSourceLabel }}</span>
         </div>
         <div v-if="game.created_at" class="meta-item">
           <span class="meta-k">添加日期</span>
-          <span class="meta-v">{{ formatDateTime(game.created_at) }}</span>
-        </div>
-        <div v-if="game.rating > 0" class="meta-item">
-          <span class="meta-k">评分</span>
-          <span class="meta-v star-highlight">★ {{ game.rating.toFixed(1) }}</span>
+          <span class="meta-v">{{ formatDate(game.created_at) }}</span>
         </div>
       </div>
 
-      <div v-if="parsedTags.length > 0" class="hi-tags">
-        <span class="tag-badge" v-for="tag in parsedTags" :key="tag">{{ tag }}</span>
+      <div class="hi-tags">
+        <template v-if="parsedTags.length > 0">
+          <span class="tag-badge" v-for="tag in parsedTags" :key="tag">{{ tag }}</span>
+        </template>
+        <span v-else class="tag-empty">暂无标签</span>
       </div>
 
-      <div v-if="game.description" class="hi-summary">
-        <p :class="{ clamped: !showFullSummary }">{{ game.description }}</p>
-        <button
-          v-if="game.description.length > 100"
-          class="expand-btn"
-          @click.stop="$emit('update:showFullSummary', !showFullSummary)"
-        >
-          {{ showFullSummary ? '收起' : '展开全文' }}
-        </button>
+      <div class="hi-summary">
+        <div class="hi-summary-label">简介</div>
+        <p>{{ game.description || '暂无简介' }}</p>
       </div>
 
       <div class="launch-area">
         <div class="launch-group">
-          <button class="launch-main" @click.stop="$emit('launch', 'normal')">
+          <button
+            v-if="!isRunning"
+            class="launch-main"
+            @click.stop="$emit('launch', 'normal')"
+          >
             <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
               <path d="M8 5v14l11-7z" />
             </svg>
             开始游戏
           </button>
-          <button class="launch-dropdown" title="更多启动方式" @click.stop="$emit('toggleLaunchMenu')">
+          <button
+            v-else
+            class="launch-main stop"
+            @click.stop="$emit('stop')"
+          >
+            <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+              <path d="M6 6h12v12H6z" />
+            </svg>
+            停止游戏
+          </button>
+          <button v-if="!isRunning" class="launch-dropdown" title="更多启动方式" @click.stop="$emit('toggleLaunchMenu')">
             <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
               <path d="M7 10l5 5 5-5z" />
             </svg>
@@ -295,38 +280,25 @@ const hasMetadata = computed(() => {
 }
 
 .hi-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
   margin-bottom: 10px;
 }
 
 .meta-item {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   font-size: 12px;
-  margin-bottom: 5px;
 }
 
 .meta-k {
   color: var(--text-tertiary);
   flex-shrink: 0;
-  width: 60px;
 }
 
 .meta-v {
   color: var(--text-secondary);
-}
-
-.meta-v.link {
-  color: var(--accent-primary);
-  text-decoration: none;
-}
-
-.meta-v.link:hover {
-  text-decoration: underline;
-}
-
-.star-highlight {
-  color: #f59e0b;
-  font-weight: 600;
 }
 
 .hi-tags {
@@ -346,8 +318,20 @@ const hasMetadata = computed(() => {
   border-radius: 20px;
 }
 
+.tag-empty {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
 .hi-summary {
   margin-bottom: 16px;
+}
+
+.hi-summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
 }
 
 .hi-summary p {
@@ -355,28 +339,8 @@ const hasMetadata = computed(() => {
   color: var(--text-secondary);
   line-height: 1.6;
   margin: 0;
-}
-
-.hi-summary p.clamped {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.expand-btn {
-  font-size: 12px;
-  color: var(--accent-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 0;
-  font-family: inherit;
-  margin-top: 4px;
-}
-
-.expand-btn:hover {
-  text-decoration: underline;
+  max-height: 80px;
+  overflow-y: auto;
 }
 
 .launch-area {
@@ -403,6 +367,15 @@ const hasMetadata = computed(() => {
   font-family: inherit;
   cursor: pointer;
   transition: opacity 0.15s;
+}
+
+.launch-main:only-child {
+  border-radius: 8px;
+}
+
+.launch-main.stop {
+  background: #ef4444;
+  border-radius: 8px;
 }
 
 .launch-main:hover {

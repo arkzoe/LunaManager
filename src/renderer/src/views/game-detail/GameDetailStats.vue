@@ -1,7 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import type { GameRecord, PlaySession } from '../../../../shared/types'
-import { formatPlaytime, formatRelativeTime, formatDate } from '../../utils/format'
+import { formatPlaytime, formatRelativeTime } from '../../utils/format'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js'
+import { Line } from 'vue-chartjs'
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
 const props = defineProps<{ game: GameRecord }>()
 
@@ -10,6 +23,7 @@ const totalSessions = ref(0)
 const totalDuration = ref(0)
 const lastPlayed = ref<number | null>(null)
 const loading = ref(true)
+const timeRange = ref<'week' | 'month' | 'all'>('month')
 
 const totalPlaytimeDisplay = computed(() => {
   if (totalDuration.value <= 0) return '-'
@@ -22,25 +36,91 @@ const lastPlayedDisplay = computed(() => {
   return '-'
 })
 
-// Build simple chart data: group sessions by day
-const chartData = computed(() => {
-  const dayMap = new Map<string, number>()
-  for (const s of sessions.value) {
-    if (s.duration <= 0) continue
-    const day = formatDate(s.start_time)
-    dayMap.set(day, (dayMap.get(day) || 0) + s.duration)
-  }
-  const sorted = [...dayMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  if (sorted.length === 0) return null
+const timeRangeOptions = [
+  { id: 'week' as const, label: '按周' },
+  { id: 'month' as const, label: '按月' },
+  { id: 'all' as const, label: '总计' }
+]
 
-  const maxDur = Math.max(...sorted.map(([, d]) => d))
-  return sorted.map(([day, dur]) => ({
-    day: day.slice(5), // MM-DD
-    duration: dur,
-    hours: (dur / 3600000).toFixed(1),
-    pct: maxDur > 0 ? Math.round((dur / maxDur) * 100) : 0
-  }))
+const chartData = computed(() => {
+  if (sessions.value.length === 0) return null
+
+  const now = Date.now()
+  let cutoff = 0
+  if (timeRange.value === 'week') {
+    cutoff = now - 7 * 24 * 60 * 60 * 1000
+  } else if (timeRange.value === 'month') {
+    cutoff = now - 30 * 24 * 60 * 60 * 1000
+  }
+
+  const filtered = timeRange.value === 'all'
+    ? sessions.value
+    : sessions.value.filter((s) => s.start_time >= cutoff)
+
+  if (filtered.length === 0) return null
+
+  const grouped = new Map<string, number>()
+  for (const s of filtered) {
+    if (s.duration <= 0) continue
+    const d = new Date(s.start_time)
+    let key: string
+    if (timeRange.value === 'week') {
+      key = `${d.getMonth() + 1}/${d.getDate()}`
+    } else if (timeRange.value === 'month') {
+      key = `${d.getMonth() + 1}/${d.getDate()}`
+    } else {
+      key = `${d.getFullYear()}/${d.getMonth() + 1}`
+    }
+    grouped.set(key, (grouped.get(key) || 0) + s.duration)
+  }
+
+  const labels = [...grouped.keys()]
+  const values = [...grouped.values()].map((d) => Math.round(d / 3600000 * 10) / 10)
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: '游玩时长 (小时)',
+        data: values,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: '#6366f1'
+      }
+    ]
+  }
 })
+
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx: any) => `${ctx.parsed.y} 小时`
+      }
+    }
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { font: { size: 11 }, color: '#9ca3af' }
+    },
+    y: {
+      beginAtZero: true,
+      grid: { color: 'rgba(156, 163, 175, 0.1)' },
+      ticks: {
+        font: { size: 11 },
+        color: '#9ca3af',
+        callback: (v: any) => `${v}h`
+      }
+    }
+  }
+}))
 
 onMounted(async () => {
   try {
@@ -77,20 +157,26 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Chart -->
-    <div v-if="chartData && chartData.length > 0" class="chart-area">
-      <div class="chart-title">游玩时长趋势</div>
-      <div class="bar-chart">
-        <div v-for="bar in chartData" :key="bar.day" class="bar-col">
-          <div class="bar-val">{{ bar.hours }}h</div>
-          <div class="bar-track">
-            <div class="bar-fill" :style="{ height: bar.pct + '%' }" />
-          </div>
-          <div class="bar-label">{{ bar.day }}</div>
+    <div v-if="chartData" class="chart-area">
+      <div class="chart-header">
+        <div class="chart-title">游玩时长趋势</div>
+        <div class="chart-toggles">
+          <button
+            v-for="opt in timeRangeOptions"
+            :key="opt.id"
+            class="toggle-btn"
+            :class="{ active: timeRange === opt.id }"
+            @click="timeRange = opt.id"
+          >
+            {{ opt.label }}
+          </button>
         </div>
       </div>
+      <div class="chart-container">
+        <Line :data="chartData" :options="chartOptions" />
+      </div>
     </div>
-    <div v-else class="chart-placeholder">
+    <div v-else-if="!loading" class="chart-placeholder">
       <svg viewBox="0 0 24 24" class="w-10 h-10 fill-text-muted opacity-20 mb-3">
         <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" />
       </svg>
@@ -127,7 +213,6 @@ onMounted(async () => {
   color: var(--text-tertiary);
 }
 
-/* Chart */
 .chart-area {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -135,60 +220,51 @@ onMounted(async () => {
   padding: 20px 18px 14px;
 }
 
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
 .chart-title {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 16px;
 }
 
-.bar-chart {
+.chart-toggles {
   display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 140px;
+  gap: 4px;
 }
 
-.bar-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-}
-
-.bar-val {
-  font-size: 10px;
+.toggle-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
   color: var(--text-tertiary);
-  margin-bottom: 4px;
-  flex-shrink: 0;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.bar-track {
-  flex: 1;
-  width: 100%;
-  max-width: 32px;
-  display: flex;
-  align-items: flex-end;
-  background: var(--bg-secondary);
-  border-radius: 4px 4px 0 0;
-  overflow: hidden;
+.toggle-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-color-medium);
 }
 
-.bar-fill {
-  width: 100%;
+.toggle-btn.active {
   background: var(--accent-primary);
-  border-radius: 4px 4px 0 0;
-  min-height: 2px;
-  transition: height 0.3s ease;
+  color: white;
+  border-color: var(--accent-primary);
 }
 
-.bar-label {
-  font-size: 9px;
-  color: var(--text-tertiary);
-  margin-top: 4px;
-  flex-shrink: 0;
-  white-space: nowrap;
+.chart-container {
+  height: 200px;
+  position: relative;
 }
 
 .chart-placeholder {

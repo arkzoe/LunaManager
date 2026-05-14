@@ -233,6 +233,14 @@ const closeContextMenu = (): void => {
   ctxMenu.value = null
 }
 
+const handleContextAddToCollection = async (): Promise<void> => {
+  if (!ctxMenu.value) return
+  selectedIds.value = new Set([ctxMenu.value.game.id])
+  closeContextMenu()
+  await loadCollections()
+  showCollectionPicker.value = true
+}
+
 const handleViewDetail = (): void => {
   if (ctxMenu.value) emit('selectGame', ctxMenu.value.game)
   closeContextMenu()
@@ -383,6 +391,7 @@ const handleBatchImported = (_count: number): void => {
       :status-filters="statusFilters"
       :game-status="ctxMenu?.game?.status ?? null"
       @view-detail="handleViewDetail"
+      @add-to-collection="handleContextAddToCollection"
       @status-change="(s) => ctxMenu && handleStatusChange(ctxMenu.game, s)"
       @close="closeContextMenu"
     />
