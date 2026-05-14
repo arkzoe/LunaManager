@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import type { GameRecord, GameStatus, LaunchMode } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import ToastNotification from '../shared/ToastNotification.vue'
+import ConfirmDialog from '../shared/ConfirmDialog.vue'
 import GameDetailHero from './game-detail/GameDetailHero.vue'
 import GameDetailStats from './game-detail/GameDetailStats.vue'
 import GameDetailEdit from './game-detail/GameDetailEdit.vue'
@@ -15,17 +16,23 @@ const store = useGameStore()
 
 const activeTab = ref<'stats' | 'edit' | 'backup'>('stats')
 const showLaunchMenu = ref(false)
-const showFullSummary = ref(false)
+const isRunning = ref(false)
 const tempStatus = ref<GameStatus>((props.game.status as GameStatus) || 'want')
 const tempRating = ref(props.game.personal_rating || 0)
 const tempNotes = ref(props.game.notes || '')
 const tempTitle = ref(props.game.title || '')
 const tempTitleCn = ref(props.game.title_cn || '')
 const tempDeveloper = ref(props.game.developer || '')
-const tempPublisher = ref(props.game.publisher || '')
 const tempReleaseDate = ref(props.game.release_date || '')
 const tempTags = ref(props.game.custom_tags || '[]')
+const tempExecutablePath = ref(props.game.executable_path || '')
+const tempDescription = ref(props.game.description || '')
+const tempDataSource = ref<string>(props.game.vndb_id ? 'vndb' : props.game.bangumi_id ? 'bangumi' : '')
+const tempVndbId = ref(props.game.vndb_id || '')
+const tempBangumiId = ref(props.game.bangumi_id || '')
 const saving = ref(false)
+const fetching = ref(false)
+const showDeleteConfirm = ref(false)
 
 // Toast
 const showToast = ref(false)
@@ -66,9 +73,20 @@ const handleLaunch = async (mode: string): Promise<void> => {
   showLaunchMenu.value = false
   try {
     await window.api.launchGame(props.game.id, mode as LaunchMode)
+    isRunning.value = true
     showToastMsg('游戏已启动', 'success')
   } catch (err: any) {
     showToastMsg(err.message || '启动失败', 'error')
+  }
+}
+
+const handleStop = async (): Promise<void> => {
+  try {
+    await window.api.stopGame(props.game.id)
+    isRunning.value = false
+    showToastMsg('游戏已停止', 'success')
+  } catch (err: any) {
+    showToastMsg(err.message || '停止失败', 'error')
   }
 }
 
@@ -86,8 +104,11 @@ const handleSave = async (): Promise<void> => {
       title: tempTitle.value,
       title_cn: tempTitleCn.value,
       developer: tempDeveloper.value,
-      publisher: tempPublisher.value,
       release_date: tempReleaseDate.value,
+      description: tempDescription.value,
+      executable_path: tempExecutablePath.value,
+      vndb_id: tempVndbId.value,
+      bangumi_id: tempBangumiId.value,
       notes: tempNotes.value,
       custom_tags: tagsJson,
       personal_rating: tempRating.value,
@@ -103,12 +124,57 @@ const handleSave = async (): Promise<void> => {
       store.games[idx] = { ...store.games[idx], ...updates }
     }
     emit('updated', props.game)
+    showToastMsg('保存成功', 'success')
   } catch (err: any) {
     console.error('保存失败:', err)
+    showToastMsg('保存失败', 'error')
   } finally {
     saving.value = false
   }
 }
+
+const handleFetchMetadata = async (): Promise<void> => {
+  const source = tempDataSource.value as 'vndb' | 'bangumi'
+  const sourceId = source === 'vndb' ? tempVndbId.value : tempBangumiId.value
+  if (!source || !sourceId) {
+    showToastMsg('请先选择数据源并输入对应 ID', 'error')
+    return
+  }
+  fetching.value = true
+  try {
+    const detail = await window.api.fetchMetadataDetail(sourceId, source)
+    if (detail.title) tempTitle.value = detail.title
+    if (detail.title_cn) tempTitleCn.value = detail.title_cn
+    if (detail.developer) tempDeveloper.value = detail.developer
+    if (detail.release_date) tempReleaseDate.value = detail.release_date
+    if (detail.description) tempDescription.value = detail.description
+    if (detail.cover) {
+      await window.api.downloadCover(props.game.id, detail.cover as any)
+    }
+    showToastMsg('远端信息已回填', 'success')
+  } catch (err: any) {
+    showToastMsg(err.message || '获取失败', 'error')
+  } finally {
+    fetching.value = false
+  }
+}
+
+const handleDeleteGame = async (): Promise<void> => {
+  showDeleteConfirm.value = false
+  try {
+    await window.api.deleteGame(props.game.id)
+    store.games = store.games.filter((g) => g.id !== props.game.id) as any
+    emit('back')
+  } catch (err: any) {
+    showToastMsg(err.message || '删除失败', 'error')
+  }
+}
+
+onMounted(async () => {
+  try {
+    isRunning.value = await window.api.isGameRunning(props.game.id)
+  } catch { /* ignore */ }
+})
 
 const handleClickOutside = (): void => {
   showLaunchMenu.value = false
@@ -127,7 +193,7 @@ const iconPaths: Record<string, string> = {
   <div class="detail" @click="handleClickOutside">
     <GameDetailHero
       :game="game"
-      :show-full-summary="showFullSummary"
+      :is-running="isRunning"
       :temp-rating="tempRating"
       :temp-status="tempStatus"
       :show-launch-menu="showLaunchMenu"
@@ -135,9 +201,9 @@ const iconPaths: Record<string, string> = {
       :launch-modes="launchModes"
       @update:temp-rating="tempRating = $event"
       @update:temp-status="tempStatus = $event"
-      @update:show-full-summary="showFullSummary = $event"
       @toggle-launch-menu="toggleLaunchMenu"
       @launch="handleLaunch"
+      @stop="handleStop"
     />
 
     <div class="tabs">
@@ -171,21 +237,42 @@ const iconPaths: Record<string, string> = {
         :temp-title="tempTitle"
         :temp-title-cn="tempTitleCn"
         :temp-developer="tempDeveloper"
-        :temp-publisher="tempPublisher"
         :temp-release-date="tempReleaseDate"
         :temp-tags="tempTags"
+        :temp-executable-path="tempExecutablePath"
+        :temp-description="tempDescription"
+        :temp-data-source="tempDataSource"
+        :temp-vndb-id="tempVndbId"
+        :temp-bangumi-id="tempBangumiId"
         :saving="saving"
+        :fetching="fetching"
         @update:temp-notes="tempNotes = $event"
         @update:temp-title="tempTitle = $event"
         @update:temp-title-cn="tempTitleCn = $event"
         @update:temp-developer="tempDeveloper = $event"
-        @update:temp-publisher="tempPublisher = $event"
         @update:temp-release-date="tempReleaseDate = $event"
         @update:temp-tags="tempTags = $event"
+        @update:temp-executable-path="tempExecutablePath = $event"
+        @update:temp-description="tempDescription = $event"
+        @update:temp-data-source="tempDataSource = $event"
+        @update:temp-vndb-id="tempVndbId = $event"
+        @update:temp-bangumi-id="tempBangumiId = $event"
         @save="handleSave"
+        @fetch-metadata="handleFetchMetadata"
+        @delete-game="showDeleteConfirm = true"
       />
       <GameDetailBackup v-else-if="activeTab === 'backup'" :game="game" />
     </div>
+
+    <ConfirmDialog
+      :show="showDeleteConfirm"
+      title="确认删除"
+      :message="`确定要删除 <strong>${game.title}</strong> 吗？此操作不可恢复。`"
+      confirm-text="确认删除"
+      danger
+      @confirm="handleDeleteGame"
+      @cancel="showDeleteConfirm = false"
+    />
   </div>
 </template>
 

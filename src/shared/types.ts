@@ -144,6 +144,8 @@ export interface IElectronAPI {
   getAllAggregatedStats: () => Promise<{ game_id: string; total_sessions: number; total_duration: number; last_played: number | null }[]>
   getTotalSessionCount: () => Promise<number>
   launchGame: (gameId: string, mode: LaunchMode) => Promise<void>
+  stopGame: (gameId: string) => Promise<void>
+  isGameRunning: (gameId: string) => Promise<boolean>
 
   getCollections: () => Promise<Collection[]>
   createCollection: (name: string) => Promise<Collection>
@@ -159,6 +161,9 @@ export interface IElectronAPI {
   deleteSnapshot: (id: string) => Promise<void>
   restoreSnapshot: (id: string) => Promise<void>
   detectSavePath: (gameId: string) => Promise<string | null>
+  backupSnapshot: (gameId: string) => Promise<string>
+  restoreSnapshotInPlace: (snapshotId: string) => Promise<void>
+  getBackupDir: (gameId: string) => Promise<string>
 
   getGameByExecutablePath: (path: string) => Promise<GameRecord | null>
 
@@ -166,6 +171,8 @@ export interface IElectronAPI {
   pickBatchImportFolder: () => Promise<BatchScanResult | null>
 
   pickFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>
+  pickDirectory: () => Promise<string | null>
+  openPath: (path: string) => Promise<string>
 
   // 元数据刮擦
   testApiConnection: (source: 'vndb' | 'bangumi', token?: string) => Promise<{ ok: boolean; message: string }>

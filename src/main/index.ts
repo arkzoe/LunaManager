@@ -79,6 +79,12 @@ function setupIpcHandlers(): void {
   ipcMain.handle('launch:game', (_, gameId: string, mode: string) => {
     launchGame(gameId, mode as LaunchMode)
   })
+  ipcMain.handle('launch:stop', (_, gameId: string) => {
+    return stopGame(gameId)
+  })
+  ipcMain.handle('launch:isRunning', (_, gameId: string) => {
+    return isGameRunning(gameId)
+  })
 
   // ===== Collections =====
   ipcMain.handle('col:getAll', () => collectionOps.getAll())
@@ -98,6 +104,17 @@ function setupIpcHandlers(): void {
     throw new Error('Not implemented')
   })
   ipcMain.handle('snap:detectSavePath', (_, _gameId: string) => null)
+  ipcMain.handle('snap:backup', async (_e, gameId: string) => {
+    const game = gameOps.getById(gameId)
+    if (!game || !game.save_path) throw new Error('未设置存档路径')
+    return backupSave(gameId, game.save_path)
+  })
+  ipcMain.handle('snap:restoreInPlace', async (_e, snapshotId: string) => {
+    return restoreSave(snapshotId)
+  })
+  ipcMain.handle('snap:getBackupDir', async (_e, gameId: string) => {
+    return getSnapshotDirPath(gameId)
+  })
 
   // ===== Import =====
   ipcMain.handle('import:pickFolder', () => pickFolderAndScan())
@@ -111,6 +128,18 @@ function setupIpcHandlers(): void {
       filters: filters ?? [{ name: 'Executable', extensions: ['exe'] }]
     })
     return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('import:pickDirectory', async () => {
+    const { dialog } = await import('electron')
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory']
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('shell:openPath', async (_e, dirPath: string) => {
+    return shell.openPath(dirPath)
   })
 
   // ===== Metadata Scraping =====
@@ -137,7 +166,8 @@ import type { GameStatus, LaunchMode } from '../shared/types'
 import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
 import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
-import { launchGame } from './services/game-launcher'
+import { launchGame, stopGame, isGameRunning } from './services/game-launcher'
+import { backupSave, restoreSave, deleteSnapshotFiles, getSnapshotDirPath } from './services/backup'
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')

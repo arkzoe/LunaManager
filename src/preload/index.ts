@@ -24,6 +24,8 @@ const api: IElectronAPI = {
   getTotalSessionCount: () => ipcRenderer.invoke('play:getTotalSessionCount'),
   getAllAggregatedStats: () => ipcRenderer.invoke('play:getAllAggregatedStats'),
   launchGame: (gameId, mode) => ipcRenderer.invoke('launch:game', gameId, mode),
+  stopGame: (gameId) => ipcRenderer.invoke('launch:stop', gameId),
+  isGameRunning: (gameId) => ipcRenderer.invoke('launch:isRunning', gameId),
 
   getCollections: () => ipcRenderer.invoke('col:getAll'),
   createCollection: (name) => ipcRenderer.invoke('col:create', name),
@@ -39,6 +41,9 @@ const api: IElectronAPI = {
   deleteSnapshot: (id) => ipcRenderer.invoke('snap:delete', id),
   restoreSnapshot: (id) => ipcRenderer.invoke('snap:restore', id),
   detectSavePath: (gameId) => ipcRenderer.invoke('snap:detectSavePath', gameId),
+  backupSnapshot: (gameId) => ipcRenderer.invoke('snap:backup', gameId),
+  restoreSnapshotInPlace: (snapshotId) => ipcRenderer.invoke('snap:restoreInPlace', snapshotId),
+  getBackupDir: (gameId) => ipcRenderer.invoke('snap:getBackupDir', gameId),
 
   getGameByExecutablePath: (path) => ipcRenderer.invoke('db:getGameByExecutablePath', path),
 
@@ -46,6 +51,9 @@ const api: IElectronAPI = {
   pickBatchImportFolder: () => ipcRenderer.invoke('import:pickBatchFolder'),
 
   pickFile: (filters) => ipcRenderer.invoke('import:pickFile', filters),
+
+  pickDirectory: () => ipcRenderer.invoke('import:pickDirectory'),
+  openPath: (path) => ipcRenderer.invoke('shell:openPath', path),
 
   testApiConnection: (source, token?) => ipcRenderer.invoke('metadata:test', { source, token }),
   searchMetadata: (query, source, apiKey?) => ipcRenderer.invoke('metadata:search', { query, source, apiKey }),
