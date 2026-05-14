@@ -74,6 +74,22 @@ export interface SaveSnapshot {
   created_at: number
 }
 
+export interface SearchResult {
+  id: string
+  title: string
+  titleCn: string
+  cover: string
+  date: string
+  rating: number
+  source: 'vndb' | 'bangumi'
+}
+
+export interface ApiError {
+  code: 'NETWORK' | 'TIMEOUT' | 'AUTH_FAILED' | 'RATE_LIMITED'
+    | 'NOT_FOUND' | 'SERVER_ERROR' | 'PARSE_ERROR'
+  message: string
+}
+
 export type GameStatus = 'want' | 'playing' | 'played' | 'shelved' | 'abandoned'
 export type LaunchMode = 'normal' | 'le' | 'magpie'
 export type ViewMode = 'grid' | 'list'
@@ -146,4 +162,10 @@ export interface IElectronAPI {
   pickBatchImportFolder: () => Promise<BatchScanResult | null>
 
   pickFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>
+
+  // 元数据刮擦
+  testApiConnection: (source: 'vndb' | 'bangumi', token?: string) => Promise<{ ok: boolean; message: string }>
+  searchMetadata: (query: string, source: 'vndb' | 'bangumi', apiKey?: string) => Promise<SearchResult[]>
+  fetchMetadataDetail: (sourceId: string, source: 'vndb' | 'bangumi', apiKey?: string, gameId?: string) => Promise<Partial<GameRecord>>
+  downloadCover: (gameId: string, url: string) => Promise<string | null>
 }

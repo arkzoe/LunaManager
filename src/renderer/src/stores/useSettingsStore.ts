@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import type { AppConfig } from '../../../shared/types'
 
 export interface AppSettings {
   // 基础配置
@@ -8,7 +9,7 @@ export interface AppSettings {
   downloadPath: string
 
   // 元数据设置
-  metadataSource: 'steam' | 'igdb' | 'rawg'
+  metadataSource: 'vndb' | 'bangumi'
   autoSyncMetadata: boolean
 
   // 外观设置
@@ -21,33 +22,11 @@ export interface AppSettings {
   recordHistory: boolean
 }
 
-// AppConfig 类型（与主进程一致）
-interface AppConfig {
-  windowBounds: {
-    width: number
-    height: number
-    x?: number
-    y?: number
-  }
-  autoStart: boolean
-  autoUpdate: boolean
-  downloadPath: string
-  metadataSource: 'steam' | 'igdb' | 'rawg'
-  autoSyncMetadata: boolean
-  theme: 'dark' | 'light'
-  language: 'zh-CN' | 'en-US'
-  sidebarCollapsed: boolean
-  showGameCover: boolean
-  trackPlaytime: boolean
-  recordHistory: boolean
-  dbPath: string
-}
-
 const defaultSettings: AppSettings = {
   autoStart: false,
   autoUpdate: true,
   downloadPath: '',
-  metadataSource: 'steam',
+  metadataSource: 'vndb',
   autoSyncMetadata: true,
   language: 'zh-CN',
   sidebarCollapsed: false,
@@ -114,7 +93,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
     try {
       const configKey = configKeyMap[key]
-      await window.api.setConfig(configKey, value as AppConfig[typeof configKey])
+      await window.api.setConfig(configKey, value as unknown as AppConfig[typeof configKey])
     } catch (error) {
       console.error('Failed to save setting:', error)
     }
@@ -128,7 +107,7 @@ export const useSettingsStore = defineStore('settings', () => {
       for (const [key, value] of Object.entries(newSettings)) {
         const configKey = configKeyMap[key as keyof AppSettings]
         if (configKey) {
-          configToSave[configKey] = value as AppConfig[typeof configKey]
+          (configToSave as Record<string, unknown>)[configKey] = value
         }
       }
       await window.api.setAllConfig(configToSave)
@@ -141,7 +120,7 @@ export const useSettingsStore = defineStore('settings', () => {
     settings.value = { ...defaultSettings }
 
     try {
-      await window.api.setAllConfig(defaultSettings)
+      await window.api.setAllConfig(defaultSettings as Partial<AppConfig>)
     } catch (error) {
       console.error('Failed to reset settings:', error)
     }

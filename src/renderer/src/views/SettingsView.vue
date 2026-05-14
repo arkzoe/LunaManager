@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useSettings } from '../composables/useSettings'
 import SettingBasic from './settings/SettingBasic.vue'
@@ -19,12 +19,33 @@ const {
 
 const currentVersion = ref('1.0.0')
 
-const handleTestBangumi = (): void => {
-  console.log('测试 Bangumi 连接')
+interface TestResult {
+  source: 'vndb' | 'bangumi'
+  loading: boolean
+  ok?: boolean
+  message?: string
 }
 
-const handleTestVNDB = (): void => {
-  console.log('测试 VNDB 连接')
+const testResult = ref<TestResult | null>(null)
+
+const handleTestBangumi = async (): Promise<void> => {
+  testResult.value = { source: 'bangumi', loading: true }
+  try {
+    const res = await window.api.testApiConnection('bangumi', bangumiToken.value || undefined)
+    testResult.value = { source: 'bangumi', loading: false, ...res }
+  } catch (err: any) {
+    testResult.value = { source: 'bangumi', loading: false, ok: false, message: err.message || '测试失败' }
+  }
+}
+
+const handleTestVNDB = async (): Promise<void> => {
+  testResult.value = { source: 'vndb', loading: true }
+  try {
+    const res = await window.api.testApiConnection('vndb', vndbApiKey.value || undefined)
+    testResult.value = { source: 'vndb', loading: false, ...res }
+  } catch (err: any) {
+    testResult.value = { source: 'vndb', loading: false, ok: false, message: err.message || '测试失败' }
+  }
 }
 
 const handleCheckUpdate = (): void => {
@@ -155,7 +176,7 @@ const scrollToSection = (id: string): void => {
         @update:show-game-cover="showGameCover = $event"
         @update:track-playtime="trackPlaytime = $event"
         @update:record-history="recordHistory = $event"
-        @update:language="language = $event"
+        @update:language="language = ($event as 'zh-CN' | 'en-US')"
         @select-download-path="handleChangeDownloadPath"
       />
 
@@ -167,7 +188,8 @@ const scrollToSection = (id: string): void => {
         :auto-sync-metadata="autoSyncMetadata"
         :vndb-api-key="vndbApiKey"
         :bangumi-token="bangumiToken"
-        @update:metadata-source="metadataSource = $event"
+        :test-result="testResult"
+        @update:metadata-source="metadataSource = ($event as 'vndb' | 'bangumi')"
         @update:auto-sync-metadata="autoSyncMetadata = $event"
         @update:vndb-api-key="vndbApiKey = $event"
         @update:bangumi-token="bangumiToken = $event"
@@ -195,7 +217,7 @@ const scrollToSection = (id: string): void => {
         :backup-max-copies="backupMaxCopies"
         @update:auto-backup="autoBackup = $event"
         @update:backup-dir="backupDir = $event"
-        @update:backup-frequency="backupFrequency = $event"
+        @update:backup-frequency="backupFrequency = ($event as 'daily' | 'weekly' | 'monthly')"
         @update:backup-max-copies="backupMaxCopies = $event"
         @select-backup-dir="handleSelectBackupDir"
       />

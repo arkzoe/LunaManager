@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { ImportScanResult, GameRecord } from '../../../shared/types'
+import type { ImportScanResult, GameRecord, SearchResult } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import SearchResultPicker from '../shared/SearchResultPicker.vue'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -15,6 +16,11 @@ const selectedExe = ref('')
 const title = ref('')
 const titleCn = ref('')
 const error = ref('')
+const searching = ref(false)
+const searchResults = ref<SearchResult[]>([])
+const showSearchPicker = ref(false)
+const searchSource = ref<'vndb' | 'bangumi'>('vndb')
+const metadataFilled = ref(false)
 
 const handlePickFolder = async (): Promise<void> => {
   isLoading.value = true
@@ -33,12 +39,76 @@ const handlePickFolder = async (): Promise<void> => {
     } else {
       selectedExe.value = result.executables.length > 0 ? result.executables[0].fullPath : ''
     }
+    isLoading.value = false
   } catch (e: any) {
     error.value = e.message || '选择文件夹失败'
-  } finally {
     isLoading.value = false
   }
 }
+
+const handleSearch = async (): Promise<void> => {
+  const query = title.value.trim() || scanResult.value?.folderName
+  if (!query) return
+
+  searching.value = true
+  metadataFilled.value = false
+  try {
+    const source = await window.api.getConfig('metadataSource')
+    searchSource.value = source || 'vndb'
+    searchResults.value = await window.api.searchMetadata(query, searchSource.value)
+    if (searchResults.value.length === 1) {
+      applySearchResult(searchResults.value[0])
+    } else if (searchResults.value.length > 1) {
+      showSearchPicker.value = true
+    }
+  } catch {
+    // silently fail, user can manually search
+  } finally {
+    searching.value = false
+  }
+}
+
+const applySearchResult = async (result: SearchResult): Promise<void> => {
+  title.value = result.titleCn || result.title || title.value
+  titleCn.value = result.titleCn || ''
+
+  if (result.id) {
+    const detail = await window.api.fetchMetadataDetail(
+      result.id,
+      result.source,
+      undefined,
+      undefined // no gameId yet, will download on import
+    )
+    if (detail.title) title.value = detail.title_cn || detail.title || title.value
+    if (detail.title_cn) titleCn.value = detail.title_cn
+    if (detail.cover) {
+      // Store the cover URL temporarily; will be downloaded on import with gameId
+      coverUrl.value = detail.cover
+    }
+    if (detail.developer) developer.value = detail.developer
+    if (detail.release_date) releaseDate.value = detail.release_date
+    if (detail.description) description.value = detail.description
+    if (detail.rating) rating.value = detail.rating
+    if (detail.custom_tags) customTags.value = detail.custom_tags
+    if (detail.vndb_id) vndbId.value = detail.vndb_id
+    if (detail.bangumi_id) bangumiId.value = detail.bangumi_id
+    metadataFilled.value = true
+  }
+}
+
+const handlePickerSelect = (result: SearchResult): void => {
+  showSearchPicker.value = false
+  applySearchResult(result)
+}
+
+const coverUrl = ref('')
+const developer = ref('')
+const releaseDate = ref('')
+const description = ref('')
+const rating = ref(0)
+const customTags = ref('[]')
+const vndbId = ref('')
+const bangumiId = ref('')
 
 const handleConfirm = async (): Promise<void> => {
   if (!scanResult.value) return
@@ -61,29 +131,38 @@ const handleConfirm = async (): Promise<void> => {
   error.value = ''
   try {
     const now = Date.now()
+    const gameId = `id-${now}`
+
+    // Download cover if we have a URL
+    let cover = ''
+    if (coverUrl.value) {
+      const localPath = await window.api.downloadCover(gameId, coverUrl.value)
+      if (localPath) cover = localPath
+    }
+
     const gameData: Omit<GameRecord, 'created_at' | 'updated_at'> = {
-      id: `id-${now}`,
+      id: gameId,
       title: title.value.trim(),
       title_cn: titleCn.value.trim(),
-      cover: '',
-      rating: 0,
+      cover,
+      rating: rating.value,
       size: scanResult.value.totalSize,
       installed: 1,
       favorite: 0,
       status: 'want',
       personal_rating: 0,
       last_played: '',
-      description: '',
-      developer: '',
+      description: description.value,
+      developer: developer.value,
       publisher: '',
-      release_date: '',
+      release_date: releaseDate.value,
       playtime: '',
       executable_path: selectedExe.value,
       save_path: '',
-      vndb_id: '',
-      bangumi_id: '',
+      vndb_id: vndbId.value,
+      bangumi_id: bangumiId.value,
       notes: '',
-      custom_tags: '[]',
+      custom_tags: customTags.value,
       last_launch_method: 'normal'
     }
     const game = await window.api.createGame(gameData)
@@ -170,15 +249,32 @@ const handleOverlayClick = (e: MouseEvent): void => {
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="input-title"
-                >游戏名称 <span class="text-danger">*</span></label
-              >
+              <div class="form-label-row">
+                <label class="form-label" for="input-title"
+                  >游戏名称 <span class="text-danger">*</span></label
+                >
+                <button
+                  class="search-btn"
+                  :disabled="searching"
+                  title="识别源数据"
+                  @click="handleSearch"
+                >
+                  <svg v-if="searching" viewBox="0 0 24 24" class="w-3.5 h-3.5 spin">
+                    <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor"/>
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                  </svg>
+                  识别源数据
+                </button>
+              </div>
               <input
                 id="input-title"
                 v-model="title"
                 class="form-input"
                 placeholder="输入游戏名称"
               />
+              <div v-if="metadataFilled" class="metadata-hint">已从 {{ searchSource === 'vndb' ? 'VNDB' : 'Bangumi' }} 获取元数据</div>
             </div>
 
             <div class="form-group">
@@ -188,6 +284,26 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 v-model="titleCn"
                 class="form-input"
                 placeholder="输入中文名称（可选）"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-developer">开发商</label>
+              <input
+                id="input-developer"
+                v-model="developer"
+                class="form-input"
+                placeholder="开发商（可自动获取）"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-date">发行日期</label>
+              <input
+                id="input-date"
+                v-model="releaseDate"
+                class="form-input"
+                placeholder="发行日期（可自动获取）"
               />
             </div>
 
@@ -202,6 +318,15 @@ const handleOverlayClick = (e: MouseEvent): void => {
       </div>
     </div>
   </Teleport>
+
+  <SearchResultPicker
+    v-if="showSearchPicker"
+    :results="searchResults"
+    :loading="false"
+    :source="searchSource"
+    @select="handlePickerSelect"
+    @close="showSearchPicker = false"
+  />
 </template>
 
 <style scoped>
@@ -292,6 +417,48 @@ const handleOverlayClick = (e: MouseEvent): void => {
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 6px;
+}
+
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.form-label-row .form-label {
+  margin-bottom: 0;
+}
+
+.search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.search-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.search-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.metadata-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #22c55e;
 }
 
 .form-path {
@@ -412,5 +579,13 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 .text-danger {
   color: var(--danger);
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

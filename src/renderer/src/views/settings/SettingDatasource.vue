@@ -1,9 +1,17 @@
 <script setup lang="ts">
+interface TestResult {
+  source: 'vndb' | 'bangumi'
+  loading: boolean
+  ok?: boolean
+  message?: string
+}
+
 defineProps<{
   metadataSource: string
   autoSyncMetadata: boolean
   vndbApiKey: string
   bangumiToken: string
+  testResult: TestResult | null
   sectionRef?: (el: unknown) => void
 }>()
 
@@ -65,6 +73,19 @@ const emit = defineEmits<{
           <button class="sbtn sbtn-secondary" @click="emit('testVndb')">测试</button>
         </div>
       </div>
+      <!-- VNDB 测试结果 -->
+      <div v-if="testResult?.source === 'vndb'" class="test-feedback" :class="{ ok: testResult.ok, err: !testResult.ok && !testResult.loading }">
+        <svg v-if="testResult.loading" viewBox="0 0 24 24" class="w-4 h-4 spin">
+          <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor"/>
+        </svg>
+        <svg v-else-if="testResult.ok" viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        <svg v-else viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <span>{{ testResult.loading ? '测试中...' : testResult.message }}</span>
+      </div>
       <div class="setting-row">
         <div class="setting-info">
           <span class="setting-label">Bangumi Token</span>
@@ -81,10 +102,54 @@ const emit = defineEmits<{
           <button class="sbtn sbtn-secondary" @click="emit('testBangumi')">测试</button>
         </div>
       </div>
+      <!-- Bangumi 测试结果 -->
+      <div v-if="testResult?.source === 'bangumi'" class="test-feedback" :class="{ ok: testResult.ok, err: !testResult.ok && !testResult.loading }">
+        <svg v-if="testResult.loading" viewBox="0 0 24 24" class="w-4 h-4 spin">
+          <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor"/>
+        </svg>
+        <svg v-else-if="testResult.ok" viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        <svg v-else viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <span>{{ testResult.loading ? '测试中...' : testResult.message }}</span>
+      </div>
     </div>
   </section>
 </template>
 
-<style>
+<style scoped>
 @import './shared.css';
+
+.test-feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  margin-left: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.test-feedback.ok {
+  background: rgba(34, 197, 94, 0.08);
+  color: #22c55e;
+}
+
+.test-feedback.err {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 </style>

@@ -12,12 +12,14 @@ interface RowState {
 
 defineProps<{
   row: RowState
+  searching: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:selected', val: boolean): void
   (e: 'update:title', val: string): void
   (e: 'update:selectedExe', val: string): void
+  (e: 'search'): void
 }>()
 </script>
 
@@ -34,12 +36,27 @@ const emit = defineEmits<{
     </div>
 
     <div class="br-title">
-      <input
-        :value="row.title"
-        class="br-input"
-        :placeholder="row.folderName"
-        @input="emit('update:title', ($event.target as HTMLInputElement).value)"
-      />
+      <div class="br-title-row">
+        <input
+          :value="row.title"
+          class="br-input"
+          :placeholder="row.folderName"
+          @input="emit('update:title', ($event.target as HTMLInputElement).value)"
+        />
+        <button
+          class="br-search-btn"
+          :disabled="searching"
+          title="识别源数据"
+          @click="emit('search')"
+        >
+          <svg v-if="searching" viewBox="0 0 24 24" class="w-3 h-3 spin">
+            <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor"/>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" class="w-3 h-3 fill-current">
+            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div class="br-exe">
@@ -88,6 +105,12 @@ const emit = defineEmits<{
   accent-color: var(--accent-primary);
 }
 
+.br-title-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
 .br-input {
   width: 100%;
   height: 30px;
@@ -104,6 +127,32 @@ const emit = defineEmits<{
 
 .br-input:focus {
   border-color: var(--accent-primary);
+}
+
+.br-search-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.br-search-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.br-search-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .br-select {
@@ -156,5 +205,13 @@ const emit = defineEmits<{
   color: var(--text-tertiary);
   text-align: right;
   white-space: nowrap;
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

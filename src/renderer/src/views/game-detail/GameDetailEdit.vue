@@ -1,14 +1,41 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { GameRecord } from '../../../../shared/types'
 
-defineProps<{
+const props = defineProps<{
   game: GameRecord
   tempNotes: string
+  tempTitle: string
+  tempTitleCn: string
+  tempDeveloper: string
+  tempPublisher: string
+  tempReleaseDate: string
+  tempTags: string
+  saving: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:tempNotes', val: string): void
+  (e: 'update:tempTitle', val: string): void
+  (e: 'update:tempTitleCn', val: string): void
+  (e: 'update:tempDeveloper', val: string): void
+  (e: 'update:tempPublisher', val: string): void
+  (e: 'update:tempReleaseDate', val: string): void
+  (e: 'update:tempTags', val: string): void
+  (e: 'save'): void
 }>()
+
+const hasChanges = computed(() => {
+  return (
+    props.tempTitle !== (props.game.title || '') ||
+    props.tempTitleCn !== (props.game.title_cn || '') ||
+    props.tempDeveloper !== (props.game.developer || '') ||
+    props.tempPublisher !== (props.game.publisher || '') ||
+    props.tempReleaseDate !== (props.game.release_date || '') ||
+    props.tempNotes !== (props.game.notes || '') ||
+    props.tempTags !== (props.game.custom_tags || '[]')
+  )
+})
 </script>
 
 <template>
@@ -16,27 +43,62 @@ defineEmits<{
     <div class="edit-form">
       <div class="form-field">
         <label>游戏名称</label>
-        <input type="text" :value="game.title" class="form-input" />
+        <input
+          type="text"
+          :value="tempTitle"
+          class="form-input"
+          @input="emit('update:tempTitle', ($event.target as HTMLInputElement).value)"
+        />
       </div>
       <div class="form-field">
         <label>中文名称</label>
-        <input type="text" :value="game.title_cn" class="form-input" />
+        <input
+          type="text"
+          :value="tempTitleCn"
+          class="form-input"
+          @input="emit('update:tempTitleCn', ($event.target as HTMLInputElement).value)"
+        />
       </div>
       <div class="form-row">
         <div class="form-field">
           <label>开发商</label>
-          <input type="text" :value="game.developer" class="form-input" />
+          <input
+            type="text"
+            :value="tempDeveloper"
+            class="form-input"
+            @input="emit('update:tempDeveloper', ($event.target as HTMLInputElement).value)"
+          />
         </div>
         <div class="form-field">
           <label>发行商</label>
-          <input type="text" :value="game.publisher" class="form-input" />
+          <input
+            type="text"
+            :value="tempPublisher"
+            class="form-input"
+            @input="emit('update:tempPublisher', ($event.target as HTMLInputElement).value)"
+          />
         </div>
       </div>
       <div class="form-row">
         <div class="form-field">
           <label>发行日期</label>
-          <input type="text" :value="game.release_date" class="form-input" />
+          <input
+            type="text"
+            :value="tempReleaseDate"
+            class="form-input"
+            @input="emit('update:tempReleaseDate', ($event.target as HTMLInputElement).value)"
+          />
         </div>
+      </div>
+      <div class="form-field">
+        <label>标签（逗号分隔）</label>
+        <input
+          type="text"
+          :value="tempTags"
+          class="form-input"
+          placeholder="冒险, 悬疑, 治愈"
+          @input="emit('update:tempTags', ($event.target as HTMLInputElement).value)"
+        />
       </div>
       <div class="form-field">
         <label>个人备注</label>
@@ -45,10 +107,16 @@ defineEmits<{
           class="form-textarea"
           rows="4"
           placeholder="添加备注..."
-          @input="$emit('update:tempNotes', ($event.target as HTMLTextAreaElement).value)"
+          @input="emit('update:tempNotes', ($event.target as HTMLTextAreaElement).value)"
         />
       </div>
-      <button class="btn-brand" disabled>保存修改</button>
+      <button
+        class="btn-brand"
+        :disabled="!hasChanges || saving"
+        @click="emit('save')"
+      >
+        {{ saving ? '保存中...' : '保存修改' }}
+      </button>
     </div>
   </div>
 </template>
@@ -111,5 +179,10 @@ defineEmits<{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.btn-brand:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

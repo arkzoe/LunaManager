@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { BatchScanResult, GameRecord } from '../../../shared/types'
+import type { BatchScanResult, GameRecord, SearchResult } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import BatchImportRow from './BatchImportRow.vue'
+import SearchResultPicker from '../shared/SearchResultPicker.vue'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -26,9 +27,24 @@ interface RowState {
   title: string
   selectedExe: string
   isDuplicate: boolean
+  vndbId: string
+  bangumiId: string
+  cover: string
+  rating: number
+  developer: string
+  releaseDate: string
+  description: string
+  customTags: string
 }
 
 const rows = ref<RowState[]>([])
+
+// Search state
+const searchingRow = ref<number>(-1)
+const searchResults = ref<SearchResult[]>([])
+const showSearchPicker = ref(false)
+const searchSource = ref<'vndb' | 'bangumi'>('vndb')
+const activeRowIndex = ref(-1)
 
 const existingPaths = computed(() => new Set(store.games.map((g) => g.executable_path)))
 const selectedCount = computed(() => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length)
@@ -54,13 +70,76 @@ const handlePickFolder = async (): Promise<void> => {
         selected: item.executables.length > 0 && !hasDuplicate,
         title: item.folderName,
         selectedExe: item.executables.length > 0 ? item.executables[0].fullPath : '',
-        isDuplicate: hasDuplicate
+        isDuplicate: hasDuplicate,
+        vndbId: '',
+        bangumiId: '',
+        cover: '',
+        rating: 0,
+        developer: '',
+        releaseDate: '',
+        description: '',
+        customTags: '[]'
       }
     })
   } catch (e: any) {
     error.value = e.message || '选择文件夹失败'
   } finally {
     isLoading.value = false
+  }
+}
+
+const handleSearchRow = async (rowIndex: number): Promise<void> => {
+  const row = rows.value[rowIndex]
+  if (!row) return
+
+  const query = row.title || row.folderName
+  if (!query) return
+
+  searchingRow.value = rowIndex
+  try {
+    const source = await window.api.getConfig('metadataSource')
+    searchSource.value = source || 'vndb'
+    searchResults.value = await window.api.searchMetadata(query, searchSource.value)
+    if (searchResults.value.length > 0) {
+      activeRowIndex.value = rowIndex
+      showSearchPicker.value = true
+    }
+  } catch {
+    // silently fail
+  } finally {
+    searchingRow.value = -1
+  }
+}
+
+const handlePickerSelect = async (result: SearchResult): Promise<void> => {
+  showSearchPicker.value = false
+  const row = rows.value[activeRowIndex.value]
+  if (!row) return
+
+  row.title = result.titleCn || result.title || row.title
+  if (result.source === 'vndb') row.vndbId = result.id
+  if (result.source === 'bangumi') row.bangumiId = result.id
+  if (result.cover) row.cover = result.cover
+  if (result.rating) row.rating = result.rating
+  if (result.date) row.releaseDate = result.date
+  searchSource.value = result.source
+
+  if (result.id) {
+    try {
+      const detail = await window.api.fetchMetadataDetail(
+        result.id,
+        result.source,
+        undefined,
+        undefined
+      )
+      if (detail.developer) row.developer = detail.developer
+      if (detail.title_cn) row.title = detail.title_cn || row.title
+      if (detail.description) row.description = detail.description
+      if (detail.custom_tags) row.customTags = detail.custom_tags
+      if (detail.cover) row.cover = detail.cover
+    } catch {
+      // details fetch failed, keep surface-level data
+    }
   }
 }
 
@@ -78,29 +157,37 @@ const handleImportAll = async (): Promise<void> => {
   try {
     for (const row of toImport) {
       const now = Date.now()
+      const gameId = `id-${now}-${Math.random().toString(36).slice(2, 6)}`
+
+      let cover = ''
+      if (row.cover) {
+        const localPath = await window.api.downloadCover(gameId, row.cover)
+        if (localPath) cover = localPath
+      }
+
       const gameData: Omit<GameRecord, 'created_at' | 'updated_at'> = {
-        id: `id-${now}-${Math.random().toString(36).slice(2, 6)}`,
+        id: gameId,
         title: row.title.trim() || row.folderName,
         title_cn: '',
-        cover: '',
-        rating: 0,
+        cover,
+        rating: row.rating,
         size: row.totalSize,
         installed: 1,
         favorite: 0,
         status: 'want',
         personal_rating: 0,
         last_played: '',
-        description: '',
-        developer: '',
+        description: row.description,
+        developer: row.developer,
         publisher: '',
-        release_date: '',
+        release_date: row.releaseDate,
         playtime: '',
         executable_path: row.selectedExe,
         save_path: '',
-        vndb_id: '',
-        bangumi_id: '',
+        vndb_id: row.vndbId,
+        bangumi_id: row.bangumiId,
         notes: '',
-        custom_tags: '[]',
+        custom_tags: row.customTags,
         last_launch_method: 'normal'
       }
       const game = await window.api.createGame(gameData)
@@ -155,12 +242,14 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
             <div class="batch-list">
               <BatchImportRow
-                v-for="row in rows"
+                v-for="(row, idx) in rows"
                 :key="row.folderPath"
                 :row="row"
+                :searching="searchingRow === idx"
                 @update:selected="row.selected = $event"
                 @update:title="row.title = $event"
                 @update:selectedExe="row.selectedExe = $event"
+                @search="handleSearchRow(idx)"
               />
             </div>
 
@@ -182,6 +271,15 @@ const handleOverlayClick = (e: MouseEvent): void => {
       </div>
     </div>
   </Teleport>
+
+  <SearchResultPicker
+    v-if="showSearchPicker"
+    :results="searchResults"
+    :loading="false"
+    :source="searchSource"
+    @select="handlePickerSelect"
+    @close="showSearchPicker = false"
+  />
 </template>
 
 <style scoped>

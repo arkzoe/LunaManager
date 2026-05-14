@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -104,14 +104,42 @@ function setupIpcHandlers(): void {
     })
     return result.canceled ? null : result.filePaths[0]
   })
+
+  // ===== Metadata Scraping =====
+  ipcMain.handle('metadata:test', async (_e, { source, token }) => {
+    return testApiConnection(source, token)
+  })
+
+  ipcMain.handle('metadata:search', async (_e, { query, source, apiKey }) => {
+    return searchMetadata(query, source, apiKey)
+  })
+
+  ipcMain.handle('metadata:fetch-detail', async (_e, { sourceId, source, apiKey, gameId }) => {
+    return fetchMetadataDetail(sourceId, source, apiKey, gameId)
+  })
+
+  // ===== Cover Download =====
+  ipcMain.handle('cover:download', async (_e, { gameId, url }) => {
+    return downloadCover(gameId, url)
+  })
 }
 
 import type { AppConfig } from './config/store'
 import type { GameStatus } from '../shared/types'
 import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
+import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
+import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
+
+  // 注册 cover:// 自定义协议，用于在渲染进程加载本地封面图片
+  protocol.handle('cover', (request) => {
+    const filePath = resolveCoverPath(request.url)
+    const normalizedPath = filePath.replace(/\\/g, '/')
+    return net.fetch(`file:///${normalizedPath}`)
+  })
+
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
   initDatabase()
   setupIpcHandlers()

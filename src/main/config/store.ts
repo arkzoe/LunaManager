@@ -32,7 +32,7 @@ export interface AppConfig {
   downloadPath: string
 
   // 元数据设置
-  metadataSource: 'steam' | 'igdb' | 'rawg'
+  metadataSource: 'vndb' | 'bangumi'
   autoSyncMetadata: boolean
 
   // 外观设置
@@ -47,6 +47,21 @@ export interface AppConfig {
 
   // 数据库配置
   dbPath: string
+
+  // 启动器配置
+  lePath: string
+  magpiePath: string
+  magpieScale: string
+
+  // API 密钥
+  bangumiToken: string
+  vndbApiKey: string
+
+  // 备份配置
+  backupDir: string
+  autoBackup: boolean
+  backupFrequency: 'daily' | 'weekly' | 'monthly'
+  backupMaxCopies: number
 }
 
 const defaultConfig: AppConfig = {
@@ -57,7 +72,7 @@ const defaultConfig: AppConfig = {
   autoStart: false,
   autoUpdate: true,
   downloadPath: '',
-  metadataSource: 'steam',
+  metadataSource: 'vndb',
   autoSyncMetadata: true,
   theme: 'dark',
   language: 'zh-CN',
@@ -65,7 +80,16 @@ const defaultConfig: AppConfig = {
   showGameCover: true,
   trackPlaytime: true,
   recordHistory: true,
-  dbPath: ''
+  dbPath: '',
+  lePath: '',
+  magpiePath: '',
+  magpieScale: '2x',
+  bangumiToken: '',
+  vndbApiKey: '',
+  backupDir: '',
+  autoBackup: false,
+  backupFrequency: 'weekly',
+  backupMaxCopies: 5
 }
 
 const storeOptions: Options<AppConfig> = {

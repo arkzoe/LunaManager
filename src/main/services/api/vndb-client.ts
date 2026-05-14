@@ -1,0 +1,99 @@
+import { buildUserAgent, safeFetch } from './base-client'
+import type { GameRecord, SearchResult } from '../../../shared/types'
+
+const VNDB_API = 'https://api.vndb.org/kana'
+
+export class VndbApiClient {
+  private token?: string
+  private userAgent: string
+
+  constructor(token?: string) {
+    this.token = token
+    this.userAgent = buildUserAgent()
+  }
+
+  private headers(): Record<string, string> {
+    const h: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'User-Agent': this.userAgent
+    }
+    if (this.token) {
+      h['Authorization'] = `Token ${this.token}`
+    }
+    return h
+  }
+
+  async testConnection(): Promise<boolean> {
+    try {
+      await safeFetch(() =>
+        fetch(`${VNDB_API}/authinfo`, {
+          method: 'GET',
+          headers: this.headers()
+        })
+      )
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async searchVN(query: string): Promise<SearchResult[]> {
+    const data = await safeFetch<any>(() =>
+      fetch(`${VNDB_API}/vn`, {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify({
+          filters: ['search', '=', query],
+          fields: 'id, title, alttitle, image.url, released, rating',
+          results: 10,
+          sort: 'searchrank'
+        })
+      })
+    )
+
+    return (data.results || []).map((vn: any) => ({
+      id: vn.id,
+      title: vn.title || '',
+      titleCn: vn.alttitle || '',
+      cover: vn.image?.url || '',
+      date: vn.released || '',
+      rating: vn.rating ? vn.rating / 10 : 0,
+      source: 'vndb' as const
+    }))
+  }
+
+  async getVNDetail(vndbId: string): Promise<Partial<GameRecord>> {
+    const data = await safeFetch<any>(() =>
+      fetch(`${VNDB_API}/vn`, {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify({
+          filters: ['id', '=', vndbId],
+          fields: 'id, title, alttitle, description, image.url, rating, released, developers.name, tags.name, tags.rating, tags.spoiler, tags.lie'
+        })
+      })
+    )
+
+    const vn = data.results?.[0]
+    if (!vn) throw { code: 'NOT_FOUND' as const, message: `未找到 VNDB 条目: ${vndbId}` }
+
+    const tags = (vn.tags || [])
+      ?.filter((t: any) => t.rating >= 2 && !t.lie)
+      .sort((a: any, b: any) => b.rating - a.rating)
+      .slice(0, 10)
+      .map((t: any) => t.name) ?? []
+
+    return {
+      title: vn.title || '',
+      title_cn: vn.alttitle || '',
+      description: vn.description || '',
+      cover: vn.image?.url || '',
+      rating: vn.rating ? vn.rating / 10 : 0,
+      release_date: vn.released || '',
+      developer: vn.developers?.[0]?.name || '',
+      publisher: '',
+      custom_tags: JSON.stringify(tags),
+      vndb_id: vn.id || ''
+    }
+  }
+}

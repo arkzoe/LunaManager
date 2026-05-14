@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { GameRecord, GameStatus } from '../../../shared/types'
+import { useGameStore } from '../stores/useGameStore'
 import GameDetailHero from './game-detail/GameDetailHero.vue'
 import GameDetailStats from './game-detail/GameDetailStats.vue'
 import GameDetailEdit from './game-detail/GameDetailEdit.vue'
 import GameDetailBackup from './game-detail/GameDetailBackup.vue'
 
 const props = defineProps<{ game: GameRecord }>()
-const emit = defineEmits<{ (e: 'back'): void }>()
+const emit = defineEmits<{ (e: 'back'): void; (e: 'updated', game: GameRecord): void }>()
+
+const store = useGameStore()
 
 const activeTab = ref<'stats' | 'edit' | 'backup'>('stats')
 const showLaunchMenu = ref(false)
@@ -15,6 +18,13 @@ const showFullSummary = ref(false)
 const tempStatus = ref<GameStatus>((props.game.status as GameStatus) || 'want')
 const tempRating = ref(props.game.personal_rating || 0)
 const tempNotes = ref(props.game.notes || '')
+const tempTitle = ref(props.game.title || '')
+const tempTitleCn = ref(props.game.title_cn || '')
+const tempDeveloper = ref(props.game.developer || '')
+const tempPublisher = ref(props.game.publisher || '')
+const tempReleaseDate = ref(props.game.release_date || '')
+const tempTags = ref(props.game.custom_tags || '[]')
+const saving = ref(false)
 
 const tabs = [
   { id: 'stats' as const, label: '游玩统计', icon: 'chart' },
@@ -40,10 +50,48 @@ const toggleLaunchMenu = (): void => {
   showLaunchMenu.value = !showLaunchMenu.value
 }
 
-const handleLaunch = (mode: 'normal' | 'le' | 'magpie'): void => {
+const handleLaunch = (mode: string): void => {
   showLaunchMenu.value = false
   // TODO: Phase 3 — call IPC launcher
   console.log('Launch with mode:', mode, 'game:', props.game.id)
+}
+
+const handleSave = async (): Promise<void> => {
+  saving.value = true
+  try {
+    let tagsJson = '[]'
+    const raw = tempTags.value.trim()
+    if (raw) {
+      const tags = raw.split(',').map(t => t.trim()).filter(Boolean)
+      tagsJson = JSON.stringify(tags)
+    }
+
+    const updates: Partial<GameRecord> = {
+      title: tempTitle.value,
+      title_cn: tempTitleCn.value,
+      developer: tempDeveloper.value,
+      publisher: tempPublisher.value,
+      release_date: tempReleaseDate.value,
+      notes: tempNotes.value,
+      custom_tags: tagsJson,
+      personal_rating: tempRating.value,
+      status: tempStatus.value
+    }
+
+    await window.api.updateGame(props.game.id, updates)
+
+    // Update local game object and notify parent
+    Object.assign(props.game, updates)
+    const idx = store.games.findIndex(g => g.id === props.game.id)
+    if (idx !== -1) {
+      store.games[idx] = { ...store.games[idx], ...updates }
+    }
+    emit('updated', props.game)
+  } catch (err: any) {
+    console.error('保存失败:', err)
+  } finally {
+    saving.value = false
+  }
 }
 
 const handleClickOutside = (): void => {
@@ -97,7 +145,21 @@ const iconPaths: Record<string, string> = {
         v-else-if="activeTab === 'edit'"
         :game="game"
         :temp-notes="tempNotes"
+        :temp-title="tempTitle"
+        :temp-title-cn="tempTitleCn"
+        :temp-developer="tempDeveloper"
+        :temp-publisher="tempPublisher"
+        :temp-release-date="tempReleaseDate"
+        :temp-tags="tempTags"
+        :saving="saving"
         @update:temp-notes="tempNotes = $event"
+        @update:temp-title="tempTitle = $event"
+        @update:temp-title-cn="tempTitleCn = $event"
+        @update:temp-developer="tempDeveloper = $event"
+        @update:temp-publisher="tempPublisher = $event"
+        @update:temp-release-date="tempReleaseDate = $event"
+        @update:temp-tags="tempTags = $event"
+        @save="handleSave"
       />
       <GameDetailBackup v-else-if="activeTab === 'backup'" :game="game" />
     </div>

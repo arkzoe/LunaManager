@@ -41,7 +41,12 @@ const api: IElectronAPI = {
   pickImportFolder: () => ipcRenderer.invoke('import:pickFolder'),
   pickBatchImportFolder: () => ipcRenderer.invoke('import:pickBatchFolder'),
 
-  pickFile: (filters) => ipcRenderer.invoke('import:pickFile', filters)
+  pickFile: (filters) => ipcRenderer.invoke('import:pickFile', filters),
+
+  testApiConnection: (source, token?) => ipcRenderer.invoke('metadata:test', { source, token }),
+  searchMetadata: (query, source, apiKey?) => ipcRenderer.invoke('metadata:search', { query, source, apiKey }),
+  fetchMetadataDetail: (sourceId, source, apiKey?, gameId?) => ipcRenderer.invoke('metadata:fetch-detail', { sourceId, source, apiKey, gameId }),
+  downloadCover: (gameId, url) => ipcRenderer.invoke('cover:download', { gameId, url })
 }
 
 if (process.contextIsolated) {

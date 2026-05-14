@@ -8,7 +8,8 @@ const emit = defineEmits<{ (e: 'click'): void }>()
 <template>
   <div class="game-card" @click="emit('click')">
     <div class="cover">
-      <div class="cover-placeholder">
+      <img v-if="game.cover" :src="game.cover" :alt="game.title" class="cover-img" />
+      <div v-else class="cover-placeholder">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
           <circle cx="8.5" cy="8.5" r="1.5" />
@@ -42,6 +43,12 @@ const emit = defineEmits<{ (e: 'click'): void }>()
   aspect-ratio: 3/4;
   background: var(--bg-secondary);
   overflow: hidden;
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .cover-placeholder {

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { GameRecord, GameStatus } from '../../../../shared/types'
+import { formatDateTime } from '../../utils/format'
 
-defineProps<{
+const props = defineProps<{
   game: GameRecord
   showFullSummary: boolean
   tempRating: number
@@ -18,6 +20,25 @@ defineEmits<{
   (e: 'toggleLaunchMenu'): void
   (e: 'launch', mode: string): void
 }>()
+
+const dataSourceLabel = computed(() => {
+  if (props.game.vndb_id) return 'VNDB'
+  if (props.game.bangumi_id) return 'Bangumi'
+  return '未刮擦'
+})
+
+const parsedTags = computed<string[]>(() => {
+  try {
+    const arr = JSON.parse(props.game.custom_tags || '[]')
+    return Array.isArray(arr) ? arr : []
+  } catch {
+    return []
+  }
+})
+
+const hasMetadata = computed(() => {
+  return props.game.vndb_id || props.game.bangumi_id
+})
 </script>
 
 <template>
@@ -83,7 +104,7 @@ defineEmits<{
           <span class="meta-v">{{ game.playtime }}</span>
         </div>
         <div v-if="game.vndb_id" class="meta-item">
-          <span class="meta-k">VNDB</span>
+          <span class="meta-k">VNDB 页面</span>
           <a
             class="meta-v link"
             :href="'https://vndb.org/' + game.vndb_id"
@@ -92,7 +113,7 @@ defineEmits<{
           >{{ game.vndb_id }}</a>
         </div>
         <div v-if="game.bangumi_id" class="meta-item">
-          <span class="meta-k">Bangumi</span>
+          <span class="meta-k">Bangumi 页面</span>
           <a
             class="meta-v link"
             :href="'https://bgm.tv/subject/' + game.bangumi_id"
@@ -100,6 +121,22 @@ defineEmits<{
             @click.stop
           >{{ game.bangumi_id }}</a>
         </div>
+        <div v-if="hasMetadata" class="meta-item">
+          <span class="meta-k">数据源</span>
+          <span class="meta-v">{{ dataSourceLabel }}</span>
+        </div>
+        <div v-if="game.created_at" class="meta-item">
+          <span class="meta-k">添加日期</span>
+          <span class="meta-v">{{ formatDateTime(game.created_at) }}</span>
+        </div>
+        <div v-if="game.rating > 0" class="meta-item">
+          <span class="meta-k">评分</span>
+          <span class="meta-v star-highlight">★ {{ game.rating.toFixed(1) }}</span>
+        </div>
+      </div>
+
+      <div v-if="parsedTags.length > 0" class="hi-tags">
+        <span class="tag-badge" v-for="tag in parsedTags" :key="tag">{{ tag }}</span>
       </div>
 
       <div v-if="game.description" class="hi-summary">
@@ -271,7 +308,7 @@ defineEmits<{
 .meta-k {
   color: var(--text-tertiary);
   flex-shrink: 0;
-  width: 52px;
+  width: 60px;
 }
 
 .meta-v {
@@ -285,6 +322,28 @@ defineEmits<{
 
 .meta-v.link:hover {
   text-decoration: underline;
+}
+
+.star-highlight {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.hi-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tag-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 11px;
+  color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 20px;
 }
 
 .hi-summary {

@@ -296,22 +296,14 @@ const handleBatchImported = (_count: number): void => {
       :search-query="searchQuery"
       :view-mode="viewMode"
       :show-import-menu="showImportMenu"
+      :batch-mode="batchMode"
       @update:search-query="searchQuery = $event"
       @update:view-mode="viewMode = $event"
       @toggle-import-menu="toggleImportMenu"
       @manual-import="handleManualImport"
       @batch-import="handleBatchImport"
+      @toggle-batch-mode="toggleBatchMode"
     />
-
-    <!-- 批量操作按钮 -->
-    <div class="tb-actions-bar">
-      <button class="btn-outline btn-sm" :class="{ active: batchMode }" @click="toggleBatchMode">
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-          <path d="M4 6h4v2H4zm0 5h4v2H4zm0 5h4v2H4zm6-10h10v2H10zm0 5h10v2H10zm0 5h10v2H10z" />
-        </svg>
-        批量操作
-      </button>
-    </div>
 
     <!-- 状态筛选 -->
     <LibraryFilterBar
@@ -437,40 +429,6 @@ const handleBatchImported = (_count: number): void => {
 <style scoped>
 .library {
   max-width: 1000px;
-}
-
-.tb-actions-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8px;
-}
-
-.btn-outline {
-  height: 34px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-
-.btn-outline:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.btn-outline.active {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
 }
 
 /* ===== 骨架屏 ===== */
