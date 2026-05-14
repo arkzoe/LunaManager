@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { GameRecord, GameStatus } from '../../../shared/types'
+import type { GameRecord, GameStatus, LaunchMode } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import ToastNotification from '../shared/ToastNotification.vue'
 import GameDetailHero from './game-detail/GameDetailHero.vue'
 import GameDetailStats from './game-detail/GameDetailStats.vue'
 import GameDetailEdit from './game-detail/GameDetailEdit.vue'
@@ -25,6 +26,17 @@ const tempPublisher = ref(props.game.publisher || '')
 const tempReleaseDate = ref(props.game.release_date || '')
 const tempTags = ref(props.game.custom_tags || '[]')
 const saving = ref(false)
+
+// Toast
+const showToast = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error'>('success')
+
+const showToastMsg = (msg: string, type: 'success' | 'error'): void => {
+  toastMessage.value = msg
+  toastType.value = type
+  showToast.value = true
+}
 
 const tabs = [
   { id: 'stats' as const, label: '游玩统计', icon: 'chart' },
@@ -50,10 +62,14 @@ const toggleLaunchMenu = (): void => {
   showLaunchMenu.value = !showLaunchMenu.value
 }
 
-const handleLaunch = (mode: string): void => {
+const handleLaunch = async (mode: string): Promise<void> => {
   showLaunchMenu.value = false
-  // TODO: Phase 3 — call IPC launcher
-  console.log('Launch with mode:', mode, 'game:', props.game.id)
+  try {
+    await window.api.launchGame(props.game.id, mode as LaunchMode)
+    showToastMsg('游戏已启动', 'success')
+  } catch (err: any) {
+    showToastMsg(err.message || '启动失败', 'error')
+  }
 }
 
 const handleSave = async (): Promise<void> => {
@@ -138,6 +154,13 @@ const iconPaths: Record<string, string> = {
         {{ tab.label }}
       </button>
     </div>
+
+    <ToastNotification
+      v-if="showToast"
+      :message="toastMessage"
+      :type="toastType"
+      @close="showToast = false"
+    />
 
     <div class="tab-body">
       <GameDetailStats v-if="activeTab === 'stats'" :game="game" />

@@ -140,6 +140,10 @@ export interface IElectronAPI {
   getGamePlaytime: (gameId: string) => Promise<number>
   getSessionsByGame: (gameId: string) => Promise<PlaySession[]>
   getRecentSessions: (limit?: number) => Promise<PlaySession[]>
+  getAggregatedStats: (gameId: string) => Promise<{ total_sessions: number; total_duration: number; last_played: number | null }>
+  getAllAggregatedStats: () => Promise<{ game_id: string; total_sessions: number; total_duration: number; last_played: number | null }[]>
+  getTotalSessionCount: () => Promise<number>
+  launchGame: (gameId: string, mode: LaunchMode) => Promise<void>
 
   getCollections: () => Promise<Collection[]>
   createCollection: (name: string) => Promise<Collection>

@@ -20,6 +20,10 @@ const api: IElectronAPI = {
   getGamePlaytime: (gameId) => ipcRenderer.invoke('play:getTotalPlaytime', gameId),
   getSessionsByGame: (gameId) => ipcRenderer.invoke('play:getSessionsByGame', gameId),
   getRecentSessions: (limit) => ipcRenderer.invoke('play:getRecentSessions', limit),
+  getAggregatedStats: (gameId) => ipcRenderer.invoke('play:getAggregatedStats', gameId),
+  getTotalSessionCount: () => ipcRenderer.invoke('play:getTotalSessionCount'),
+  getAllAggregatedStats: () => ipcRenderer.invoke('play:getAllAggregatedStats'),
+  launchGame: (gameId, mode) => ipcRenderer.invoke('launch:game', gameId, mode),
 
   getCollections: () => ipcRenderer.invoke('col:getAll'),
   createCollection: (name) => ipcRenderer.invoke('col:create', name),

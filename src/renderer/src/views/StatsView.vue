@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
+import { formatPlaytime } from '../utils/format'
 import StatsRanking from './stats/StatsRanking.vue'
 
 const store = useGameStore()
@@ -8,51 +9,63 @@ const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
 const rankRange = ref<'week' | 'month'>('week')
 const showLibraryOverview = ref(true)
 
-onMounted(() => {
-  if (store.games.length === 0) store.loadGames()
+interface AggregatedStat {
+  game_id: string
+  total_sessions: number
+  total_duration: number
+  last_played: number | null
+}
+
+const allStats = ref<AggregatedStat[]>([])
+const totalSessionCount = ref(0)
+
+onMounted(async () => {
+  if (store.games.length === 0) await store.loadGames()
+  const [stats, count] = await Promise.all([
+    window.api.getAllAggregatedStats(),
+    window.api.getTotalSessionCount()
+  ])
+  allStats.value = stats
+  totalSessionCount.value = count
 })
 
 const libraryStats = computed(() => {
   const totalGames = store.allGames.length
-  const totalMinutes = store.allGames.reduce((sum, g) => {
-    const m = g.playtime?.match(/(\d+)/)
-    return sum + (m ? parseInt(m[1]) : 0)
-  }, 0)
-  const totalHours = Math.floor(totalMinutes / 60) || 0
+  let totalMs = 0
+  for (const s of allStats.value) {
+    totalMs += s.total_duration
+  }
+  const totalHours = Math.floor(totalMs / 3600000) || 0
   const completedGames = store.allGames.filter((g) => g.status === 'played').length
   return {
     totalGames,
     totalHours,
     completedGames,
-    avgPerDay: total.value > 0 ? Math.round(totalHours / Math.max(totalGames, 1)) : 0
+    avgPerDay: totalGames > 0 ? Math.round(totalHours / Math.max(totalGames, 1)) : 0
   }
 })
 
-const total = computed(() => store.allGames.length)
-
 const rankings = computed(() => {
-  const sorted = [...store.allGames]
-    .filter((g) => g.playtime && g.playtime !== '未知')
-    .sort((a, b) => {
-      const getMins = (p: string) => {
-        const m = p.match(/(\d+)/)
-        return m ? parseInt(m[1]) : 0
-      }
-      return getMins(b.playtime || '') - getMins(a.playtime || '')
-    })
+  const gameMap = new Map(store.allGames.map(g => [g.id, g]))
+  const ranked = allStats.value
+    .filter(s => s.total_duration > 0)
     .slice(0, 5)
+    .map((s, idx) => {
+      const game = gameMap.get(s.game_id)
+      return {
+        rank: idx + 1,
+        title: game ? (game.title_cn || game.title) : s.game_id,
+        playtime: formatPlaytime(Math.floor(s.total_duration / 1000))
+      }
+    })
 
-  if (sorted.length === 0) {
+  if (ranked.length === 0) {
     return [
       { rank: 1, title: '-', playtime: '-' },
       { rank: 2, title: '-', playtime: '-' }
     ]
   }
-  return sorted.map((g, idx) => ({
-    rank: idx + 1,
-    title: g.title_cn || g.title,
-    playtime: g.playtime
-  }))
+  return ranked
 })
 
 const topGame = computed(() => rankings.value[0])
@@ -121,7 +134,7 @@ const timeRanges = [
           <div class="og-lbl">库中所有游戏</div>
         </div>
         <div class="og-item">
-          <div class="og-val">-</div>
+          <div class="og-val">{{ totalSessionCount || '-' }}</div>
           <div class="og-lbl">总游玩次数</div>
         </div>
         <div class="og-item">

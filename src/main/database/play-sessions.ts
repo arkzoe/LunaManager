@@ -41,6 +41,22 @@ export const sessionOps = {
     return r.total
   },
 
+  getTotalCount: (): number => {
+    const r = getDatabase().prepare('SELECT COUNT(*) as count FROM play_sessions').get() as { count: number }
+    return r.count
+  },
+
+  getAllAggregatedStats: (): { game_id: string; total_sessions: number; total_duration: number; last_played: number | null }[] => {
+    return getDatabase().prepare(`
+      SELECT game_id, COUNT(*) as total_sessions,
+        COALESCE(SUM(duration), 0) as total_duration,
+        MAX(start_time) as last_played
+      FROM play_sessions
+      GROUP BY game_id
+      ORDER BY total_duration DESC
+    `).all() as { game_id: string; total_sessions: number; total_duration: number; last_played: number | null }[]
+  },
+
   getAggregatedStats: (gameId: string): { total_sessions: number; total_duration: number; last_played: number | null } => {
     const r = getDatabase().prepare(`
       SELECT COUNT(*) as total_sessions, COALESCE(SUM(duration), 0) as total_duration,

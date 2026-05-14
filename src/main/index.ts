@@ -71,6 +71,14 @@ function setupIpcHandlers(): void {
   ipcMain.handle('play:getTotalPlaytime', (_, gameId: string) => sessionOps.getTotalPlaytime(gameId))
   ipcMain.handle('play:getSessionsByGame', (_, gameId: string) => sessionOps.getByGameId(gameId))
   ipcMain.handle('play:getRecentSessions', (_, limit?: number) => sessionOps.getRecent(limit))
+  ipcMain.handle('play:getAggregatedStats', (_, gameId: string) => sessionOps.getAggregatedStats(gameId))
+  ipcMain.handle('play:getTotalSessionCount', () => sessionOps.getTotalCount())
+  ipcMain.handle('play:getAllAggregatedStats', () => sessionOps.getAllAggregatedStats())
+
+  // ===== Game Launch =====
+  ipcMain.handle('launch:game', (_, gameId: string, mode: string) => {
+    launchGame(gameId, mode as LaunchMode)
+  })
 
   // ===== Collections =====
   ipcMain.handle('col:getAll', () => collectionOps.getAll())
@@ -125,10 +133,11 @@ function setupIpcHandlers(): void {
 }
 
 import type { AppConfig } from './config/store'
-import type { GameStatus } from '../shared/types'
+import type { GameStatus, LaunchMode } from '../shared/types'
 import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
 import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
+import { launchGame } from './services/game-launcher'
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
