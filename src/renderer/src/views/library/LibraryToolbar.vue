@@ -5,6 +5,7 @@ defineProps<{
   searchQuery: string
   viewMode: 'grid' | 'list'
   showImportMenu: boolean
+  batchMode: boolean
 }>()
 
 const emit = defineEmits<{
@@ -13,6 +14,7 @@ const emit = defineEmits<{
   (e: 'toggleImportMenu'): void
   (e: 'manualImport'): void
   (e: 'batchImport'): void
+  (e: 'toggleBatchMode'): void
 }>()
 
 const importBtnRef = ref<HTMLElement | null>(null)
@@ -56,6 +58,13 @@ const importBtnRef = ref<HTMLElement | null>(null)
           </svg>
         </button>
       </div>
+
+      <button class="bb-btn" :class="{ active: batchMode }" @click="emit('toggleBatchMode')">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+          <path d="M4 6h4v2H4zm0 5h4v2H4zm0 5h4v2H4zm6-10h10v2H10zm0 5h10v2H10zm0 5h10v2H10z" />
+        </svg>
+        批量操作
+      </button>
 
       <div class="import-dropdown">
         <button ref="importBtnRef" class="btn-brand btn-sm" @click="emit('toggleImportMenu')">
@@ -217,5 +226,33 @@ const importBtnRef = ref<HTMLElement | null>(null)
 .ctx-item:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.bb-btn {
+  height: 32px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.bb-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.bb-btn.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
 }
 </style>
