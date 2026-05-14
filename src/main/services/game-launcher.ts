@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from 'child_process'
+import { spawn, execFile, type ChildProcess } from 'child_process'
 import path from 'path'
 import { getConfig } from '../config/store'
 import { sessionOps, gameOps } from '../database'
@@ -102,5 +102,27 @@ export function launchGame(gameId: string, mode: LaunchMode): void {
         last_played: new Date().toISOString()
       })
     }
+  })
+}
+
+export function stopGame(gameId: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = activeProcesses.get(gameId)
+    if (!proc || proc.exitCode !== null) {
+      resolve()
+      return
+    }
+
+    const pid = proc.pid
+    if (!pid || process.platform !== 'win32') {
+      proc.kill('SIGTERM')
+      resolve()
+      return
+    }
+
+    execFile('taskkill', ['/f', '/t', '/pid', String(pid)], (err) => {
+      if (err) reject(err)
+      else resolve()
+    })
   })
 }

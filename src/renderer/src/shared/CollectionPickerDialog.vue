@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 
 interface CollectionItem {
   id: string
@@ -43,8 +43,8 @@ const handleSelect = (id: string): void => {
   emit('select', id)
 }
 
-onMounted(() => {
-  if (props.show) loadCollections()
+watch(() => props.show, (val) => {
+  if (val) loadCollections()
 })
 </script>
 
