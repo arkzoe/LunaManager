@@ -52,17 +52,28 @@ const handleSearch = async (): Promise<void> => {
 
   searching.value = true
   metadataFilled.value = false
+  error.value = ''
   try {
     const source = await window.api.getConfig('metadataSource')
     searchSource.value = source || 'vndb'
-    searchResults.value = await window.api.searchMetadata(query, searchSource.value)
+
+    const token = searchSource.value === 'bangumi'
+      ? await window.api.getConfig('bangumiToken')
+      : await window.api.getConfig('vndbApiKey')
+
+    if (searchSource.value === 'bangumi' && !token) {
+      error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
+      return
+    }
+
+    searchResults.value = await window.api.searchMetadata(query, searchSource.value, token || undefined)
     if (searchResults.value.length === 1) {
       applySearchResult(searchResults.value[0])
     } else if (searchResults.value.length > 1) {
       showSearchPicker.value = true
     }
-  } catch {
-    // silently fail, user can manually search
+  } catch (err: any) {
+    error.value = err.message || '搜索失败'
   } finally {
     searching.value = false
   }
@@ -73,26 +84,32 @@ const applySearchResult = async (result: SearchResult): Promise<void> => {
   titleCn.value = result.titleCn || ''
 
   if (result.id) {
-    const detail = await window.api.fetchMetadataDetail(
-      result.id,
-      result.source,
-      undefined,
-      undefined // no gameId yet, will download on import
-    )
-    if (detail.title) title.value = detail.title_cn || detail.title || title.value
-    if (detail.title_cn) titleCn.value = detail.title_cn
-    if (detail.cover) {
-      // Store the cover URL temporarily; will be downloaded on import with gameId
-      coverUrl.value = detail.cover
+    try {
+      const token = result.source === 'bangumi'
+        ? await window.api.getConfig('bangumiToken')
+        : await window.api.getConfig('vndbApiKey')
+      const detail = await window.api.fetchMetadataDetail(
+        result.id,
+        result.source,
+        token || undefined,
+        undefined
+      )
+      if (detail.title) title.value = detail.title_cn || detail.title || title.value
+      if (detail.title_cn) titleCn.value = detail.title_cn
+      if (detail.cover) {
+        coverUrl.value = detail.cover
+      }
+      if (detail.developer) developer.value = detail.developer
+      if (detail.release_date) releaseDate.value = detail.release_date
+      if (detail.description) description.value = detail.description
+      if (detail.rating) rating.value = detail.rating
+      if (detail.custom_tags) customTags.value = detail.custom_tags
+      if (detail.vndb_id) vndbId.value = detail.vndb_id
+      if (detail.bangumi_id) bangumiId.value = detail.bangumi_id
+      metadataFilled.value = true
+    } catch (err: any) {
+      console.error('获取元数据详情失败:', err.message || err)
     }
-    if (detail.developer) developer.value = detail.developer
-    if (detail.release_date) releaseDate.value = detail.release_date
-    if (detail.description) description.value = detail.description
-    if (detail.rating) rating.value = detail.rating
-    if (detail.custom_tags) customTags.value = detail.custom_tags
-    if (detail.vndb_id) vndbId.value = detail.vndb_id
-    if (detail.bangumi_id) bangumiId.value = detail.bangumi_id
-    metadataFilled.value = true
   }
 }
 

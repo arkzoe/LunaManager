@@ -96,16 +96,27 @@ const handleSearchRow = async (rowIndex: number): Promise<void> => {
   if (!query) return
 
   searchingRow.value = rowIndex
+  error.value = ''
   try {
     const source = await window.api.getConfig('metadataSource')
     searchSource.value = source || 'vndb'
-    searchResults.value = await window.api.searchMetadata(query, searchSource.value)
+
+    const token = searchSource.value === 'bangumi'
+      ? await window.api.getConfig('bangumiToken')
+      : await window.api.getConfig('vndbApiKey')
+
+    if (searchSource.value === 'bangumi' && !token) {
+      error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
+      return
+    }
+
+    searchResults.value = await window.api.searchMetadata(query, searchSource.value, token || undefined)
     if (searchResults.value.length > 0) {
       activeRowIndex.value = rowIndex
       showSearchPicker.value = true
     }
-  } catch {
-    // silently fail
+  } catch (err: any) {
+    error.value = err.message || '搜索失败'
   } finally {
     searchingRow.value = -1
   }
@@ -126,10 +137,13 @@ const handlePickerSelect = async (result: SearchResult): Promise<void> => {
 
   if (result.id) {
     try {
+      const token = result.source === 'bangumi'
+        ? await window.api.getConfig('bangumiToken')
+        : await window.api.getConfig('vndbApiKey')
       const detail = await window.api.fetchMetadataDetail(
         result.id,
         result.source,
-        undefined,
+        token || undefined,
         undefined
       )
       if (detail.developer) row.developer = detail.developer
@@ -137,8 +151,8 @@ const handlePickerSelect = async (result: SearchResult): Promise<void> => {
       if (detail.description) row.description = detail.description
       if (detail.custom_tags) row.customTags = detail.custom_tags
       if (detail.cover) row.cover = detail.cover
-    } catch {
-      // details fetch failed, keep surface-level data
+    } catch (err: any) {
+      console.error('获取元数据详情失败:', err.message || err)
     }
   }
 }

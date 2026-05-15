@@ -1,7 +1,23 @@
-import { buildUserAgent, safeFetch } from './base-client'
+import { buildUserAgent, safeFetch, apiError } from './base-client'
 import type { GameRecord, SearchResult } from '../../../shared/types'
 
 const VNDB_API = 'https://api.vndb.org/kana'
+
+const TITLE_FIELDS = 'titles.title, titles.latin, titles.lang, titles.official'
+
+function pickChineseTitle(titles: Array<{ lang: string; title: string; official?: boolean }>): string {
+  if (!titles?.length) return ''
+  const pref = ['zh-Hans', 'zh', 'zh-Hant']
+  for (const lang of pref) {
+    const match = titles.find((t) => t.lang === lang && t.official)
+    if (match) return match.title
+  }
+  for (const lang of pref) {
+    const match = titles.find((t) => t.lang === lang)
+    if (match) return match.title
+  }
+  return ''
+}
 
 export class VndbApiClient {
   private token?: string
@@ -44,7 +60,7 @@ export class VndbApiClient {
         headers: this.headers(),
         body: JSON.stringify({
           filters: ['search', '=', query],
-          fields: 'id, title, alttitle, image.url, released, rating',
+          fields: `id, title, ${TITLE_FIELDS}, image.url, released, rating`,
           results: 10,
           sort: 'searchrank'
         })
@@ -54,7 +70,7 @@ export class VndbApiClient {
     return (data.results || []).map((vn: any) => ({
       id: vn.id,
       title: vn.title || '',
-      titleCn: vn.alttitle || '',
+      titleCn: pickChineseTitle(vn.titles),
       cover: vn.image?.url || '',
       date: vn.released || '',
       rating: vn.rating ? vn.rating / 10 : 0,
@@ -69,13 +85,13 @@ export class VndbApiClient {
         headers: this.headers(),
         body: JSON.stringify({
           filters: ['id', '=', vndbId],
-          fields: 'id, title, alttitle, description, image.url, rating, released, developers.name, tags.name, tags.rating, tags.spoiler, tags.lie'
+          fields: `id, title, ${TITLE_FIELDS}, description, image.url, rating, released, developers.name, tags.name, tags.rating, tags.spoiler, tags.lie`
         })
       })
     )
 
     const vn = data.results?.[0]
-    if (!vn) throw { code: 'NOT_FOUND' as const, message: `未找到 VNDB 条目: ${vndbId}` }
+    if (!vn) throw apiError('NOT_FOUND', `未找到 VNDB 条目: ${vndbId}`)
 
     const tags = (vn.tags || [])
       ?.filter((t: any) => t.rating >= 2 && !t.lie)
@@ -85,7 +101,7 @@ export class VndbApiClient {
 
     return {
       title: vn.title || '',
-      title_cn: vn.alttitle || '',
+      title_cn: pickChineseTitle(vn.titles),
       description: vn.description || '',
       cover: vn.image?.url || '',
       rating: vn.rating ? vn.rating / 10 : 0,

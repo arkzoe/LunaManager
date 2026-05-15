@@ -1,4 +1,4 @@
-import { buildUserAgent, safeFetch } from './base-client'
+import { buildUserAgent, safeFetch, safeFetchWithRetry, apiError } from './base-client'
 import type { GameRecord, SearchResult } from '../../../shared/types'
 
 const BGM_API = 'https://api.bgm.tv'
@@ -70,14 +70,14 @@ export class BangumiApiClient {
   }
 
   async getSubjectDetail(subjectId: string): Promise<Partial<GameRecord>> {
-    const data = await safeFetch<any>(() =>
+    const data = await safeFetchWithRetry<any>(() =>
       fetch(`${BGM_API}/v0/subjects/${subjectId}`, {
         method: 'GET',
         headers: this.headers()
       })
     )
 
-    if (!data || !data.id) throw { code: 'NOT_FOUND' as const, message: `未找到 Bangumi 条目: ${subjectId}` }
+    if (!data || !data.id) throw apiError('NOT_FOUND', `未找到 Bangumi 条目: ${subjectId}`)
 
     const tags = (data.tags || [])
       .sort((a: any, b: any) => (b.count || 0) - (a.count || 0))

@@ -140,9 +140,24 @@ const handleFetchMetadata = async (): Promise<void> => {
     showToastMsg('请先选择数据源并输入对应 ID', 'error')
     return
   }
+
+  const token = source === 'bangumi'
+    ? await window.api.getConfig('bangumiToken')
+    : await window.api.getConfig('vndbApiKey')
+
+  if (source === 'bangumi' && !token) {
+    showToastMsg('请先在「设置 → 数据源」中配置 Bangumi Token', 'error')
+    return
+  }
+
   fetching.value = true
   try {
-    const detail = await window.api.fetchMetadataDetail(sourceId, source)
+    const detail = await window.api.fetchMetadataDetail(
+      sourceId,
+      source,
+      token || undefined,
+      undefined
+    )
     if (detail.title) tempTitle.value = detail.title
     if (detail.title_cn) tempTitleCn.value = detail.title_cn
     if (detail.developer) tempDeveloper.value = detail.developer

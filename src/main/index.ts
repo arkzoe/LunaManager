@@ -148,11 +148,19 @@ function setupIpcHandlers(): void {
   })
 
   ipcMain.handle('metadata:search', async (_e, { query, source, apiKey }) => {
-    return searchMetadata(query, source, apiKey)
+    try {
+      return await searchMetadata(query, source, apiKey)
+    } catch (err: any) {
+      throw new Error(err.message || '搜索失败')
+    }
   })
 
   ipcMain.handle('metadata:fetch-detail', async (_e, { sourceId, source, apiKey, gameId }) => {
-    return fetchMetadataDetail(sourceId, source, apiKey, gameId)
+    try {
+      return await fetchMetadataDetail(sourceId, source, apiKey, gameId)
+    } catch (err: any) {
+      throw new Error(err.message || '获取元数据失败')
+    }
   })
 
   // ===== Cover Download =====
