@@ -121,8 +121,14 @@ export interface SearchResult {
 }
 
 export interface ApiError {
-  code: 'NETWORK' | 'TIMEOUT' | 'AUTH_FAILED' | 'RATE_LIMITED'
-    | 'NOT_FOUND' | 'SERVER_ERROR' | 'PARSE_ERROR'
+  code:
+    | 'NETWORK'
+    | 'TIMEOUT'
+    | 'AUTH_FAILED'
+    | 'RATE_LIMITED'
+    | 'NOT_FOUND'
+    | 'SERVER_ERROR'
+    | 'PARSE_ERROR'
   message: string
 }
 
@@ -175,9 +181,19 @@ export interface IElectronAPI {
   endPlaySession: (sessionId: string) => Promise<void>
   getGamePlaytime: (gameId: string) => Promise<number>
   getSessionsByGame: (gameId: string) => Promise<PlaySession[]>
+  getAllSessions: () => Promise<PlaySession[]>
   getRecentSessions: (limit?: number) => Promise<PlaySession[]>
-  getAggregatedStats: (gameId: string) => Promise<{ total_sessions: number; total_duration: number; last_played: number | null }>
-  getAllAggregatedStats: () => Promise<{ game_id: string; total_sessions: number; total_duration: number; last_played: number | null }[]>
+  getAggregatedStats: (
+    gameId: string
+  ) => Promise<{ total_sessions: number; total_duration: number; last_played: number | null }>
+  getAllAggregatedStats: () => Promise<
+    {
+      game_id: string
+      total_sessions: number
+      total_duration: number
+      last_played: number | null
+    }[]
+  >
   getTotalSessionCount: () => Promise<number>
   launchGame: (gameId: string, mode: LaunchMode) => Promise<void>
   stopGame: (gameId: string) => Promise<void>
@@ -211,8 +227,20 @@ export interface IElectronAPI {
   openPath: (path: string) => Promise<string>
 
   // 元数据刮擦
-  testApiConnection: (source: 'vndb' | 'bangumi', token?: string) => Promise<{ ok: boolean; message: string }>
-  searchMetadata: (query: string, source: 'vndb' | 'bangumi', apiKey?: string) => Promise<SearchResult[]>
-  fetchMetadataDetail: (sourceId: string, source: 'vndb' | 'bangumi', apiKey?: string, gameId?: string) => Promise<Partial<GameRecord>>
+  testApiConnection: (
+    source: 'vndb' | 'bangumi',
+    token?: string
+  ) => Promise<{ ok: boolean; message: string }>
+  searchMetadata: (
+    query: string,
+    source: 'vndb' | 'bangumi',
+    apiKey?: string
+  ) => Promise<SearchResult[]>
+  fetchMetadataDetail: (
+    sourceId: string,
+    source: 'vndb' | 'bangumi',
+    apiKey?: string,
+    gameId?: string
+  ) => Promise<Partial<GameRecord>>
   downloadCover: (gameId: string, url: string) => Promise<string | null>
 }

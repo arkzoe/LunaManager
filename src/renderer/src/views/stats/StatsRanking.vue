@@ -3,6 +3,7 @@ interface RankingItem {
   rank: number
   title: string
   playtime: string
+  cover: string
 }
 
 defineProps<{
@@ -37,32 +38,39 @@ const emit = defineEmits<{
         </button>
       </div>
     </div>
-    <div class="rankings">
-      <div v-if="topGame" class="rank-top">
-        <div class="rt-badge">#1</div>
-        <div class="rt-cover">
-          <svg viewBox="0 0 24 24" class="w-8 h-8 fill-text-muted opacity-25">
-            <path
-              d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-            />
-          </svg>
+    <div v-if="topGame" class="rankings">
+      <div class="rank-left">
+        <!-- <div class="rl-badge">#1</div> -->
+        <div class="rl-cover">
+          <img
+            v-if="topGame.cover"
+            :src="topGame.cover"
+            :alt="topGame.title"
+            class="rl-cover-img"
+          />
+          <div v-else class="rl-cover-ph">
+            <svg viewBox="0 0 24 24" class="w-10 h-10 fill-text-muted opacity-25">
+              <path
+                d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+              />
+            </svg>
+          </div>
         </div>
-        <div class="rt-name">{{ topGame.title }}</div>
-        <div class="rt-time">{{ topGame.playtime }}</div>
+        <div class="rl-name">{{ topGame.title }}</div>
+        <div class="rl-time">{{ topGame.playtime }}</div>
       </div>
-
-      <div class="rank-list">
-        <div class="rl-header">
-          <span class="rl-rank">#</span>
-          <span class="rl-title">游戏</span>
-          <span class="rl-time">时长</span>
+      <div class="rank-right">
+        <div class="rr-header">
+          <span class="rr-rank">#</span>
+          <span class="rr-title">游戏</span>
+          <span class="rr-time">时长</span>
         </div>
-        <div v-for="g in rankings.slice(1)" :key="g.rank" class="rl-row">
-          <span class="rl-rank">{{ g.rank }}</span>
-          <span class="rl-title">{{ g.title }}</span>
-          <span class="rl-time">{{ g.playtime }}</span>
+        <div v-for="g in rankings.slice(1)" :key="g.rank" class="rr-row">
+          <span class="rr-rank">{{ g.rank }}</span>
+          <span class="rr-title">{{ g.title }}</span>
+          <span class="rr-time">{{ g.playtime }}</span>
         </div>
-        <div v-if="rankings.length <= 1" class="rl-empty">暂无排行数据</div>
+        <div v-if="rankings.length <= 1" class="rr-empty">暂无排行数据</div>
       </div>
     </div>
   </div>
@@ -84,13 +92,7 @@ const emit = defineEmits<{
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  cursor: pointer;
   user-select: none;
-  transition: background 0.15s;
-}
-
-.panel-header:hover {
-  background: var(--bg-hover);
 }
 
 .time-toggle {
@@ -125,89 +127,112 @@ const emit = defineEmits<{
 }
 
 .rankings {
-  padding: 0 18px 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
   border-top: 1px solid var(--border-color-light);
 }
 
-.rank-top {
+/* ===== 左栏 — #1 大封面 ===== */
+.rank-left {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 0 20px;
+  padding: 24px 16px 20px;
+  border-right: 1px solid var(--border-color-light);
   text-align: center;
 }
 
-.rt-badge {
-  width: 40px;
-  height: 40px;
+.rl-badge {
+  width: 36px;
+  height: 36px;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   margin-bottom: 12px;
 }
 
-.rt-cover {
-  width: 100px;
-  height: 140px;
-  background: var(--bg-secondary);
+.rl-cover {
+  width: 240px;
+  height: 336px;
   border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
-  border: 1px solid var(--border-color);
 }
 
-.rt-name {
+.rl-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rl-cover-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rl-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 3px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.rt-time {
-  font-size: 12px;
+.rl-time {
+  font-size: 13px;
   color: var(--text-tertiary);
 }
 
-.rank-list {
-  margin-top: 8px;
+/* ===== 右栏 — 其余排行 ===== */
+.rank-right {
+  padding: 16px 14px;
 }
 
-.rl-header {
+.rr-header {
   display: grid;
-  grid-template-columns: 40px 1fr 80px;
-  padding: 8px 12px;
+  grid-template-columns: 32px 1fr 72px;
+  padding: 6px 10px;
   font-size: 11px;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.rl-row {
+.rr-row {
   display: grid;
-  grid-template-columns: 40px 1fr 80px;
+  grid-template-columns: 32px 1fr 72px;
   align-items: center;
-  padding: 10px 12px;
+  padding: 10px;
   border-radius: 8px;
   transition: background 0.1s;
 }
 
-.rl-row:hover {
+.rr-row:hover {
   background: var(--bg-hover);
 }
 
-.rl-rank {
+.rr-rank {
   font-size: 13px;
   color: var(--text-secondary);
+  text-align: center;
 }
 
-.rl-title {
+.rr-title {
   font-size: 13px;
   color: var(--text-primary);
   white-space: nowrap;
@@ -215,13 +240,13 @@ const emit = defineEmits<{
   text-overflow: ellipsis;
 }
 
-.rl-time {
+.rr-time {
   font-size: 13px;
   color: var(--text-secondary);
   text-align: right;
 }
 
-.rl-empty {
+.rr-empty {
   padding: 30px 0;
   text-align: center;
   font-size: 13px;

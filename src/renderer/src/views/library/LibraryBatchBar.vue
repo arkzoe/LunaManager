@@ -29,7 +29,11 @@ const emit = defineEmits<{
         修改状态
         <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current"><path d="M7 10l5 5 5-5z" /></svg>
       </button>
-      <div v-if="showBatchStatusMenu" class="context-overlay" @click="emit('closeBatchStatusMenu')" />
+      <div
+        v-if="showBatchStatusMenu"
+        class="context-overlay"
+        @click="emit('closeBatchStatusMenu')"
+      />
       <div v-if="showBatchStatusMenu" class="batch-status-menu">
         <button
           v-for="f in statusFilters"

@@ -393,7 +393,9 @@ const handleBatchImported = (result: ImportResult): void => {
         @click="toggleSort(opt.key)"
       >
         {{ opt.label }}
-        <span v-if="sortKey === opt.key" class="sort-arrow">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+        <span v-if="sortKey === opt.key" class="sort-arrow">{{
+          sortDir === 'asc' ? '↑' : '↓'
+        }}</span>
       </button>
     </div>
 

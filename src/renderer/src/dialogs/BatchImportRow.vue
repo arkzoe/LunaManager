@@ -39,11 +39,7 @@ const matchStatusClass = (status?: string): string => {
     }"
   >
     <div class="br-status">
-      <span
-        v-if="row.importStatus === 'importing'"
-        class="br-status-spin"
-        title="导入中"
-      >
+      <span v-if="row.importStatus === 'importing'" class="br-status-spin" title="导入中">
         <svg viewBox="0 0 24 24" class="w-3 h-3 spin">
           <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
         </svg>
@@ -52,22 +48,21 @@ const matchStatusClass = (status?: string): string => {
         v-else-if="row.importStatus === 'success'"
         class="br-status-icon br-status-ok"
         title="导入成功"
-      >✓</span>
+        >✓</span
+      >
       <span
         v-else-if="row.importStatus === 'failed'"
         class="br-status-icon br-status-fail"
         :title="row.importMessage || '导入失败'"
-      >✗</span>
+        >✗</span
+      >
       <span
         v-else-if="row.importStatus === 'skipped'"
         class="br-status-icon br-status-skip"
         :title="row.importMessage || '已跳过'"
-      >⏭</span>
-      <span
-        v-else-if="row.matchStatus === 'searching'"
-        class="br-status-spin"
-        title="匹配中"
+        >⏭</span
       >
+      <span v-else-if="row.matchStatus === 'searching'" class="br-status-spin" title="匹配中">
         <svg viewBox="0 0 24 24" class="w-3 h-3 spin">
           <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
         </svg>
@@ -77,7 +72,8 @@ const matchStatusClass = (status?: string): string => {
         class="br-status-icon"
         :class="matchStatusClass(row.matchStatus)"
         :title="row.matchStatus === 'matched' ? '已匹配' : '无匹配结果'"
-      >{{ matchStatusIcon(row.matchStatus) }}</span>
+        >{{ matchStatusIcon(row.matchStatus) }}</span
+      >
     </div>
 
     <div class="br-check">

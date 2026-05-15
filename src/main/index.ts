@@ -2,7 +2,14 @@ import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { initDatabase, closeDatabase, gameOps, sessionOps, collectionOps, snapshotOps } from './database'
+import {
+  initDatabase,
+  closeDatabase,
+  gameOps,
+  sessionOps,
+  collectionOps,
+  snapshotOps
+} from './database'
 import { getConfig, setConfig, getAllConfig, setAllConfig } from './config/store'
 
 function createWindow(): void {
@@ -56,22 +63,39 @@ function setupIpcHandlers(): void {
   ipcMain.handle('db:updateGame', (_, id: string, updates) => gameOps.update(id, updates))
   ipcMain.handle('db:deleteGame', (_, id: string) => gameOps.delete(id))
   ipcMain.handle('db:searchGames', (_, q: string) => gameOps.search(q))
-  ipcMain.handle('db:getGamesByStatus', (_, status: string) => gameOps.getByStatus(status as GameStatus))
-  ipcMain.handle('db:getGameByExecutablePath', (_, path: string) => gameOps.getByExecutablePath(path) || null)
+  ipcMain.handle('db:getGamesByStatus', (_, status: string) =>
+    gameOps.getByStatus(status as GameStatus)
+  )
+  ipcMain.handle(
+    'db:getGameByExecutablePath',
+    (_, path: string) => gameOps.getByExecutablePath(path) || null
+  )
 
   // ===== Config =====
-  ipcMain.handle('config:get', <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K) => getConfig(key))
-  ipcMain.handle('config:set', <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K, value: AppConfig[K]) => setConfig(key, value))
+  ipcMain.handle(
+    'config:get',
+    <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K) => getConfig(key)
+  )
+  ipcMain.handle(
+    'config:set',
+    <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K, value: AppConfig[K]) =>
+      setConfig(key, value)
+  )
   ipcMain.handle('config:getAll', () => getAllConfig())
   ipcMain.handle('config:setAll', (_, config) => setAllConfig(config))
 
   // ===== Play Sessions =====
   ipcMain.handle('play:startSession', (_, gameId: string) => sessionOps.start(gameId))
   ipcMain.handle('play:endSession', (_, sessionId: string) => sessionOps.end(sessionId))
-  ipcMain.handle('play:getTotalPlaytime', (_, gameId: string) => sessionOps.getTotalPlaytime(gameId))
+  ipcMain.handle('play:getTotalPlaytime', (_, gameId: string) =>
+    sessionOps.getTotalPlaytime(gameId)
+  )
   ipcMain.handle('play:getSessionsByGame', (_, gameId: string) => sessionOps.getByGameId(gameId))
   ipcMain.handle('play:getRecentSessions', (_, limit?: number) => sessionOps.getRecent(limit))
-  ipcMain.handle('play:getAggregatedStats', (_, gameId: string) => sessionOps.getAggregatedStats(gameId))
+  ipcMain.handle('play:getAllSessions', () => sessionOps.getAll())
+  ipcMain.handle('play:getAggregatedStats', (_, gameId: string) =>
+    sessionOps.getAggregatedStats(gameId)
+  )
   ipcMain.handle('play:getTotalSessionCount', () => sessionOps.getTotalCount())
   ipcMain.handle('play:getAllAggregatedStats', () => sessionOps.getAllAggregatedStats())
 
@@ -91,14 +115,22 @@ function setupIpcHandlers(): void {
   ipcMain.handle('col:create', (_, name: string) => collectionOps.create(name))
   ipcMain.handle('col:rename', (_, id: string, name: string) => collectionOps.rename(id, name))
   ipcMain.handle('col:delete', (_, id: string) => collectionOps.delete(id))
-  ipcMain.handle('col:addGame', (_, gameId: string, colId: string) => collectionOps.addGame(gameId, colId))
-  ipcMain.handle('col:removeGame', (_, gameId: string, colId: string) => collectionOps.removeGame(gameId, colId))
-  ipcMain.handle('col:getCollectionGames', (_, colId: string) => collectionOps.getCollectionGames(colId))
+  ipcMain.handle('col:addGame', (_, gameId: string, colId: string) =>
+    collectionOps.addGame(gameId, colId)
+  )
+  ipcMain.handle('col:removeGame', (_, gameId: string, colId: string) =>
+    collectionOps.removeGame(gameId, colId)
+  )
+  ipcMain.handle('col:getCollectionGames', (_, colId: string) =>
+    collectionOps.getCollectionGames(colId)
+  )
   ipcMain.handle('col:reorder', (_, ids: string[]) => collectionOps.reorder(ids))
 
   // ===== Save Snapshots =====
   ipcMain.handle('snap:getByGame', (_, gameId: string) => snapshotOps.getByGameId(gameId))
-  ipcMain.handle('snap:create', (_, gameId: string, notes?: string) => snapshotOps.create(gameId, notes))
+  ipcMain.handle('snap:create', (_, gameId: string, notes?: string) =>
+    snapshotOps.create(gameId, notes)
+  )
   ipcMain.handle('snap:delete', (_, id: string) => snapshotOps.delete(id))
   ipcMain.handle('snap:restore', () => {
     throw new Error('Not implemented')
@@ -121,14 +153,17 @@ function setupIpcHandlers(): void {
   ipcMain.handle('import:pickBatchFolder', (_e, options?) => pickBatchFolderAndScan(options))
 
   // ===== File Picker =====
-  ipcMain.handle('import:pickFile', async (_e, filters?: { name: string; extensions: string[] }[]) => {
-    const { dialog } = await import('electron')
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile'],
-      filters: filters ?? [{ name: 'Executable', extensions: ['exe'] }]
-    })
-    return result.canceled ? null : result.filePaths[0]
-  })
+  ipcMain.handle(
+    'import:pickFile',
+    async (_e, filters?: { name: string; extensions: string[] }[]) => {
+      const { dialog } = await import('electron')
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: filters ?? [{ name: 'Executable', extensions: ['exe'] }]
+      })
+      return result.canceled ? null : result.filePaths[0]
+    }
+  )
 
   ipcMain.handle('import:pickDirectory', async () => {
     const { dialog } = await import('electron')
@@ -197,7 +232,10 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') { closeDatabase(); app.quit() }
+  if (process.platform !== 'darwin') {
+    closeDatabase()
+    app.quit()
+  }
 })
 
 app.on('before-quit', () => closeDatabase())

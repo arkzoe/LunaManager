@@ -2,7 +2,21 @@
 import { computed, onMounted, ref } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import { formatPlaytime } from '../utils/format'
+import type { PlaySession } from '../../../shared/types'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Filler,
+  type TooltipItem
+} from 'chart.js'
+import { Line } from 'vue-chartjs'
 import StatsRanking from './stats/StatsRanking.vue'
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
 const store = useGameStore()
 const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
@@ -18,15 +32,18 @@ interface AggregatedStat {
 
 const allStats = ref<AggregatedStat[]>([])
 const totalSessionCount = ref(0)
+const allSessions = ref<PlaySession[]>([])
 
 onMounted(async () => {
   if (store.games.length === 0) await store.loadGames()
-  const [stats, count] = await Promise.all([
+  const [stats, count, sessions] = await Promise.all([
     window.api.getAllAggregatedStats(),
-    window.api.getTotalSessionCount()
+    window.api.getTotalSessionCount(),
+    window.api.getAllSessions()
   ])
   allStats.value = stats
   totalSessionCount.value = count
+  allSessions.value = sessions
 })
 
 const libraryStats = computed(() => {
@@ -49,26 +66,123 @@ const rankings = computed(() => {
   const gameMap = new Map(store.allGames.map((g) => [g.id, g]))
   const ranked = allStats.value
     .filter((s) => s.total_duration > 0)
-    .slice(0, 5)
+    .slice(0, 10)
     .map((s, idx) => {
       const game = gameMap.get(s.game_id)
       return {
         rank: idx + 1,
         title: game ? game.title_cn || game.title : s.game_id,
-        playtime: formatPlaytime(Math.floor(s.total_duration / 1000))
+        playtime: formatPlaytime(Math.floor(s.total_duration / 1000)),
+        cover: game?.cover || ''
       }
     })
 
   if (ranked.length === 0) {
     return [
-      { rank: 1, title: '-', playtime: '-' },
-      { rank: 2, title: '-', playtime: '-' }
+      { rank: 1, title: '-', playtime: '-', cover: '' },
+      { rank: 2, title: '-', playtime: '-', cover: '' }
     ]
   }
   return ranked
 })
 
 const topGame = computed(() => rankings.value[0])
+
+const chartData = computed(() => {
+  if (allSessions.value.length === 0) return null
+
+  const now = Date.now()
+  let cutoff: number
+  if (timeRange.value === 'week') {
+    cutoff = now - 7 * 24 * 60 * 60 * 1000
+  } else if (timeRange.value === 'month') {
+    cutoff = now - 30 * 24 * 60 * 60 * 1000
+  } else if (timeRange.value === 'year') {
+    cutoff = now - 365 * 24 * 60 * 60 * 1000
+  } else {
+    cutoff = 0
+  }
+
+  const sessions = cutoff
+    ? allSessions.value.filter((s) => s.start_time >= cutoff)
+    : allSessions.value
+
+  if (sessions.length === 0) return null
+
+  type GroupEntry = { total: number; sortKey: number }
+  const grouped = new Map<string, GroupEntry>()
+
+  for (const s of sessions) {
+    if (s.duration <= 0) continue
+    const d = new Date(s.start_time)
+    let key: string
+    let sortKey: number
+    if (timeRange.value === 'all') {
+      key = `${d.getFullYear()}/${d.getMonth() + 1}`
+      sortKey = d.getFullYear() * 12 + d.getMonth()
+    } else if (timeRange.value === 'year') {
+      key = `${d.getMonth() + 1}/${d.getDate()}`
+      sortKey = d.getTime()
+    } else {
+      key = `${d.getMonth() + 1}/${d.getDate()}`
+      sortKey = d.getTime()
+    }
+    const prev = grouped.get(key)
+    if (prev) {
+      prev.total += s.duration
+    } else {
+      grouped.set(key, { total: s.duration, sortKey })
+    }
+  }
+
+  const entries = [...grouped.entries()].sort((a, b) => a[1].sortKey - b[1].sortKey)
+  const labels = entries.map(([k]) => k)
+  const values = entries.map(([, v]) => Math.round((v.total / 3600000) * 10) / 10)
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: '游玩时长 (小时)',
+        data: values,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: '#6366f1'
+      }
+    ]
+  }
+})
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx: TooltipItem<'line'>) => `${ctx.parsed.y ?? 0} 小时`
+      }
+    }
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { font: { size: 11 }, color: '#9ca3af' }
+    },
+    y: {
+      beginAtZero: true,
+      grid: { color: 'rgba(156, 163, 175, 0.1)' },
+      ticks: {
+        font: { size: 11 },
+        color: '#9ca3af',
+        callback: (v: number | string) => `${v}h`
+      }
+    }
+  }
+}
 
 const timeRanges = [
   { id: 'week' as const, label: '周' },
@@ -176,11 +290,16 @@ const timeRanges = [
           </button>
         </div>
       </div>
-      <div class="chart-ph">
-        <svg viewBox="0 0 24 24" class="w-12 h-12 fill-text-muted opacity-15 mb-3">
-          <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" />
-        </svg>
-        <p>游玩时长趋势图将在接入真实数据后显示</p>
+      <div class="panel-body">
+        <div v-if="chartData" class="chart-container">
+          <Line :data="chartData" :options="chartOptions" />
+        </div>
+        <div v-else class="chart-ph">
+          <svg viewBox="0 0 24 24" class="w-12 h-12 fill-text-muted opacity-15 mb-3">
+            <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" />
+          </svg>
+          <p>还没有游玩记录</p>
+        </div>
       </div>
     </div>
 
@@ -349,7 +468,12 @@ const timeRanges = [
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-/* ===== 图表占位 ===== */
+/* ===== 图表 ===== */
+.chart-container {
+  height: 200px;
+  position: relative;
+}
+
 .chart-ph {
   display: flex;
   flex-direction: column;

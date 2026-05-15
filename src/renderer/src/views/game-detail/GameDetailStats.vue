@@ -1,33 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import type { GameRecord, PlaySession } from '../../../../shared/types'
 import { formatPlaytime, formatRelativeTime } from '../../utils/format'
+import { useThemeStore } from '../../stores/useThemeStore'
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  Title,
   Tooltip,
-  Legend,
   Filler,
   type TooltipItem
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-)
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
 const props = defineProps<{ game: GameRecord }>()
+const theme = useThemeStore()
 
 const sessions = ref<PlaySession[]>([])
 const totalSessions = ref(0)
@@ -35,6 +26,7 @@ const totalDuration = ref(0)
 const lastPlayed = ref<number | null>(null)
 const loading = ref(true)
 const timeRange = ref<'week' | 'month' | 'all'>('month')
+let unmounted = false
 
 const totalPlaytimeDisplay = computed(() => {
   if (totalDuration.value <= 0) return '-'
@@ -53,16 +45,23 @@ const timeRangeOptions = [
   { id: 'all' as const, label: '总计' }
 ]
 
+function hexToRgba(hex: string, alpha: number): string {
+  const v = parseInt(hex.replace('#', ''), 16)
+  return `rgba(${(v >> 16) & 255}, ${(v >> 8) & 255}, ${v & 255}, ${alpha})`
+}
+
+const accentColor = computed(() => (theme.isDark ? '#818cf8' : '#6366f1'))
+
 const chartData = computed(() => {
   if (sessions.value.length === 0) return null
 
   const now = Date.now()
-  let cutoff = 0
-  if (timeRange.value === 'week') {
-    cutoff = now - 7 * 24 * 60 * 60 * 1000
-  } else if (timeRange.value === 'month') {
-    cutoff = now - 30 * 24 * 60 * 60 * 1000
-  }
+  const cutoff =
+    timeRange.value === 'all'
+      ? 0
+      : timeRange.value === 'week'
+        ? now - 7 * 24 * 60 * 60 * 1000
+        : now - 30 * 24 * 60 * 60 * 1000
 
   const filtered =
     timeRange.value === 'all'
@@ -71,23 +70,34 @@ const chartData = computed(() => {
 
   if (filtered.length === 0) return null
 
-  const grouped = new Map<string, number>()
+  type GroupEntry = { total: number; sortKey: number }
+  const grouped = new Map<string, GroupEntry>()
+
   for (const s of filtered) {
     if (s.duration <= 0) continue
     const d = new Date(s.start_time)
     let key: string
-    if (timeRange.value === 'week') {
-      key = `${d.getMonth() + 1}/${d.getDate()}`
-    } else if (timeRange.value === 'month') {
-      key = `${d.getMonth() + 1}/${d.getDate()}`
-    } else {
+    let sortKey: number
+    if (timeRange.value === 'all') {
       key = `${d.getFullYear()}/${d.getMonth() + 1}`
+      sortKey = d.getFullYear() * 12 + d.getMonth()
+    } else {
+      key = `${d.getMonth() + 1}/${d.getDate()}`
+      sortKey = d.getTime()
     }
-    grouped.set(key, (grouped.get(key) || 0) + s.duration)
+    const prev = grouped.get(key)
+    if (prev) {
+      prev.total += s.duration
+    } else {
+      grouped.set(key, { total: s.duration, sortKey })
+    }
   }
 
-  const labels = [...grouped.keys()]
-  const values = [...grouped.values()].map((d) => Math.round((d / 3600000) * 10) / 10)
+  const entries = [...grouped.entries()].sort((a, b) => a[1].sortKey - b[1].sortKey)
+  const labels = entries.map(([k]) => k)
+  const values = entries.map(([, v]) => Math.round((v.total / 3600000) * 10) / 10)
+
+  const ac = accentColor.value
 
   return {
     labels,
@@ -95,18 +105,18 @@ const chartData = computed(() => {
       {
         label: '游玩时长 (小时)',
         data: values,
-        borderColor: '#6366f1',
-        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+        borderColor: ac,
+        backgroundColor: hexToRgba(ac, 0.08),
         fill: true,
         tension: 0.3,
         pointRadius: 4,
-        pointBackgroundColor: '#6366f1'
+        pointBackgroundColor: ac
       }
     ]
   }
 })
 
-const chartOptions = computed(() => ({
+const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -132,7 +142,7 @@ const chartOptions = computed(() => ({
       }
     }
   }
-}))
+}
 
 onMounted(async () => {
   try {
@@ -140,15 +150,20 @@ onMounted(async () => {
       window.api.getAggregatedStats(props.game.id),
       window.api.getSessionsByGame(props.game.id)
     ])
+    if (unmounted) return
     totalSessions.value = stats.total_sessions
     totalDuration.value = stats.total_duration
     lastPlayed.value = stats.last_played
     sessions.value = allSessions
   } catch (err) {
-    console.error('Failed to load play stats:', err)
+    if (!unmounted) console.error('Failed to load play stats:', err)
   } finally {
-    loading.value = false
+    if (!unmounted) loading.value = false
   }
+})
+
+onUnmounted(() => {
+  unmounted = true
 })
 </script>
 

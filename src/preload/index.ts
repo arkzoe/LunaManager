@@ -19,6 +19,7 @@ const api: IElectronAPI = {
   endPlaySession: (sessionId) => ipcRenderer.invoke('play:endSession', sessionId),
   getGamePlaytime: (gameId) => ipcRenderer.invoke('play:getTotalPlaytime', gameId),
   getSessionsByGame: (gameId) => ipcRenderer.invoke('play:getSessionsByGame', gameId),
+  getAllSessions: () => ipcRenderer.invoke('play:getAllSessions'),
   getRecentSessions: (limit) => ipcRenderer.invoke('play:getRecentSessions', limit),
   getAggregatedStats: (gameId) => ipcRenderer.invoke('play:getAggregatedStats', gameId),
   getTotalSessionCount: () => ipcRenderer.invoke('play:getTotalSessionCount'),
@@ -56,8 +57,10 @@ const api: IElectronAPI = {
   openPath: (path) => ipcRenderer.invoke('shell:openPath', path),
 
   testApiConnection: (source, token?) => ipcRenderer.invoke('metadata:test', { source, token }),
-  searchMetadata: (query, source, apiKey?) => ipcRenderer.invoke('metadata:search', { query, source, apiKey }),
-  fetchMetadataDetail: (sourceId, source, apiKey?, gameId?) => ipcRenderer.invoke('metadata:fetch-detail', { sourceId, source, apiKey, gameId }),
+  searchMetadata: (query, source, apiKey?) =>
+    ipcRenderer.invoke('metadata:search', { query, source, apiKey }),
+  fetchMetadataDetail: (sourceId, source, apiKey?, gameId?) =>
+    ipcRenderer.invoke('metadata:fetch-detail', { sourceId, source, apiKey, gameId }),
   downloadCover: (gameId, url) => ipcRenderer.invoke('cover:download', { gameId, url })
 }
 
