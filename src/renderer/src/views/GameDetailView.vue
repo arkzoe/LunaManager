@@ -159,8 +159,18 @@ const handleFetchMetadata = async (): Promise<void> => {
     if (detail.release_date) tempReleaseDate.value = detail.release_date
     if (detail.description) tempDescription.value = detail.description
     if (detail.cover) {
-      await window.api.downloadCover(props.game.id, detail.cover as any)
+      const coverPath = await window.api.downloadCover(props.game.id, detail.cover as any)
+      if (coverPath) {
+        await window.api.updateGame(props.game.id, { cover: coverPath })
+        props.game.cover = coverPath
+        const idx = store.games.findIndex(g => g.id === props.game.id)
+        if (idx !== -1) {
+          store.games[idx].cover = coverPath
+        }
+        emit('updated', props.game)
+      }
     }
+    if (detail.custom_tags) tempTags.value = detail.custom_tags
     showToastMsg('远端信息已回填', 'success')
   } catch (err: any) {
     showToastMsg(err.message || '获取失败', 'error')

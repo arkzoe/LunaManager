@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { GameRecord, GameStatus } from '../../../../shared/types'
 import { formatDate } from '../../utils/format'
+
+const isCoverWide = ref(false)
+
+const onCoverLoad = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  isCoverWide.value = img.naturalWidth >= img.naturalHeight
+}
 
 const props = defineProps<{
   game: GameRecord
@@ -43,11 +50,13 @@ const hasMetadata = computed(() => {
 
 <template>
   <div class="hero">
-    <div class="hero-cover">
-      <img v-if="game.cover" :src="game.cover" :alt="game.title" class="cover-img" />
+    <div class="hero-cover" :class="{ 'hero-cover-wide': isCoverWide }">
+      <img v-if="game.cover" :src="game.cover" :alt="game.title" class="cover-img" @load="onCoverLoad" />
       <div v-else class="cover-ph">
         <svg viewBox="0 0 24 24" class="w-16 h-16 fill-text-muted opacity-20">
-          <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+          <path
+            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+          />
         </svg>
       </div>
     </div>
@@ -64,7 +73,9 @@ const hasMetadata = computed(() => {
             @click.stop="$emit('update:tempRating', i * 2)"
           >
             <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
-              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+              <path
+                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+              />
             </svg>
           </button>
           <span class="star-score">{{ tempRating }}/10</span>
@@ -76,7 +87,9 @@ const hasMetadata = computed(() => {
         <select
           :value="tempStatus"
           class="status-select"
-          @change="$emit('update:tempStatus', ($event.target as HTMLSelectElement).value as GameStatus)"
+          @change="
+            $emit('update:tempStatus', ($event.target as HTMLSelectElement).value as GameStatus)
+          "
         >
           <option v-for="s in statuses" :key="s.id" :value="s.id">{{ s.label }}</option>
         </select>
@@ -111,7 +124,7 @@ const hasMetadata = computed(() => {
 
       <div class="hi-tags">
         <template v-if="parsedTags.length > 0">
-          <span class="tag-badge" v-for="tag in parsedTags" :key="tag">{{ tag }}</span>
+          <span v-for="tag in parsedTags" :key="tag" class="tag-badge">{{ tag }}</span>
         </template>
         <span v-else class="tag-empty">暂无标签</span>
       </div>
@@ -123,27 +136,24 @@ const hasMetadata = computed(() => {
 
       <div class="launch-area">
         <div class="launch-group">
-          <button
-            v-if="!isRunning"
-            class="launch-main"
-            @click.stop="$emit('launch', 'normal')"
-          >
+          <button v-if="!isRunning" class="launch-main" @click.stop="$emit('launch', 'normal')">
             <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
               <path d="M8 5v14l11-7z" />
             </svg>
             开始游戏
           </button>
-          <button
-            v-else
-            class="launch-main stop"
-            @click.stop="$emit('stop')"
-          >
+          <button v-else class="launch-main stop" @click.stop="$emit('stop')">
             <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
               <path d="M6 6h12v12H6z" />
             </svg>
             停止游戏
           </button>
-          <button v-if="!isRunning" class="launch-dropdown" title="更多启动方式" @click.stop="$emit('toggleLaunchMenu')">
+          <button
+            v-if="!isRunning"
+            class="launch-dropdown"
+            title="更多启动方式"
+            @click.stop="$emit('toggleLaunchMenu')"
+          >
             <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
               <path d="M7 10l5 5 5-5z" />
             </svg>
@@ -176,17 +186,24 @@ const hasMetadata = computed(() => {
 .hero-cover {
   flex-shrink: 0;
   width: 200px;
-  height: 280px;
   border-radius: 12px;
   overflow: hidden;
-  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.25s ease;
+}
+
+.hero-cover-wide {
+  width: 320px;
 }
 
 .cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .cover-ph {
@@ -341,7 +358,7 @@ const hasMetadata = computed(() => {
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
-  max-height: 80px;
+  max-height: 200px;
   overflow-y: auto;
 }
 
