@@ -54,8 +54,8 @@ export async function fetchMetadataDetail(
     ? await getVndbClient(apiKey).getVNDetail(sourceId)
     : await getBangumiClient(apiKey).getSubjectDetail(sourceId)
 
-  // 下载封面到本地
-  if (detail.cover && gameId) {
+  // 下载封面到本地（已是本地路径则跳过）
+  if (detail.cover && gameId && !detail.cover.startsWith('cover://')) {
     const localPath = await downloadCover(gameId, detail.cover)
     if (localPath) {
       detail.cover = localPath

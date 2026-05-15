@@ -1,18 +1,10 @@
 <script setup lang="ts">
-interface RowState {
-  folderPath: string
-  folderName: string
-  executables: { name: string; fullPath: string }[]
-  totalSize: string
-  selected: boolean
-  title: string
-  selectedExe: string
-  isDuplicate: boolean
-}
+import type { ImportRowState } from '../../../shared/types'
 
 defineProps<{
-  row: RowState
+  row: ImportRowState
   searching: boolean
+  importing: boolean
 }>()
 
 const emit = defineEmits<{
@@ -29,7 +21,7 @@ const emit = defineEmits<{
       <input
         :checked="row.selected"
         type="checkbox"
-        :disabled="!row.selectedExe || row.isDuplicate"
+        :disabled="!row.selectedExe || row.isDuplicate || importing"
         class="br-cb"
         @change="emit('update:selected', ($event.target as HTMLInputElement).checked)"
       />
@@ -41,11 +33,12 @@ const emit = defineEmits<{
           :value="row.title"
           class="br-input"
           :placeholder="row.folderName"
+          :disabled="importing"
           @input="emit('update:title', ($event.target as HTMLInputElement).value)"
         />
         <button
           class="br-search-btn"
-          :disabled="searching"
+          :disabled="searching || importing"
           title="识别源数据"
           @click="emit('search')"
         >
@@ -63,7 +56,7 @@ const emit = defineEmits<{
       <select
         :value="row.selectedExe"
         class="br-select"
-        :disabled="row.executables.length === 0"
+        :disabled="row.executables.length === 0 || importing"
         @change="emit('update:selectedExe', ($event.target as HTMLSelectElement).value)"
       >
         <option v-for="exe in row.executables" :key="exe.fullPath" :value="exe.fullPath">

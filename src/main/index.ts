@@ -117,8 +117,8 @@ function setupIpcHandlers(): void {
   })
 
   // ===== Import =====
-  ipcMain.handle('import:pickFolder', () => pickFolderAndScan())
-  ipcMain.handle('import:pickBatchFolder', () => pickBatchFolderAndScan())
+  ipcMain.handle('import:pickFolder', (_e, options?) => pickFolderAndScan(options))
+  ipcMain.handle('import:pickBatchFolder', (_e, options?) => pickBatchFolderAndScan(options))
 
   // ===== File Picker =====
   ipcMain.handle('import:pickFile', async (_e, filters?: { name: string; extensions: string[] }[]) => {

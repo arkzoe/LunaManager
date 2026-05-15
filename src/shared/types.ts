@@ -47,14 +47,12 @@ export interface GameCollection {
   collection_id: string
 }
 
-export interface ImportScanResult {
-  folderPath: string
-  folderName: string
-  executables: { name: string; fullPath: string }[]
-  totalSize: string
+export interface ScanOptions {
+  maxDepth?: number
+  skipSize?: boolean
 }
 
-export interface BatchScanItem {
+export interface ScanResult {
   folderPath: string
   folderName: string
   executables: { name: string; fullPath: string }[]
@@ -62,7 +60,39 @@ export interface BatchScanItem {
 }
 
 export interface BatchScanResult {
-  items: BatchScanItem[]
+  items: ScanResult[]
+}
+
+export interface ImportRowState extends ScanResult {
+  selected: boolean
+  title: string
+  selectedExe: string
+  isDuplicate: boolean
+  vndbId: string
+  bangumiId: string
+  cover: string
+  rating: number
+  developer: string
+  publisher: string
+  releaseDate: string
+  description: string
+  customTags: string
+  savePath: string
+}
+
+export interface ImportResultItem {
+  title: string
+  id: string
+  status: 'success' | 'skipped' | 'failed'
+  reason?: string
+}
+
+export interface ImportResult {
+  items: ImportResultItem[]
+  successCount: number
+  skippedCount: number
+  failedCount: number
+  totalDuration: number
 }
 
 export interface SaveSnapshot {
@@ -167,8 +197,8 @@ export interface IElectronAPI {
 
   getGameByExecutablePath: (path: string) => Promise<GameRecord | null>
 
-  pickImportFolder: () => Promise<ImportScanResult | null>
-  pickBatchImportFolder: () => Promise<BatchScanResult | null>
+  pickImportFolder: (options?: ScanOptions) => Promise<ScanResult | null>
+  pickBatchImportFolder: (options?: ScanOptions) => Promise<BatchScanResult | null>
 
   pickFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>
   pickDirectory: () => Promise<string | null>

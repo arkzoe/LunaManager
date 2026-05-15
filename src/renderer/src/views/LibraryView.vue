@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
-import type { GameRecord, GameStatus } from '../../../shared/types'
+import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
 import ImportDialog from '../dialogs/ImportDialog.vue'
 import BatchImportDialog from '../dialogs/BatchImportDialog.vue'
 import ToastNotification from '../shared/ToastNotification.vue'
@@ -292,8 +292,14 @@ const handleBatchImportClose = (): void => {
   showBatchImportDialog.value = false
 }
 
-const handleBatchImported = (_count: number): void => {
+const handleBatchImported = (result: ImportResult): void => {
   showBatchImportDialog.value = false
+  const parts: string[] = []
+  if (result.successCount > 0) parts.push(`成功 ${result.successCount} 个`)
+  if (result.skippedCount > 0) parts.push(`跳过 ${result.skippedCount} 个`)
+  if (result.failedCount > 0) parts.push(`失败 ${result.failedCount} 个`)
+  const type = result.failedCount > 0 ? 'error' : 'success'
+  showToastMsg(`导入完成：${parts.join('，')}`, type)
 }
 </script>
 

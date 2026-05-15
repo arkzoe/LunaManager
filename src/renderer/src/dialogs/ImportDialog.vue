@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { ImportScanResult, GameRecord, SearchResult } from '../../../shared/types'
+import { ref, watch } from 'vue'
+import type { ScanResult, GameRecord, SearchResult } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import SearchResultPicker from '../shared/SearchResultPicker.vue'
 
@@ -11,7 +11,7 @@ const emit = defineEmits<{
 
 const store = useGameStore()
 const isLoading = ref(false)
-const scanResult = ref<ImportScanResult | null>(null)
+const scanResult = ref<ScanResult | null>(null)
 const selectedExe = ref('')
 const title = ref('')
 const titleCn = ref('')
@@ -21,8 +21,46 @@ const searchResults = ref<SearchResult[]>([])
 const showSearchPicker = ref(false)
 const searchSource = ref<'vndb' | 'bangumi'>('vndb')
 const metadataFilled = ref(false)
+const searchNoResults = ref(false)
+
+// Token cache
+let cachedSource: 'vndb' | 'bangumi' | null = null
+let cachedToken: string | null = null
+
+const coverUrl = ref('')
+const developer = ref('')
+const releaseDate = ref('')
+const description = ref('')
+const rating = ref(0)
+const customTags = ref('[]')
+const vndbId = ref('')
+const bangumiId = ref('')
+const publisher = ref('')
+const notes = ref('')
+const savePath = ref('')
+const status = ref<GameRecord['status']>('want')
+
+const invalidateTokenCache = (): void => {
+  cachedSource = null
+  cachedToken = null
+}
+
+watch(title, () => { searchNoResults.value = false })
+
+const ensureTokenCache = async (): Promise<{ source: 'vndb' | 'bangumi'; token: string | null }> => {
+  if (cachedSource === null) {
+    cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
+  }
+  if (cachedToken === null) {
+    cachedToken = cachedSource === 'bangumi'
+      ? await window.api.getConfig('bangumiToken')
+      : await window.api.getConfig('vndbApiKey')
+  }
+  return { source: cachedSource, token: cachedToken }
+}
 
 const handlePickFolder = async (): Promise<void> => {
+  invalidateTokenCache()
   isLoading.value = true
   error.value = ''
   try {
@@ -52,25 +90,24 @@ const handleSearch = async (): Promise<void> => {
 
   searching.value = true
   metadataFilled.value = false
+  searchNoResults.value = false
   error.value = ''
   try {
-    const source = await window.api.getConfig('metadataSource')
-    searchSource.value = source || 'vndb'
+    const { source, token } = await ensureTokenCache()
+    searchSource.value = source
 
-    const token = searchSource.value === 'bangumi'
-      ? await window.api.getConfig('bangumiToken')
-      : await window.api.getConfig('vndbApiKey')
-
-    if (searchSource.value === 'bangumi' && !token) {
+    if (source === 'bangumi' && !token) {
       error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
       return
     }
 
-    searchResults.value = await window.api.searchMetadata(query, searchSource.value, token || undefined)
+    searchResults.value = await window.api.searchMetadata(query, source, token || undefined)
     if (searchResults.value.length === 1) {
       applySearchResult(searchResults.value[0])
     } else if (searchResults.value.length > 1) {
       showSearchPicker.value = true
+    } else {
+      searchNoResults.value = true
     }
   } catch (err: any) {
     error.value = err.message || '搜索失败'
@@ -85,9 +122,7 @@ const applySearchResult = async (result: SearchResult): Promise<void> => {
 
   if (result.id) {
     try {
-      const token = result.source === 'bangumi'
-        ? await window.api.getConfig('bangumiToken')
-        : await window.api.getConfig('vndbApiKey')
+      const { token } = await ensureTokenCache()
       const detail = await window.api.fetchMetadataDetail(
         result.id,
         result.source,
@@ -100,6 +135,7 @@ const applySearchResult = async (result: SearchResult): Promise<void> => {
         coverUrl.value = detail.cover
       }
       if (detail.developer) developer.value = detail.developer
+      if (detail.publisher) publisher.value = detail.publisher
       if (detail.release_date) releaseDate.value = detail.release_date
       if (detail.description) description.value = detail.description
       if (detail.rating) rating.value = detail.rating
@@ -118,15 +154,6 @@ const handlePickerSelect = (result: SearchResult): void => {
   applySearchResult(result)
 }
 
-const coverUrl = ref('')
-const developer = ref('')
-const releaseDate = ref('')
-const description = ref('')
-const rating = ref(0)
-const customTags = ref('[]')
-const vndbId = ref('')
-const bangumiId = ref('')
-
 const handleConfirm = async (): Promise<void> => {
   if (!scanResult.value) return
   if (!title.value.trim()) {
@@ -138,7 +165,11 @@ const handleConfirm = async (): Promise<void> => {
     return
   }
 
-  const existing = store.games.find((g) => g.executable_path === selectedExe.value)
+  const existing = store.games.find(g =>
+    g.executable_path === selectedExe.value ||
+    (vndbId.value && g.vndb_id === vndbId.value) ||
+    (bangumiId.value && g.bangumi_id === bangumiId.value)
+  )
   if (existing) {
     error.value = `"${existing.title}" 已存在于游戏库中，请勿重复导入`
     return
@@ -148,11 +179,10 @@ const handleConfirm = async (): Promise<void> => {
   error.value = ''
   try {
     const now = Date.now()
-    const gameId = `id-${now}`
+    const gameId = `id-${now}-${Math.random().toString(36).slice(2, 6)}`
 
-    // Download cover if we have a URL
     let cover = ''
-    if (coverUrl.value) {
+    if (coverUrl.value && !coverUrl.value.startsWith('cover://')) {
       const localPath = await window.api.downloadCover(gameId, coverUrl.value)
       if (localPath) cover = localPath
     }
@@ -166,19 +196,19 @@ const handleConfirm = async (): Promise<void> => {
       size: scanResult.value.totalSize,
       installed: 1,
       favorite: 0,
-      status: 'want',
+      status: status.value,
       personal_rating: 0,
       last_played: '',
       description: description.value,
       developer: developer.value,
-      publisher: '',
+      publisher: publisher.value,
       release_date: releaseDate.value,
       playtime: '',
       executable_path: selectedExe.value,
-      save_path: '',
+      save_path: savePath.value,
       vndb_id: vndbId.value,
       bangumi_id: bangumiId.value,
-      notes: '',
+      notes: notes.value,
       custom_tags: customTags.value,
       last_launch_method: 'normal'
     }
@@ -194,6 +224,11 @@ const handleConfirm = async (): Promise<void> => {
 
 const handleClose = (): void => {
   if (!isLoading.value) emit('close')
+}
+
+const handlePickSavePath = async (): Promise<void> => {
+  const dir = await window.api.pickDirectory()
+  if (dir) savePath.value = dir
 }
 
 const handleOverlayClick = (e: MouseEvent): void => {
@@ -265,6 +300,18 @@ const handleOverlayClick = (e: MouseEvent): void => {
               </div>
             </div>
 
+            <!-- Cover preview -->
+            <div v-if="coverUrl" class="form-group">
+              <label class="form-label">封面预览</label>
+              <div class="cover-preview-wrap">
+                <img
+                  :src="coverUrl"
+                  class="cover-preview-img"
+                  @error="($event.target as HTMLImageElement).style.display = 'none'"
+                />
+              </div>
+            </div>
+
             <div class="form-group">
               <div class="form-label-row">
                 <label class="form-label" for="input-title"
@@ -292,6 +339,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 placeholder="输入游戏名称"
               />
               <div v-if="metadataFilled" class="metadata-hint">已从 {{ searchSource === 'vndb' ? 'VNDB' : 'Bangumi' }} 获取元数据</div>
+              <div v-if="searchNoResults" class="search-no-results">未找到匹配结果，请尝试调整搜索名称</div>
             </div>
 
             <div class="form-group">
@@ -315,6 +363,16 @@ const handleOverlayClick = (e: MouseEvent): void => {
             </div>
 
             <div class="form-group">
+              <label class="form-label" for="input-publisher">发行商</label>
+              <input
+                id="input-publisher"
+                v-model="publisher"
+                class="form-input"
+                placeholder="发行商（可自动获取）"
+              />
+            </div>
+
+            <div class="form-group">
               <label class="form-label" for="input-date">发行日期</label>
               <input
                 id="input-date"
@@ -322,6 +380,57 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 class="form-input"
                 placeholder="发行日期（可自动获取）"
               />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-status">游戏状态</label>
+              <select id="input-status" v-model="status" class="form-select">
+                <option value="want">想玩</option>
+                <option value="playing">在玩</option>
+                <option value="played">玩过</option>
+                <option value="shelved">搁置</option>
+                <option value="abandoned">弃坑</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-description">游戏描述</label>
+              <textarea
+                id="input-description"
+                v-model="description"
+                class="form-textarea"
+                placeholder="游戏描述（可自动获取）"
+                rows="3"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-notes">备注</label>
+              <textarea
+                id="input-notes"
+                v-model="notes"
+                class="form-textarea"
+                placeholder="输入备注信息（可选）"
+                rows="2"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-tags">自定义标签</label>
+              <input
+                id="input-tags"
+                v-model="customTags"
+                class="form-input"
+                placeholder="标签（JSON 数组，可自动获取）"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">存档路径</label>
+              <div class="save-path-row">
+                <div class="form-path save-path-text" :class="{ empty: !savePath }">{{ savePath || '未设置' }}</div>
+                <button class="btn-pick-path" :disabled="isLoading" @click="handlePickSavePath">选择</button>
+              </div>
             </div>
 
             <div class="form-actions">
@@ -358,7 +467,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
 }
 
 .dialog-card {
-  width: 480px;
+  width: 520px;
   max-width: 90vw;
   max-height: 85vh;
   overflow-y: auto;
@@ -422,6 +531,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
   border-radius: 8px;
   color: var(--danger);
   font-size: 12px;
+}
+
+.search-no-results {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--warning);
 }
 
 .form-group {
@@ -520,6 +635,27 @@ const handleOverlayClick = (e: MouseEvent): void => {
   cursor: pointer;
 }
 
+.form-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  resize: vertical;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.form-textarea:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
 .form-warning {
   font-size: 12px;
   color: var(--warning);
@@ -565,6 +701,56 @@ const handleOverlayClick = (e: MouseEvent): void => {
   font-size: 13px;
   color: var(--text-primary);
   word-break: break-all;
+}
+
+.cover-preview-wrap {
+  width: 120px;
+  height: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.cover-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.save-path-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.save-path-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.save-path-text.empty {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.btn-pick-path {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.btn-pick-path:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .form-actions {
