@@ -6,19 +6,45 @@ import GameCard from '../../shared/GameCard.vue'
 defineProps<{
   games: GameRecord[]
   collections: UICollection[]
+  batchMode?: boolean
+  selectedIds?: string[]
 }>()
 
 const emit = defineEmits<{
-  (e: 'selectGame', game: GameRecord): void
+  (e: 'cardClick', game: GameRecord): void
   (e: 'moveGame', game: GameRecord): void
+  (e: 'toggleSelect', gameId: string): void
 }>()
 </script>
 
 <template>
   <div v-if="games.length > 0" class="flc-grid">
-    <div v-for="game in games" :key="game.id" class="flc-game" @click="emit('selectGame', game)">
+    <div
+      v-for="game in games"
+      :key="game.id"
+      class="flc-game"
+      :class="{ 'ring-2 ring-brand-500/50 rounded-xl': batchMode && selectedIds?.includes(game.id) }"
+      @click="emit('cardClick', game)"
+    >
+      <div v-if="batchMode" class="flc-check" @click.stop="emit('toggleSelect', game.id)">
+        <div
+          class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer"
+          :class="selectedIds?.includes(game.id)
+            ? 'bg-brand-500 border-brand-500'
+            : 'border-gray-400 hover:border-brand-400'"
+        >
+          <svg v-if="selectedIds?.includes(game.id)" viewBox="0 0 24 24" class="w-3 h-3 fill-white">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+          </svg>
+        </div>
+      </div>
       <GameCard :game="game" />
-      <button class="flc-move" title="移动" @click.stop="emit('moveGame', game)">
+      <button
+        v-if="!batchMode"
+        class="flc-move"
+        title="移动"
+        @click.stop="emit('moveGame', game)"
+      >
         <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current">
           <path
             d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
@@ -49,6 +75,13 @@ const emit = defineEmits<{
 
 .flc-game {
   position: relative;
+}
+
+.flc-check {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
 }
 
 .flc-move {

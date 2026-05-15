@@ -17,6 +17,13 @@ function columnExists(table: string, col: string): boolean {
   return r.some(c => c.name === col)
 }
 
+function migrateCollectionsTable(): void {
+  if (!columnExists('collections', 'updated_at')) {
+    db!.exec('ALTER TABLE collections ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0')
+    db!.exec('UPDATE collections SET updated_at = created_at WHERE updated_at = 0')
+  }
+}
+
 function migrateGamesTable(): void {
   const additions: [string, string][] = [
     ['title_cn', 'TEXT DEFAULT ""'],
@@ -112,6 +119,7 @@ export const initDatabase = (): Database.Database => {
   `)
 
   migrateGamesTable()
+  migrateCollectionsTable()
 
   console.log('Database initialized at:', dbPath)
   return db

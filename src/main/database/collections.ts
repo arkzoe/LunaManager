@@ -14,19 +14,21 @@ export const collectionOps = {
 
   create: (name: string): Collection => {
     const db = getDatabase()
+    const now = Date.now()
     const c: Collection = {
-      id: `col-${Date.now()}`,
+      id: `col-${now}`,
       name,
       parent_id: null,
       sort_order: (db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM collections').get() as { n: number }).n,
-      created_at: Date.now()
+      created_at: now,
+      updated_at: now
     }
-    db.prepare('INSERT INTO collections (id, name, parent_id, sort_order, created_at) VALUES (@id, @name, @parent_id, @sort_order, @created_at)').run(c)
+    db.prepare('INSERT INTO collections (id, name, parent_id, sort_order, created_at, updated_at) VALUES (@id, @name, @parent_id, @sort_order, @created_at, @updated_at)').run(c)
     return c
   },
 
   rename: (id: string, name: string): void => {
-    getDatabase().prepare('UPDATE collections SET name = @name WHERE id = @id').run({ id, name })
+    getDatabase().prepare('UPDATE collections SET name = @name, updated_at = @now WHERE id = @id').run({ id, name, now: Date.now() })
   },
 
   delete: (id: string): void => {
@@ -61,5 +63,14 @@ export const collectionOps = {
       WHERE gc.collection_id = ?
       ORDER BY g.title ASC
     `).all(collectionId) as GameRecord[]
+  },
+
+  getAllSorted: (sortBy: string, sortDir: 'asc' | 'desc'): Collection[] => {
+    const allowed = new Set(['name', 'created_at', 'updated_at', 'sort_order'])
+    const col = allowed.has(sortBy) ? sortBy : 'sort_order'
+    const dir = sortDir === 'desc' ? 'DESC' : 'ASC'
+    return getDatabase().prepare(
+      `SELECT * FROM collections ORDER BY ${col} ${dir}`
+    ).all() as Collection[]
   }
 }

@@ -8,6 +8,7 @@ export interface UICollection {
   iconColor: string
   gameIds: string[]
   createdAt: number
+  updatedAt: number
 }
 
 const defaultIconColor = '#4f46e5'
@@ -18,7 +19,8 @@ const mapDBCollection = (db: DBCollection): UICollection => ({
   icon: 'folder',
   iconColor: defaultIconColor,
   gameIds: [],
-  createdAt: db.created_at
+  createdAt: db.created_at,
+  updatedAt: db.updated_at
 })
 
 export function useCollections() {

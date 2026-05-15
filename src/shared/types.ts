@@ -40,6 +40,7 @@ export interface Collection {
   parent_id: string | null
   sort_order: number
   created_at: number
+  updated_at: number
 }
 
 export interface GameCollection {

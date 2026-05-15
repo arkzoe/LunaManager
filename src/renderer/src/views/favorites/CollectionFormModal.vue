@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { UICollection } from '../../composables/useCollections'
 import { getIconSvg } from './icons'
 import type { GameRecord } from '../../../../shared/types'
@@ -22,6 +22,23 @@ const emit = defineEmits<{
 }>()
 
 const inputValue = ref('')
+
+const existingNames = computed(() =>
+  new Set((props.collections || []).map((c) => c.name.toLowerCase()))
+)
+
+const nameError = computed(() => {
+  const v = inputValue.value.trim()
+  if (!v) return ''
+  if (props.mode === 'rename' && v.toLowerCase() === props.collection?.name?.toLowerCase()) return ''
+  if (existingNames.value.has(v.toLowerCase())) return '已存在同名收藏夹'
+  return ''
+})
+
+const canSubmit = computed(() => {
+  if (props.mode !== 'create' && props.mode !== 'rename') return true
+  return !!inputValue.value.trim() && !nameError.value
+})
 
 watch(
   () => props.show,
@@ -66,9 +83,11 @@ const handleMoveTarget = (targetId: string): void => {
           v-model="inputValue"
           type="text"
           placeholder="输入收藏夹名称"
-          class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-5 transition-all duration-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-1 transition-all duration-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
           @keyup.enter="handleConfirm"
         />
+        <p v-if="nameError" class="text-xs text-danger-500 m-0 mb-4 ml-1">{{ nameError }}</p>
+        <p v-else class="text-xs m-0 mb-4">&nbsp;</p>
         <div class="flex items-center justify-end gap-3">
           <button
             class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-bg-secondary text-text-secondary hover:bg-bg-tertiary"
@@ -77,7 +96,9 @@ const handleMoveTarget = (targetId: string): void => {
             取消
           </button>
           <button
-            class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-brand-600 text-white hover:bg-brand-700 shadow-brand hover:shadow-brand-lg"
+            class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200"
+            :class="canSubmit ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand hover:shadow-brand-lg' : 'bg-bg-tertiary text-text-muted cursor-not-allowed'"
+            :disabled="!canSubmit"
             @click="handleConfirm"
           >
             创建
@@ -91,9 +112,11 @@ const handleMoveTarget = (targetId: string): void => {
           v-model="inputValue"
           type="text"
           placeholder="输入新名称"
-          class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-5 transition-all duration-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-1 transition-all duration-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
           @keyup.enter="handleConfirm"
         />
+        <p v-if="nameError" class="text-xs text-danger-500 m-0 mb-4 ml-1">{{ nameError }}</p>
+        <p v-else class="text-xs m-0 mb-4">&nbsp;</p>
         <div class="flex items-center justify-end gap-3">
           <button
             class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-bg-secondary text-text-secondary hover:bg-bg-tertiary"
@@ -102,7 +125,9 @@ const handleMoveTarget = (targetId: string): void => {
             取消
           </button>
           <button
-            class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-brand-600 text-white hover:bg-brand-700 shadow-brand hover:shadow-brand-lg"
+            class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200"
+            :class="canSubmit ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand hover:shadow-brand-lg' : 'bg-bg-tertiary text-text-muted cursor-not-allowed'"
+            :disabled="!canSubmit"
             @click="handleConfirm"
           >
             确认

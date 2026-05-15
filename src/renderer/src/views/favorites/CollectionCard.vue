@@ -5,20 +5,39 @@ import { getIconSvg } from './icons'
 defineProps<{
   collection: UICollection
   isDefault: boolean
+  batchMode?: boolean
+  selected?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'open'): void
   (e: 'rename'): void
   (e: 'delete'): void
+  (e: 'toggleSelect', id: string): void
 }>()
 </script>
 
 <template>
   <div
-    class="collection-card w-70 h-20 flex items-center gap-4 p-4 bg-bg-primary rounded-xl cursor-pointer transition-all duration-250 flex-shrink-0 box-border hover:-translate-y-0.5"
-    @click="emit('open')"
+    class="collection-card w-70 h-20 flex items-center gap-3 p-4 bg-bg-primary rounded-xl cursor-pointer transition-all duration-250 flex-shrink-0 box-border hover:-translate-y-0.5"
+    :class="{ 'ring-2 ring-brand-500/50': selected }"
+    @click="batchMode ? (!isDefault && emit('toggleSelect', collection.id)) : emit('open')"
   >
+    <div v-if="batchMode" class="flex-shrink-0">
+      <div
+        class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer"
+        :class="isDefault
+          ? 'border-gray-300 opacity-30 cursor-not-allowed'
+          : selected
+            ? 'bg-brand-500 border-brand-500'
+            : 'border-gray-400 hover:border-brand-400'"
+        @click.stop="!isDefault && emit('toggleSelect', collection.id)"
+      >
+        <svg v-if="selected" viewBox="0 0 24 24" class="w-3 h-3 fill-white">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+        </svg>
+      </div>
+    </div>
     <div
       class="w-12 h-12 flex items-center justify-center rounded-lg flex-shrink-0"
       :style="{ backgroundColor: collection.iconColor + '20' }"
@@ -27,7 +46,7 @@ const emit = defineEmits<{
         <path :d="getIconSvg(collection.icon)" />
       </svg>
     </div>
-    <div class="w-35 h-12 flex flex-col justify-center">
+    <div class="flex-1 min-w-0 h-12 flex flex-col justify-center">
       <h3
         class="w-full h-5.5 text-15px font-semibold text-text-primary m-0 mb-1 whitespace-nowrap overflow-hidden text-ellipsis leading-5.5"
       >
@@ -38,7 +57,8 @@ const emit = defineEmits<{
       </p>
     </div>
     <div
-      class="flex items-center gap-1 opacity-0 transition-opacity duration-200 collection-card:hover:opacity-100"
+      v-if="!batchMode"
+      class="collection-actions flex items-center gap-1 opacity-0 transition-opacity duration-200"
       @click.stop
     >
       <button v-if="!isDefault" class="action-menu-btn" title="重命名" @click="emit('rename')">
