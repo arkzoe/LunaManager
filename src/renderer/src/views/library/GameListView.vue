@@ -40,7 +40,7 @@ const emit = defineEmits<{
       v-for="game in filteredGames"
       :key="game.id"
       class="list-row"
-      :class="{ 'has-check': batchMode }"
+      :class="{ 'has-check': batchMode, selected: batchMode && selectedIds.has(game.id) }"
       @click="emit('selectGame', game)"
       @contextmenu="emit('contextMenu', $event, game)"
     >
@@ -111,6 +111,11 @@ const emit = defineEmits<{
 
 .list-row:hover {
   background: var(--bg-hover);
+}
+
+.list-row.selected {
+  background: rgba(99, 102, 241, 0.06);
+  border-left: 3px solid var(--accent-primary);
 }
 
 .lr-cover {

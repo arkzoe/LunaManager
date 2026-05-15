@@ -10,7 +10,7 @@ import type {
 } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import BatchImportRow from './BatchImportRow.vue'
-import SearchResultPicker from '../shared/SearchResultPicker.vue'
+import SearchInputDialog from '../shared/SearchInputDialog.vue'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -53,10 +53,10 @@ const rows = ref<ImportRowState[]>([])
 
 // Search state
 const searchingRow = ref('')
-const searchResults = ref<SearchResult[]>([])
-const showSearchPicker = ref(false)
 const searchSource = ref<'vndb' | 'bangumi'>('vndb')
-const activeRowFolder = ref('')
+const showSearchInput = ref(false)
+const searchInputFolder = ref('')
+const searchInputQuery = ref('')
 
 // Match-all state
 const isMatchingAll = ref(false)
@@ -70,9 +70,19 @@ const importResult = ref<ImportResult | null>(null)
 const sortKey = ref<'name' | 'size'>('name')
 const sortDir = ref<'asc' | 'desc'>('asc')
 
+const matchStatusOrder: Record<string, number> = {
+  matched: 0,
+  noresult: 1,
+  searching: 2,
+  idle: 3
+}
+
 const sortedRows = computed(() => {
   const arr = [...rows.value]
   arr.sort((a, b) => {
+    const ma = matchStatusOrder[a.matchStatus ?? 'idle'] ?? 3
+    const mb = matchStatusOrder[b.matchStatus ?? 'idle'] ?? 3
+    if (ma !== mb) return ma - mb
     let cmp = 0
     if (sortKey.value === 'name') {
       cmp = (a.title || a.folderName).localeCompare(b.title || b.folderName)
@@ -139,13 +149,18 @@ const handlePickFolder = async (): Promise<void> => {
     }
     scanResult.value = result
     const paths = existingPaths.value
+    const EXCLUDE_EXE = ['update', 'unitycrashhandler', 'custom']
     rows.value = result.items.map((item) => {
-      const hasDuplicate = item.executables.some((e) => paths.has(e.fullPath))
+      const filtered = item.executables.filter(
+        (e) => !EXCLUDE_EXE.includes(e.name.toLowerCase().replace(/\.exe$/i, ''))
+      )
+      const hasDuplicate = filtered.some((e) => paths.has(e.fullPath))
       return {
         ...item,
-        selected: item.executables.length > 0 && !hasDuplicate,
+        executables: filtered,
+        selected: filtered.length > 0 && !hasDuplicate,
         title: item.folderName,
-        selectedExe: item.executables.length > 0 ? item.executables[0].fullPath : '',
+        selectedExe: filtered.length > 0 ? filtered[0].fullPath : '',
         isDuplicate: hasDuplicate,
         vndbId: '',
         bangumiId: '',
@@ -156,7 +171,10 @@ const handlePickFolder = async (): Promise<void> => {
         releaseDate: '',
         description: '',
         customTags: '[]',
-        savePath: ''
+        savePath: '',
+        matchStatus: 'idle',
+        importStatus: 'idle',
+        importMessage: ''
       }
     })
   } catch (e: unknown) {
@@ -166,42 +184,20 @@ const handlePickFolder = async (): Promise<void> => {
   }
 }
 
-const handleSearchRow = async (folderPath: string): Promise<void> => {
-  if (searchingRow.value) return
+const handleSearchRow = (folderPath: string): void => {
   const row = rows.value.find((r) => r.folderPath === folderPath)
   if (!row) return
-
-  const query = row.title || row.folderName
-  if (!query) return
-
-  searchingRow.value = folderPath
-  error.value = ''
-  try {
-    const { source, token } = await ensureTokenCache()
-    searchSource.value = source
-
-    if (source === 'bangumi' && !token) {
-      error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
-      return
-    }
-
-    searchResults.value = await window.api.searchMetadata(query, source, token || undefined)
-    if (searchResults.value.length > 0) {
-      activeRowFolder.value = folderPath
-      showSearchPicker.value = true
-    }
-  } catch (err: unknown) {
-    error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
-  } finally {
-    searchingRow.value = ''
-  }
+  searchInputFolder.value = folderPath
+  searchInputQuery.value = row.title || row.folderName
+  showSearchInput.value = true
 }
 
-const handlePickerSelect = async (result: SearchResult): Promise<void> => {
-  showSearchPicker.value = false
-  const row = rows.value.find((r) => r.folderPath === activeRowFolder.value)
+const handleSearchInputSelect = async (result: SearchResult): Promise<void> => {
+  showSearchInput.value = false
+  const row = rows.value.find((r) => r.folderPath === searchInputFolder.value)
   if (!row) return
 
+  row.matchStatus = 'matched'
   row.title = result.titleCn || result.title || row.title
   if (result.source === 'vndb') row.vndbId = result.id
   if (result.source === 'bangumi') row.bangumiId = result.id
@@ -211,8 +207,11 @@ const handlePickerSelect = async (result: SearchResult): Promise<void> => {
   searchSource.value = result.source
 
   if (result.id) {
+    const token =
+      result.source === 'bangumi'
+        ? await window.api.getConfig('bangumiToken')
+        : await window.api.getConfig('vndbApiKey')
     try {
-      const { token } = await ensureTokenCache()
       const detail = await window.api.fetchMetadataDetail(
         result.id,
         result.source,
@@ -228,11 +227,16 @@ const handlePickerSelect = async (result: SearchResult): Promise<void> => {
       if (detail.description) row.description = detail.description
       if (detail.custom_tags) row.customTags = detail.custom_tags
       if (detail.cover) row.cover = detail.cover
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('获取元数据详情失败:', msg)
+    } catch (err) {
+      console.error('获取元数据详情失败:', err)
     }
   }
+}
+
+const handleSearchInputClose = (): void => {
+  showSearchInput.value = false
+  const row = rows.value.find((r) => r.folderPath === searchInputFolder.value)
+  if (row) row.matchStatus = 'idle'
 }
 
 const handleMatchAll = async (): Promise<void> => {
@@ -261,6 +265,7 @@ const handleMatchAll = async (): Promise<void> => {
       if (signal.aborted) break
       const row = toMatch[i]
       const query = row.title || row.folderName
+      row.matchStatus = 'searching'
 
       try {
         const results = await window.api.searchMetadata(query, source, token || undefined)
@@ -294,10 +299,13 @@ const handleMatchAll = async (): Promise<void> => {
               matchFailedCount++
             }
           }
+          row.matchStatus = 'matched'
         } else {
+          row.matchStatus = 'noresult'
           matchFailedCount++
         }
       } catch {
+        row.matchStatus = 'noresult'
         matchFailedCount++
       }
 
@@ -341,6 +349,8 @@ const handleImportAll = async (): Promise<void> => {
       const chunk = toImport.slice(i, i + CONCURRENCY)
       await Promise.allSettled(
         chunk.map(async (row) => {
+          row.importStatus = 'importing'
+          row.importMessage = ''
           try {
             const now = Date.now()
             const gameId = `id-${now}-${Math.random().toString(36).slice(2, 6)}`
@@ -352,11 +362,13 @@ const handleImportAll = async (): Promise<void> => {
                 (row.bangumiId && g.bangumi_id === row.bangumiId)
             )
             if (existing) {
+              row.importStatus = 'skipped'
+              row.importMessage = `与已有游戏 "${existing.title}" 重复`
               resultItems.push({
                 title: row.title || row.folderName,
                 id: '',
                 status: 'skipped',
-                reason: `与已有游戏 "${existing.title}" 重复`
+                reason: row.importMessage
               })
               return
             }
@@ -395,17 +407,20 @@ const handleImportAll = async (): Promise<void> => {
             const game = await window.api.createGame(gameData)
             store.games.unshift(game)
             importedCount.value++
+            row.importStatus = 'success'
             resultItems.push({
               title: row.title || row.folderName,
               id: gameId,
               status: 'success'
             })
           } catch (e: unknown) {
+            row.importStatus = 'failed'
+            row.importMessage = (e instanceof Error ? e.message : String(e)) || '未知错误'
             resultItems.push({
               title: row.title || row.folderName,
               id: '',
               status: 'failed',
-              reason: (e instanceof Error ? e.message : String(e)) || '未知错误'
+              reason: row.importMessage
             })
           }
         })
@@ -453,11 +468,9 @@ const handleOverlayClick = (e: MouseEvent): void => {
           <button class="dialog-close" @click="handleClose">&times;</button>
         </div>
 
-        <div class="dialog-body">
-          <div v-if="error" class="form-error">{{ error }}</div>
-
-          <!-- Step 1: Select Folder -->
-          <div v-if="!scanResult" class="folder-pick-area">
+        <!-- Step 1: Select Folder (non-scrollable) -->
+        <div v-if="!scanResult" class="dialog-body">
+          <div class="folder-pick-area">
             <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
               <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
                 <path
@@ -468,9 +481,11 @@ const handleOverlayClick = (e: MouseEvent): void => {
             </button>
             <p class="folder-hint">选择包含多个游戏子文件夹的根目录</p>
           </div>
+        </div>
 
-          <!-- Import result report -->
-          <div v-if="showResult && importResult" class="result-panel">
+        <!-- Import result report (scrollable) -->
+        <div v-else-if="showResult && importResult" class="dialog-body">
+          <div class="result-panel">
             <div class="result-summary">
               <div class="result-stat success">
                 <span class="result-num">{{ importResult.successCount }}</span>
@@ -491,24 +506,37 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 <span class="result-label">耗时</span>
               </div>
             </div>
+            <div v-if="importResult.successCount > 0" class="result-detail">
+              <div class="result-section-title">成功详情 ({{ importResult.successCount }})</div>
+              <div
+                v-for="item in importResult.items.filter((i) => i.status === 'success')"
+                :key="item.title + item.id"
+                class="result-item success"
+              >
+                <span class="result-item-icon">✓</span>
+                <span class="result-item-title">{{ item.title || '(未知)' }}</span>
+              </div>
+            </div>
             <div v-if="importResult.failedCount > 0" class="result-detail">
-              <div class="result-section-title">失败详情</div>
+              <div class="result-section-title">失败详情 ({{ importResult.failedCount }})</div>
               <div
                 v-for="item in importResult.items.filter((i) => i.status === 'failed')"
                 :key="item.title + item.reason"
                 class="result-item failed"
               >
+                <span class="result-item-icon">✗</span>
                 <span class="result-item-title">{{ item.title || '(未知)' }}</span>
                 <span class="result-item-reason">{{ item.reason }}</span>
               </div>
             </div>
             <div v-if="importResult.skippedCount > 0" class="result-detail">
-              <div class="result-section-title">跳过详情</div>
+              <div class="result-section-title">跳过详情 ({{ importResult.skippedCount }})</div>
               <div
                 v-for="item in importResult.items.filter((i) => i.status === 'skipped')"
                 :key="item.title + item.reason"
                 class="result-item skipped"
               >
+                <span class="result-item-icon">⏭</span>
                 <span class="result-item-title">{{ item.title }}</span>
                 <span class="result-item-reason">{{ item.reason }}</span>
               </div>
@@ -517,59 +545,62 @@ const handleOverlayClick = (e: MouseEvent): void => {
               <button class="btn-brand" @click="handleFinish">完成</button>
             </div>
           </div>
+        </div>
 
-          <!-- Step 2: Review & Import -->
-          <div v-else-if="scanResult" class="batch-form">
-            <div class="batch-summary">
-              <div class="bs-left">
-                <label class="bs-select-all">
-                  <input
-                    type="checkbox"
-                    :checked="isAllSelected"
-                    :indeterminate="
-                      selectedSelectableCount > 0 && selectedSelectableCount < allSelectableCount
-                    "
-                    :disabled="isImporting"
-                    @change="handleSelectAll(($event.target as HTMLInputElement).checked)"
-                  />
-                  <span
-                    >共检测到 <strong>{{ totalCount }}</strong> 个游戏目录</span
-                  >
-                </label>
-                <div class="bs-sort">
-                  <button
-                    class="sort-btn"
-                    :class="{ active: sortKey === 'name' }"
-                    :disabled="isImporting"
-                    @click="toggleSort('name')"
-                  >
-                    名称 {{ sortKey === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
-                  </button>
-                  <button
-                    class="sort-btn"
-                    :class="{ active: sortKey === 'size' }"
-                    :disabled="isImporting"
-                    @click="toggleSort('size')"
-                  >
-                    大小 {{ sortKey === 'size' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
-                  </button>
-                </div>
-              </div>
-              <div class="bs-right">
-                <button
-                  v-if="!isMatchingAll"
-                  class="btn-match-all"
-                  :disabled="isImporting || unmatchedCount === 0"
-                  @click="handleMatchAll"
+        <!-- Step 2: Review & Import (split layout: fixed top/bottom, scrollable middle) -->
+        <template v-else-if="scanResult">
+          <div v-if="error" class="form-error batch-error">{{ error }}</div>
+          <div class="batch-summary">
+            <div class="bs-left">
+              <label class="bs-select-all">
+                <input
+                  type="checkbox"
+                  :checked="isAllSelected"
+                  :indeterminate="
+                    selectedSelectableCount > 0 && selectedSelectableCount < allSelectableCount
+                  "
+                  :disabled="isImporting"
+                  @change="handleSelectAll(($event.target as HTMLInputElement).checked)"
+                />
+                <span
+                  >共检测到 <strong>{{ totalCount }}</strong> 个游戏目录</span
                 >
-                  一键匹配全部 ({{ unmatchedCount }})
+              </label>
+              <div class="bs-sort">
+                <button
+                  class="sort-btn"
+                  :class="{ active: sortKey === 'name' }"
+                  :disabled="isImporting"
+                  @click="toggleSort('name')"
+                >
+                  名称 {{ sortKey === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
                 </button>
-                <button v-else class="btn-match-cancel" @click="handleCancelMatchAll">
-                  取消匹配
+                <button
+                  class="sort-btn"
+                  :class="{ active: sortKey === 'size' }"
+                  :disabled="isImporting"
+                  @click="toggleSort('size')"
+                >
+                  大小 {{ sortKey === 'size' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
                 </button>
               </div>
             </div>
+            <div class="bs-right">
+              <button
+                v-if="!isMatchingAll"
+                class="btn-match-all"
+                :disabled="isImporting || unmatchedCount === 0"
+                @click="handleMatchAll"
+              >
+                一键匹配全部 ({{ unmatchedCount }})
+              </button>
+              <button v-else class="btn-match-cancel" @click="handleCancelMatchAll">
+                取消匹配
+              </button>
+            </div>
+          </div>
 
+          <div class="batch-scroll">
             <div class="batch-list">
               <BatchImportRow
                 v-for="row in sortedRows"
@@ -585,45 +616,44 @@ const handleOverlayClick = (e: MouseEvent): void => {
             </div>
 
             <div v-if="totalCount === 0" class="empty-hint">该文件夹下没有子目录</div>
+          </div>
 
-            <div class="batch-actions">
-              <div class="ba-count">
-                {{
-                  isImporting
-                    ? `正在导入 ${importedCount}/${selectedCount} ...`
-                    : `已选 ${selectedCount} 个游戏${skipCount > 0 ? `，${skipCount} 个跳过（已存在）` : ''}`
-                }}
-              </div>
-              <div class="ba-buttons">
-                <button
-                  class="btn-cancel"
-                  :disabled="isImporting || isMatchingAll"
-                  @click="handleClose"
-                >
-                  取消
-                </button>
-                <button
-                  class="btn-brand"
-                  :disabled="isImporting || isMatchingAll || selectedCount === 0"
-                  @click="handleImportAll"
-                >
-                  {{ isImporting ? '导入中...' : '导入选中' }}
-                </button>
-              </div>
+          <div class="batch-actions">
+            <div class="ba-count">
+              {{
+                isImporting
+                  ? `正在导入 ${importedCount}/${selectedCount} ...`
+                  : `已选 ${selectedCount} 个游戏${skipCount > 0 ? `，${skipCount} 个跳过（已存在）` : ''}`
+              }}
+            </div>
+            <div class="ba-buttons">
+              <button
+                class="btn-cancel"
+                :disabled="isImporting || isMatchingAll"
+                @click="handleClose"
+              >
+                取消
+              </button>
+              <button
+                class="btn-brand"
+                :disabled="isImporting || isMatchingAll || selectedCount === 0"
+                @click="handleImportAll"
+              >
+                {{ isImporting ? '导入中...' : '导入选中' }}
+              </button>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </Teleport>
 
-  <SearchResultPicker
-    v-if="showSearchPicker"
-    :results="searchResults"
-    :loading="false"
-    :source="searchSource"
-    @select="handlePickerSelect"
-    @close="showSearchPicker = false"
+  <SearchInputDialog
+    v-if="showSearchInput"
+    :initial-query="searchInputQuery"
+    :initial-source="searchSource"
+    @select="handleSearchInputSelect"
+    @close="handleSearchInputClose"
   />
 </template>
 
@@ -707,7 +737,6 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 .form-error {
   padding: 8px 12px;
-  margin-bottom: 12px;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 8px;
@@ -715,11 +744,19 @@ const handleOverlayClick = (e: MouseEvent): void => {
   font-size: 12px;
 }
 
+.batch-error {
+  margin: 8px 20px 0;
+  flex-shrink: 0;
+}
+
 .batch-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  padding: 12px 20px 0;
+  flex-shrink: 0;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color-light);
 }
 
 .bs-left {
@@ -813,11 +850,17 @@ const handleOverlayClick = (e: MouseEvent): void => {
   color: var(--danger);
 }
 
+.batch-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+  min-height: 0;
+}
+
 .batch-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 16px;
 }
 
 .empty-hint {
@@ -831,8 +874,11 @@ const handleOverlayClick = (e: MouseEvent): void => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 14px;
+  padding: 12px 20px;
   border-top: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+  background: var(--bg-primary);
+  border-radius: 8px;
 }
 
 .ba-count {
@@ -847,7 +893,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 /* Result panel */
 .result-panel {
-  padding: 16px 0;
+  padding: 0;
 }
 
 .result-summary {
@@ -906,6 +952,11 @@ const handleOverlayClick = (e: MouseEvent): void => {
   border-radius: 6px;
   font-size: 12px;
   margin-bottom: 4px;
+  align-items: center;
+}
+
+.result-item.success {
+  background: rgba(34, 197, 94, 0.06);
 }
 
 .result-item.failed {
@@ -914,6 +965,26 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 .result-item.skipped {
   background: rgba(245, 158, 11, 0.08);
+}
+
+.result-item-icon {
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+.result-item.success .result-item-icon {
+  color: #22c55e;
+}
+
+.result-item.failed .result-item-icon {
+  color: var(--danger);
+}
+
+.result-item.skipped .result-item-icon {
+  color: #f59e0b;
 }
 
 .result-item-title {

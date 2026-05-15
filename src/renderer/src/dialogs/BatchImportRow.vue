@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ImportRowState } from '../../../shared/types'
 
-defineProps<{
+const props = defineProps<{
   row: ImportRowState
   searching: boolean
   importing: boolean
@@ -13,10 +13,73 @@ const emit = defineEmits<{
   (e: 'update:selectedExe', val: string): void
   (e: 'search'): void
 }>()
+
+const matchStatusIcon = (status?: string): string => {
+  if (status === 'matched') return '✓'
+  if (status === 'noresult') return '✗'
+  return ''
+}
+
+const matchStatusClass = (status?: string): string => {
+  if (status === 'matched') return 'ms-matched'
+  if (status === 'noresult') return 'ms-noresult'
+  return ''
+}
 </script>
 
 <template>
-  <div class="batch-row" :class="{ disabled: !row.selectedExe || row.isDuplicate }">
+  <div
+    class="batch-row"
+    :class="{
+      disabled: !row.selectedExe || row.isDuplicate,
+      'row-importing': row.importStatus === 'importing',
+      'row-success': row.importStatus === 'success',
+      'row-failed': row.importStatus === 'failed',
+      'row-skipped': row.importStatus === 'skipped'
+    }"
+  >
+    <div class="br-status">
+      <span
+        v-if="row.importStatus === 'importing'"
+        class="br-status-spin"
+        title="导入中"
+      >
+        <svg viewBox="0 0 24 24" class="w-3 h-3 spin">
+          <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
+        </svg>
+      </span>
+      <span
+        v-else-if="row.importStatus === 'success'"
+        class="br-status-icon br-status-ok"
+        title="导入成功"
+      >✓</span>
+      <span
+        v-else-if="row.importStatus === 'failed'"
+        class="br-status-icon br-status-fail"
+        :title="row.importMessage || '导入失败'"
+      >✗</span>
+      <span
+        v-else-if="row.importStatus === 'skipped'"
+        class="br-status-icon br-status-skip"
+        :title="row.importMessage || '已跳过'"
+      >⏭</span>
+      <span
+        v-else-if="row.matchStatus === 'searching'"
+        class="br-status-spin"
+        title="匹配中"
+      >
+        <svg viewBox="0 0 24 24" class="w-3 h-3 spin">
+          <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
+        </svg>
+      </span>
+      <span
+        v-else-if="row.matchStatus"
+        class="br-status-icon"
+        :class="matchStatusClass(row.matchStatus)"
+        :title="row.matchStatus === 'matched' ? '已匹配' : '无匹配结果'"
+      >{{ matchStatusIcon(row.matchStatus) }}</span>
+    </div>
+
     <div class="br-check">
       <input
         :checked="row.selected"
@@ -76,18 +139,79 @@ const emit = defineEmits<{
 <style scoped>
 .batch-row {
   display: grid;
-  grid-template-columns: 32px 1fr 1fr 70px;
+  grid-template-columns: 24px 32px 1fr 1fr 70px;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  transition: border-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
 .batch-row.disabled {
   opacity: 0.5;
   border-style: dashed;
+}
+
+.batch-row.row-importing {
+  border-color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.batch-row.row-success {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.batch-row.row-failed {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.batch-row.row-skipped {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.br-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  height: 24px;
+}
+
+.br-status-spin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.br-status-icon {
+  font-weight: 700;
+  line-height: 1;
+}
+
+.br-status-ok {
+  color: #22c55e;
+}
+
+.br-status-fail {
+  color: var(--danger);
+}
+
+.br-status-skip {
+  color: #f59e0b;
+}
+
+.ms-matched {
+  color: #22c55e;
+}
+
+.ms-noresult {
+  color: var(--danger);
 }
 
 .br-check {

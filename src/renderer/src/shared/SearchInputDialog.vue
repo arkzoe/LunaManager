@@ -2,23 +2,55 @@
 import { ref } from 'vue'
 import type { SearchResult } from '../../../shared/types'
 
-const props = defineProps<{
-  results: SearchResult[]
-  loading: boolean
-  source: 'vndb' | 'bangumi'
-}>()
-
 const emit = defineEmits<{
   (e: 'select', result: SearchResult): void
   (e: 'close'): void
 }>()
 
-const selectedId = ref<string | null>(null)
+const props = defineProps<{
+  initialQuery?: string
+  initialSource?: 'vndb' | 'bangumi'
+}>()
 
-const sourceLabel = props.source === 'vndb' ? 'VNDB' : 'Bangumi'
+const query = ref(props.initialQuery || '')
+const source = ref<'vndb' | 'bangumi'>(props.initialSource || 'vndb')
+const searching = ref(false)
+const results = ref<SearchResult[]>([])
+const searched = ref(false)
+const selectedId = ref<string | null>(null)
+const error = ref('')
+
+const handleSearch = async (): Promise<void> => {
+  const q = query.value.trim()
+  if (!q) return
+
+  searching.value = true
+  searched.value = true
+  error.value = ''
+  results.value = []
+  selectedId.value = null
+
+  try {
+    const token =
+      source.value === 'bangumi'
+        ? await window.api.getConfig('bangumiToken')
+        : await window.api.getConfig('vndbApiKey')
+
+    if (source.value === 'bangumi' && !token) {
+      error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
+      return
+    }
+
+    results.value = await window.api.searchMetadata(q, source.value, token || undefined)
+  } catch (err: unknown) {
+    error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
+  } finally {
+    searching.value = false
+  }
+}
 
 const handleSelect = (): void => {
-  const found = props.results.find((r) => r.id === selectedId.value)
+  const found = results.value.find((r) => r.id === selectedId.value)
   if (found) emit('select', found)
 }
 
@@ -34,21 +66,47 @@ const handleOverlayClick = (e: MouseEvent): void => {
     <div class="dialog-overlay" @click="handleOverlayClick" @keydown.esc="emit('close')">
       <div class="dialog-card">
         <div class="dialog-header">
-          <h2 class="dialog-title">选择 {{ sourceLabel }} 条目</h2>
+          <h2 class="dialog-title">手动搜索元数据</h2>
           <button class="dialog-close" @click="emit('close')">&times;</button>
         </div>
 
         <div class="dialog-body">
-          <div v-if="loading" class="picker-loading">
-            <svg viewBox="0 0 24 24" class="w-5 h-5 spin">
-              <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
-            </svg>
-            <span>搜索中...</span>
+          <div v-if="error" class="search-error">{{ error }}</div>
+
+          <div class="search-form">
+            <div class="sf-row">
+              <label class="sf-label">数据源</label>
+              <select v-model="source" class="sf-select" :disabled="searching">
+                <option value="vndb">VNDB</option>
+                <option value="bangumi">Bangumi</option>
+              </select>
+            </div>
+            <div class="sf-row">
+              <label class="sf-label">关键词</label>
+              <input
+                v-model="query"
+                class="sf-input"
+                placeholder="输入游戏名称搜索..."
+                :disabled="searching"
+                @keydown.enter="handleSearch"
+              />
+            </div>
+            <button class="btn-brand sf-btn" :disabled="searching || !query.trim()" @click="handleSearch">
+              <svg v-if="searching" viewBox="0 0 24 24" class="w-3.5 h-3.5 spin">
+                <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+              </svg>
+              {{ searching ? '搜索中...' : '搜索' }}
+            </button>
           </div>
 
-          <div v-else-if="results.length === 0" class="picker-empty">未找到相关结果</div>
+          <div v-if="searched && !searching && results.length === 0 && !error" class="picker-empty">
+            未找到相关结果
+          </div>
 
-          <div v-else class="picker-list">
+          <div v-else-if="results.length > 0" class="picker-list">
             <label
               v-for="item in results"
               :key="item.id"
@@ -63,9 +121,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 </div>
                 <div class="picker-meta">
                   <span v-if="item.date">{{ item.date }}</span>
-                  <span v-if="item.rating > 0" class="picker-rating"
-                    >★ {{ item.rating.toFixed(1) }}</span
-                  >
+                  <span v-if="item.rating > 0" class="picker-rating">★ {{ item.rating.toFixed(1) }}</span>
                 </div>
               </div>
             </label>
@@ -74,7 +130,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
         <div class="dialog-footer">
           <button class="btn-cancel" @click="emit('close')">取消</button>
-          <button class="btn-brand" :disabled="!selectedId || loading" @click="handleSelect">
+          <button class="btn-brand" :disabled="!selectedId || searching" @click="handleSelect">
             确认选择
           </button>
         </div>
@@ -87,7 +143,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1001;
+  z-index: 1002;
   background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
@@ -157,12 +213,73 @@ const handleOverlayClick = (e: MouseEvent): void => {
   flex-shrink: 0;
 }
 
-.picker-loading,
-.picker-empty {
+.search-error {
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.sf-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.sf-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 56px;
+  flex-shrink: 0;
+}
+
+.sf-select,
+.sf-input {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.sf-select:focus,
+.sf-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.sf-select:disabled,
+.sf-input:disabled {
+  opacity: 0.6;
+}
+
+.sf-btn {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.picker-empty {
+  text-align: center;
   padding: 32px 0;
   font-size: 13px;
   color: var(--text-tertiary);
@@ -243,23 +360,5 @@ const handleOverlayClick = (e: MouseEvent): void => {
   to {
     transform: rotate(360deg);
   }
-}
-
-.btn-cancel {
-  height: 34px;
-  padding: 0 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-cancel:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
 }
 </style>
