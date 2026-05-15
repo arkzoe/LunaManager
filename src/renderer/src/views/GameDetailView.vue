@@ -27,7 +27,9 @@ const tempReleaseDate = ref(props.game.release_date || '')
 const tempTags = ref(props.game.custom_tags || '[]')
 const tempExecutablePath = ref(props.game.executable_path || '')
 const tempDescription = ref(props.game.description || '')
-const tempDataSource = ref<string>(props.game.vndb_id ? 'vndb' : props.game.bangumi_id ? 'bangumi' : '')
+const tempDataSource = ref<string>(
+  props.game.vndb_id ? 'vndb' : props.game.bangumi_id ? 'bangumi' : ''
+)
 const tempVndbId = ref(props.game.vndb_id || '')
 const tempBangumiId = ref(props.game.bangumi_id || '')
 const saving = ref(false)
@@ -114,7 +116,7 @@ const handleSave = async (): Promise<void> => {
 
     // Update local game object and notify parent
     Object.assign(props.game, updates)
-    const idx = store.games.findIndex(g => g.id === props.game.id)
+    const idx = store.games.findIndex((g) => g.id === props.game.id)
     if (idx !== -1) {
       store.games[idx] = { ...store.games[idx], ...updates }
     }
@@ -136,9 +138,10 @@ const handleFetchMetadata = async (): Promise<void> => {
     return
   }
 
-  const token = source === 'bangumi'
-    ? await window.api.getConfig('bangumiToken')
-    : await window.api.getConfig('vndbApiKey')
+  const token =
+    source === 'bangumi'
+      ? await window.api.getConfig('bangumiToken')
+      : await window.api.getConfig('vndbApiKey')
 
   if (source === 'bangumi' && !token) {
     showToastMsg('请先在「设置 → 数据源」中配置 Bangumi Token', 'error')
@@ -163,7 +166,7 @@ const handleFetchMetadata = async (): Promise<void> => {
       if (coverPath) {
         await window.api.updateGame(props.game.id, { cover: coverPath })
         props.game.cover = coverPath
-        const idx = store.games.findIndex(g => g.id === props.game.id)
+        const idx = store.games.findIndex((g) => g.id === props.game.id)
         if (idx !== -1) {
           store.games[idx].cover = coverPath
         }
@@ -193,7 +196,9 @@ const handleDeleteGame = async (): Promise<void> => {
 onMounted(async () => {
   try {
     isRunning.value = await window.api.isGameRunning(props.game.id)
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 })
 
 const handleClickOutside = (): void => {

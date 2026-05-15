@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { BatchScanResult, GameRecord, SearchResult, ImportRowState, ImportResult, ImportResultItem } from '../../../shared/types'
+import type {
+  BatchScanResult,
+  GameRecord,
+  SearchResult,
+  ImportRowState,
+  ImportResult,
+  ImportResultItem
+} from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import BatchImportRow from './BatchImportRow.vue'
 import SearchResultPicker from '../shared/SearchResultPicker.vue'
@@ -26,14 +33,18 @@ const invalidateTokenCache = (): void => {
   cachedToken = null
 }
 
-const ensureTokenCache = async (): Promise<{ source: 'vndb' | 'bangumi'; token: string | null }> => {
+const ensureTokenCache = async (): Promise<{
+  source: 'vndb' | 'bangumi'
+  token: string | null
+}> => {
   if (cachedSource === null) {
     cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
   }
   if (cachedToken === null) {
-    cachedToken = cachedSource === 'bangumi'
-      ? await window.api.getConfig('bangumiToken')
-      : await window.api.getConfig('vndbApiKey')
+    cachedToken =
+      cachedSource === 'bangumi'
+        ? await window.api.getConfig('bangumiToken')
+        : await window.api.getConfig('vndbApiKey')
   }
   return { source: cachedSource, token: cachedToken }
 }
@@ -84,20 +95,31 @@ const toggleSort = (key: 'name' | 'size'): void => {
 
 const existingPaths = computed(() => new Set(store.games.map((g) => g.executable_path)))
 const existingVndbIds = computed(() => new Set(store.games.map((g) => g.vndb_id).filter(Boolean)))
-const existingBangumiIds = computed(() => new Set(store.games.map((g) => g.bangumi_id).filter(Boolean)))
-
-const selectedCount = computed(() => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length)
-const skipCount = computed(() => rows.value.filter((r) => r.isDuplicate).length)
-const totalCount = computed(() => rows.value.length)
-const allSelectableCount = computed(() => rows.value.filter((r) => r.selectedExe && !r.isDuplicate).length)
-const selectedSelectableCount = computed(() => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length)
-
-const isAllSelected = computed(() =>
-  allSelectableCount.value > 0 && selectedSelectableCount.value === allSelectableCount.value
+const existingBangumiIds = computed(
+  () => new Set(store.games.map((g) => g.bangumi_id).filter(Boolean))
 )
 
-const unmatchedCount = computed(() =>
-  rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate && !r.vndbId && !r.bangumiId).length
+const selectedCount = computed(
+  () => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length
+)
+const skipCount = computed(() => rows.value.filter((r) => r.isDuplicate).length)
+const totalCount = computed(() => rows.value.length)
+const allSelectableCount = computed(
+  () => rows.value.filter((r) => r.selectedExe && !r.isDuplicate).length
+)
+const selectedSelectableCount = computed(
+  () => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length
+)
+
+const isAllSelected = computed(
+  () => allSelectableCount.value > 0 && selectedSelectableCount.value === allSelectableCount.value
+)
+
+const unmatchedCount = computed(
+  () =>
+    rows.value.filter(
+      (r) => r.selected && r.selectedExe && !r.isDuplicate && !r.vndbId && !r.bangumiId
+    ).length
 )
 
 const handleSelectAll = (checked: boolean): void => {
@@ -273,12 +295,16 @@ const handleMatchAll = async (): Promise<void> => {
               if (detail.description) row.description = detail.description
               if (detail.custom_tags) row.customTags = detail.custom_tags
               if (detail.cover) row.cover = detail.cover
-            } catch { matchFailedCount++ }
+            } catch {
+              matchFailedCount++
+            }
           }
         } else {
           matchFailedCount++
         }
-      } catch { matchFailedCount++ }
+      } catch {
+        matchFailedCount++
+      }
 
       if (i < toMatch.length - 1 && !signal.aborted) {
         await new Promise((resolve) => setTimeout(resolve, 300))
@@ -324,10 +350,11 @@ const handleImportAll = async (): Promise<void> => {
             const now = Date.now()
             const gameId = `id-${now}-${Math.random().toString(36).slice(2, 6)}`
 
-            const existing = store.games.find(g =>
-              g.executable_path === row.selectedExe ||
-              (row.vndbId && g.vndb_id === row.vndbId) ||
-              (row.bangumiId && g.bangumi_id === row.bangumiId)
+            const existing = store.games.find(
+              (g) =>
+                g.executable_path === row.selectedExe ||
+                (row.vndbId && g.vndb_id === row.vndbId) ||
+                (row.bangumiId && g.bangumi_id === row.bangumiId)
             )
             if (existing) {
               resultItems.push({
@@ -438,7 +465,9 @@ const handleOverlayClick = (e: MouseEvent): void => {
           <div v-if="!scanResult" class="folder-pick-area">
             <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
               <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-                <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" />
+                <path
+                  d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
+                />
               </svg>
               {{ isLoading ? '扫描中...' : '选择游戏库根文件夹' }}
             </button>
@@ -461,14 +490,16 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 <span class="result-label">失败</span>
               </div>
               <div class="result-stat">
-                <span class="result-num">{{ (importResult.totalDuration / 1000).toFixed(1) }}s</span>
+                <span class="result-num"
+                  >{{ (importResult.totalDuration / 1000).toFixed(1) }}s</span
+                >
                 <span class="result-label">耗时</span>
               </div>
             </div>
             <div v-if="importResult.failedCount > 0" class="result-detail">
               <div class="result-section-title">失败详情</div>
               <div
-                v-for="item in importResult.items.filter(i => i.status === 'failed')"
+                v-for="item in importResult.items.filter((i) => i.status === 'failed')"
                 :key="item.title + item.reason"
                 class="result-item failed"
               >
@@ -479,7 +510,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
             <div v-if="importResult.skippedCount > 0" class="result-detail">
               <div class="result-section-title">跳过详情</div>
               <div
-                v-for="item in importResult.items.filter(i => i.status === 'skipped')"
+                v-for="item in importResult.items.filter((i) => i.status === 'skipped')"
                 :key="item.title + item.reason"
                 class="result-item skipped"
               >
@@ -500,11 +531,15 @@ const handleOverlayClick = (e: MouseEvent): void => {
                   <input
                     type="checkbox"
                     :checked="isAllSelected"
-                    :indeterminate="selectedSelectableCount > 0 && selectedSelectableCount < allSelectableCount"
+                    :indeterminate="
+                      selectedSelectableCount > 0 && selectedSelectableCount < allSelectableCount
+                    "
                     :disabled="isImporting"
                     @change="handleSelectAll(($event.target as HTMLInputElement).checked)"
                   />
-                  <span>共检测到 <strong>{{ totalCount }}</strong> 个游戏目录</span>
+                  <span
+                    >共检测到 <strong>{{ totalCount }}</strong> 个游戏目录</span
+                  >
                 </label>
                 <div class="bs-sort">
                   <button
@@ -534,11 +569,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 >
                   一键匹配全部 ({{ unmatchedCount }})
                 </button>
-                <button
-                  v-else
-                  class="btn-match-cancel"
-                  @click="handleCancelMatchAll"
-                >
+                <button v-else class="btn-match-cancel" @click="handleCancelMatchAll">
                   取消匹配
                 </button>
               </div>
@@ -553,7 +584,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 :importing="isImporting || isMatchingAll"
                 @update:selected="row.selected = $event"
                 @update:title="row.title = $event"
-                @update:selectedExe="row.selectedExe = $event"
+                @update:selected-exe="row.selectedExe = $event"
                 @search="handleSearchRow(row.folderPath)"
               />
             </div>
@@ -562,11 +593,25 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
             <div class="batch-actions">
               <div class="ba-count">
-                {{ isImporting ? `正在导入 ${importedCount}/${selectedCount} ...` : `已选 ${selectedCount} 个游戏${skipCount > 0 ? `，${skipCount} 个跳过（已存在）` : ''}` }}
+                {{
+                  isImporting
+                    ? `正在导入 ${importedCount}/${selectedCount} ...`
+                    : `已选 ${selectedCount} 个游戏${skipCount > 0 ? `，${skipCount} 个跳过（已存在）` : ''}`
+                }}
               </div>
               <div class="ba-buttons">
-                <button class="btn-cancel" :disabled="isImporting || isMatchingAll" @click="handleClose">取消</button>
-                <button class="btn-brand" :disabled="isImporting || isMatchingAll || selectedCount === 0" @click="handleImportAll">
+                <button
+                  class="btn-cancel"
+                  :disabled="isImporting || isMatchingAll"
+                  @click="handleClose"
+                >
+                  取消
+                </button>
+                <button
+                  class="btn-brand"
+                  :disabled="isImporting || isMatchingAll || selectedCount === 0"
+                  @click="handleImportAll"
+                >
                   {{ isImporting ? '导入中...' : '导入选中' }}
                 </button>
               </div>
@@ -827,9 +872,15 @@ const handleOverlayClick = (e: MouseEvent): void => {
   border: 1px solid var(--border-color);
 }
 
-.result-stat.success .result-num { color: #22c55e; }
-.result-stat.skipped .result-num { color: #f59e0b; }
-.result-stat.failed .result-num { color: var(--danger); }
+.result-stat.success .result-num {
+  color: #22c55e;
+}
+.result-stat.skipped .result-num {
+  color: #f59e0b;
+}
+.result-stat.failed .result-num {
+  color: var(--danger);
+}
 
 .result-num {
   font-size: 22px;

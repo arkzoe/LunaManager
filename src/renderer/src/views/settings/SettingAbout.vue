@@ -5,7 +5,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'checkUpdate': []
+  checkUpdate: []
 }>()
 </script>
 
@@ -36,7 +36,8 @@ const emit = defineEmits<{
           target="_blank"
           class="sbtn sbtn-secondary"
           style="text-decoration: none"
-        >GitHub</a>
+          >GitHub</a
+        >
       </div>
     </div>
   </section>

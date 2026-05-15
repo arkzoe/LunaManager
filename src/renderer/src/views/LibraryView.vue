@@ -66,12 +66,15 @@ const loadCollections = async (): Promise<void> => {
       items.push({ id: c.id, name: c.name, gameIds: games.map((g) => g.id) })
     }
     collections.value = items
-  } catch { collections.value = [] }
+  } catch {
+    collections.value = []
+  }
 }
 
 const batchCount = computed(() => selectedIds.value.size)
-const allFilteredSelected = computed(() =>
-  filteredGames.value.length > 0 && filteredGames.value.every((g) => selectedIds.value.has(g.id))
+const allFilteredSelected = computed(
+  () =>
+    filteredGames.value.length > 0 && filteredGames.value.every((g) => selectedIds.value.has(g.id))
 )
 
 const handleGameClick = (game: GameRecord): void => {
@@ -151,7 +154,9 @@ const handleAddToCollection = async (collectionId: string): Promise<void> => {
         await window.api.addGameToCollection(id, collectionId)
         col.gameIds.push(id)
         added++
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
   }
   showCollectionPicker.value = false
@@ -374,7 +379,9 @@ const handleBatchImported = (result: ImportResult): void => {
     <!-- 空状态：游戏库为空 -->
     <div v-else-if="store.games.length === 0" class="empty-state">
       <svg viewBox="0 0 24 24" class="w-12 h-12 fill-text-muted opacity-25 mb-4">
-        <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+        <path
+          d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+        />
       </svg>
       <p>游戏库还是空的</p>
       <button class="btn-brand btn-sm" @click="handleManualImport">导入你的第一个游戏</button>
@@ -490,5 +497,4 @@ const handleBatchImported = (result: ImportResult): void => {
   color: var(--text-tertiary);
   margin: 0;
 }
-
 </style>

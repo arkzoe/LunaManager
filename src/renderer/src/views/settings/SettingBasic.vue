@@ -17,7 +17,7 @@ const emit = defineEmits<{
   'update:trackPlaytime': [value: boolean]
   'update:recordHistory': [value: boolean]
   'update:language': [value: string]
-  'selectDownloadPath': []
+  selectDownloadPath: []
 }>()
 </script>
 

@@ -23,17 +23,20 @@ const emit = defineEmits<{
 
 const inputValue = ref('')
 
-watch(() => props.show, (val) => {
-  if (val) {
-    if (props.mode === 'rename') {
-      inputValue.value = props.collection?.name || ''
-    } else if (props.mode === 'create') {
-      inputValue.value = props.collectionName || ''
-    } else {
-      inputValue.value = ''
+watch(
+  () => props.show,
+  (val) => {
+    if (val) {
+      if (props.mode === 'rename') {
+        inputValue.value = props.collection?.name || ''
+      } else if (props.mode === 'create') {
+        inputValue.value = props.collectionName || ''
+      } else {
+        inputValue.value = ''
+      }
     }
   }
-})
+)
 
 const handleConfirm = () => {
   if (props.mode === 'create') {

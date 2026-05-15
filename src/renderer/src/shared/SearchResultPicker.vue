@@ -18,7 +18,7 @@ const selectedId = ref<string | null>(null)
 const sourceLabel = props.source === 'vndb' ? 'VNDB' : 'Bangumi'
 
 const handleSelect = (): void => {
-  const found = props.results.find(r => r.id === selectedId.value)
+  const found = props.results.find((r) => r.id === selectedId.value)
   if (found) emit('select', found)
 }
 
@@ -41,14 +41,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
         <div class="dialog-body">
           <div v-if="loading" class="picker-loading">
             <svg viewBox="0 0 24 24" class="w-5 h-5 spin">
-              <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor"/>
+              <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
             </svg>
             <span>搜索中...</span>
           </div>
 
-          <div v-else-if="results.length === 0" class="picker-empty">
-            未找到相关结果
-          </div>
+          <div v-else-if="results.length === 0" class="picker-empty">未找到相关结果</div>
 
           <div v-else class="picker-list">
             <label
@@ -57,12 +55,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
               class="picker-item"
               :class="{ selected: selectedId === item.id }"
             >
-              <input
-                v-model="selectedId"
-                type="radio"
-                :value="item.id"
-                class="picker-radio"
-              />
+              <input v-model="selectedId" type="radio" :value="item.id" class="picker-radio" />
               <img
                 v-if="item.cover"
                 :src="item.cover"
@@ -77,7 +70,9 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 </div>
                 <div class="picker-meta">
                   <span v-if="item.date">{{ item.date }}</span>
-                  <span v-if="item.rating > 0" class="picker-rating">★ {{ item.rating.toFixed(1) }}</span>
+                  <span v-if="item.rating > 0" class="picker-rating"
+                    >★ {{ item.rating.toFixed(1) }}</span
+                  >
                 </div>
               </div>
             </label>
@@ -86,11 +81,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
         <div class="dialog-footer">
           <button class="btn-cancel" @click="emit('close')">取消</button>
-          <button
-            class="btn-brand"
-            :disabled="!selectedId || loading"
-            @click="handleSelect"
-          >
+          <button class="btn-brand" :disabled="!selectedId || loading" @click="handleSelect">
             确认选择
           </button>
         </div>
@@ -272,7 +263,9 @@ const handleOverlayClick = (e: MouseEvent): void => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-cancel {

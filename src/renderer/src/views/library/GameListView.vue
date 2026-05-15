@@ -22,7 +22,12 @@ const emit = defineEmits<{
   <div class="game-list">
     <div class="list-header" :class="{ 'has-check': batchMode }">
       <span v-if="batchMode" class="lh-check">
-        <input type="checkbox" :checked="allFilteredSelected" @change="emit('toggleSelectAll')" class="list-cb" />
+        <input
+          type="checkbox"
+          :checked="allFilteredSelected"
+          class="list-cb"
+          @change="emit('toggleSelectAll')"
+        />
       </span>
       <span class="lh-col lh-cover">&nbsp;</span>
       <span class="lh-col lh-name">名称</span>
@@ -43,15 +48,17 @@ const emit = defineEmits<{
         <input
           type="checkbox"
           :checked="selectedIds.has(game.id)"
-          @change="emit('toggleSelectGame', game.id)"
           class="list-cb"
+          @change="emit('toggleSelectGame', game.id)"
         />
       </div>
       <div class="lr-cover">
         <img v-if="game.cover" :src="game.cover" :alt="game.title" class="lr-cover-img" />
         <div v-else class="lr-cover-ph">
           <svg viewBox="0 0 24 24" class="w-4 h-4 fill-text-muted opacity-30">
-            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+            <path
+              d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+            />
           </svg>
         </div>
       </div>

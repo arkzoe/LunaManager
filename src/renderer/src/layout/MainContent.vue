@@ -49,15 +49,28 @@ const handleBack = (): void => {
     </header>
     <div class="content">
       <Transition name="page" mode="out-in">
-        <GameDetailView v-if="selectedGame" :key="'detail-'+selectedGame.id" :game="selectedGame" @back="handleBack" />
+        <GameDetailView
+          v-if="selectedGame"
+          :key="'detail-' + selectedGame.id"
+          :game="selectedGame"
+          @back="handleBack"
+        />
         <HomeView
           v-else-if="activeTab === 'home'"
           key="home"
           @select-game="handleSelectGame"
           @navigate-library="() => emit('update:activeTab', 'library')"
         />
-        <LibraryView v-else-if="activeTab === 'library'" key="library" @select-game="handleSelectGame" />
-        <FavoritesView v-else-if="activeTab === 'favorites'" key="favorites" @select-game="handleSelectGame" />
+        <LibraryView
+          v-else-if="activeTab === 'library'"
+          key="library"
+          @select-game="handleSelectGame"
+        />
+        <FavoritesView
+          v-else-if="activeTab === 'favorites'"
+          key="favorites"
+          @select-game="handleSelectGame"
+        />
         <StatsView v-else-if="activeTab === 'stats'" key="stats" />
         <SettingsView v-else-if="activeTab === 'settings'" key="settings" />
       </Transition>
@@ -122,7 +135,9 @@ const handleBack = (): void => {
 /* ===== 页面过渡 ===== */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .page-enter-from {

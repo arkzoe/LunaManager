@@ -10,8 +10,8 @@ const emit = defineEmits<{
   'update:lePath': [value: string]
   'update:magpiePath': [value: string]
   'update:magpieScale': [value: string]
-  'selectLEPath': []
-  'selectMagpiePath': []
+  selectLEPath: []
+  selectMagpiePath: []
 }>()
 </script>
 
@@ -29,7 +29,9 @@ const emit = defineEmits<{
       <div class="setting-row">
         <div class="setting-info">
           <span class="setting-label">Magpie 路径</span>
-          <span class="setting-desc">{{ magpiePath || 'Magpie.exe 所在路径，用于超分放大游戏窗口' }}</span>
+          <span class="setting-desc">{{
+            magpiePath || 'Magpie.exe 所在路径，用于超分放大游戏窗口'
+          }}</span>
         </div>
         <button class="sbtn sbtn-secondary" @click="emit('selectMagpiePath')">选择路径</button>
       </div>

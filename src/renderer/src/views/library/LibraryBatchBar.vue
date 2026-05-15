@@ -30,7 +30,11 @@ const emit = defineEmits<{
         <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current"><path d="M7 10l5 5 5-5z" /></svg>
       </button>
       <Teleport to="body">
-        <div v-if="showBatchStatusMenu" class="context-overlay" @click="emit('closeBatchStatusMenu')" />
+        <div
+          v-if="showBatchStatusMenu"
+          class="context-overlay"
+          @click="emit('closeBatchStatusMenu')"
+        />
         <div v-if="showBatchStatusMenu" class="batch-status-menu">
           <button
             v-for="f in statusFilters"
@@ -43,8 +47,16 @@ const emit = defineEmits<{
         </div>
       </Teleport>
     </div>
-    <button class="bb-btn" :disabled="batchCount === 0" @click="emit('openCollectionPicker')">添加到收藏夹</button>
-    <button class="bb-btn bb-danger" :disabled="batchCount === 0" @click="emit('openDeleteConfirm')">删除</button>
+    <button class="bb-btn" :disabled="batchCount === 0" @click="emit('openCollectionPicker')">
+      添加到收藏夹
+    </button>
+    <button
+      class="bb-btn bb-danger"
+      :disabled="batchCount === 0"
+      @click="emit('openDeleteConfirm')"
+    >
+      删除
+    </button>
   </div>
 </template>
 

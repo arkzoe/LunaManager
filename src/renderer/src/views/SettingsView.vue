@@ -9,12 +9,30 @@ import SettingBackup from './settings/SettingBackup.vue'
 import SettingAbout from './settings/SettingAbout.vue'
 
 const {
-  autoStart, autoUpdate, downloadPath, language,
-  vndbApiKey, bangumiToken, lePath, magpiePath, magpieScale,
-  autoBackup, backupDir, backupFrequency, backupMaxCopies,
-  showGameCover, trackPlaytime, recordHistory, autoSyncMetadata, metadataSource,
-  loadConfig, setupPersistence,
-  handleSelectLEPath, handleSelectMagpiePath, handleChangeDownloadPath, handleSelectBackupDir
+  autoStart,
+  autoUpdate,
+  downloadPath,
+  language,
+  vndbApiKey,
+  bangumiToken,
+  lePath,
+  magpiePath,
+  magpieScale,
+  autoBackup,
+  backupDir,
+  backupFrequency,
+  backupMaxCopies,
+  showGameCover,
+  trackPlaytime,
+  recordHistory,
+  autoSyncMetadata,
+  metadataSource,
+  loadConfig,
+  setupPersistence,
+  handleSelectLEPath,
+  handleSelectMagpiePath,
+  handleChangeDownloadPath,
+  handleSelectBackupDir
 } = useSettings()
 
 const currentVersion = ref('1.0.0')
@@ -34,7 +52,12 @@ const handleTestBangumi = async (): Promise<void> => {
     const res = await window.api.testApiConnection('bangumi', bangumiToken.value || undefined)
     testResult.value = { source: 'bangumi', loading: false, ...res }
   } catch (err: any) {
-    testResult.value = { source: 'bangumi', loading: false, ok: false, message: err.message || '测试失败' }
+    testResult.value = {
+      source: 'bangumi',
+      loading: false,
+      ok: false,
+      message: err.message || '测试失败'
+    }
   }
 }
 
@@ -44,7 +67,12 @@ const handleTestVNDB = async (): Promise<void> => {
     const res = await window.api.testApiConnection('vndb', vndbApiKey.value || undefined)
     testResult.value = { source: 'vndb', loading: false, ...res }
   } catch (err: any) {
-    testResult.value = { source: 'vndb', loading: false, ok: false, message: err.message || '测试失败' }
+    testResult.value = {
+      source: 'vndb',
+      loading: false,
+      ok: false,
+      message: err.message || '测试失败'
+    }
   }
 }
 
@@ -176,7 +204,7 @@ const scrollToSection = (id: string): void => {
         @update:show-game-cover="showGameCover = $event"
         @update:track-playtime="trackPlaytime = $event"
         @update:record-history="recordHistory = $event"
-        @update:language="language = ($event as 'zh-CN' | 'en-US')"
+        @update:language="language = $event as 'zh-CN' | 'en-US'"
         @select-download-path="handleChangeDownloadPath"
       />
 
@@ -189,7 +217,7 @@ const scrollToSection = (id: string): void => {
         :vndb-api-key="vndbApiKey"
         :bangumi-token="bangumiToken"
         :test-result="testResult"
-        @update:metadata-source="metadataSource = ($event as 'vndb' | 'bangumi')"
+        @update:metadata-source="metadataSource = $event as 'vndb' | 'bangumi'"
         @update:auto-sync-metadata="autoSyncMetadata = $event"
         @update:vndb-api-key="vndbApiKey = $event"
         @update:bangumi-token="bangumiToken = $event"
@@ -217,7 +245,7 @@ const scrollToSection = (id: string): void => {
         :backup-max-copies="backupMaxCopies"
         @update:auto-backup="autoBackup = $event"
         @update:backup-dir="backupDir = $event"
-        @update:backup-frequency="backupFrequency = ($event as 'daily' | 'weekly' | 'monthly')"
+        @update:backup-frequency="backupFrequency = $event as 'daily' | 'weekly' | 'monthly'"
         @update:backup-max-copies="backupMaxCopies = $event"
         @select-backup-dir="handleSelectBackupDir"
       />

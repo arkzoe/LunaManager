@@ -29,8 +29,8 @@ const emit = defineEmits<{
         <input
           type="checkbox"
           :checked="selectedIds.has(game.id)"
-          @change="emit('toggleSelectGame', game.id)"
           class="grid-cb"
+          @change="emit('toggleSelectGame', game.id)"
         />
       </label>
       <GameCard :game="game" />

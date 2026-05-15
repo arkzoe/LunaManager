@@ -18,11 +18,7 @@ const themeStore = useThemeStore()
           <span class="setting-desc">使用深色主题保护眼睛</span>
         </div>
         <label class="toggle">
-          <input
-            type="checkbox"
-            :checked="themeStore.isDark"
-            @change="themeStore.toggleTheme"
-          />
+          <input type="checkbox" :checked="themeStore.isDark" @change="themeStore.toggleTheme" />
           <span class="toggle-slider"></span>
         </label>
       </div>

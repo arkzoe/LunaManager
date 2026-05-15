@@ -19,7 +19,8 @@ const emit = defineEmits<{
   (e: 'selectGame', game: GameRecord): void
 }>()
 
-const { collections, loadCollections, createCollection, renameCollection, deleteCollection } = useCollections()
+const { collections, loadCollections, createCollection, renameCollection, deleteCollection } =
+  useCollections()
 
 const effectiveGames = computed(() => props.games || store.allGames)
 
@@ -56,13 +57,11 @@ const selectedCollection = computed(() =>
   collections.value.find((c) => c.id === selectedCollectionId.value)
 )
 
-const currentCollectionGames = computed(() =>
-  collectionGames.value.get(selectedCollectionId.value || '') || []
+const currentCollectionGames = computed(
+  () => collectionGames.value.get(selectedCollectionId.value || '') || []
 )
 
-const defaultCollection = computed(() =>
-  collections.value.find((c) => c.name === '最喜欢的游戏')
-)
+const defaultCollection = computed(() => collections.value.find((c) => c.name === '最喜欢的游戏'))
 
 const isDefault = (col: UICollection) => col.name === '最喜欢的游戏'
 
@@ -75,12 +74,16 @@ watch(
     const currentIds = new Set(collectionGames.value.get(colId)?.map((g) => g.id) || [])
     for (const id of favIds) {
       if (!currentIds.has(id)) {
-        try { await window.api.addGameToCollection(id, colId) } catch { }
+        try {
+          await window.api.addGameToCollection(id, colId)
+        } catch {}
       }
     }
     for (const id of currentIds) {
       if (!favIds.includes(id)) {
-        try { await window.api.removeGameFromCollection(id, colId) } catch { }
+        try {
+          await window.api.removeGameFromCollection(id, colId)
+        } catch {}
       }
     }
     const games = await window.api.getCollectionGames(colId)
@@ -125,10 +128,13 @@ const handleDelete = async (id: string) => {
 
 const handleMoveGame = async (gameId: string, targetId: string) => {
   for (const col of collections.value) {
-    await window.api.removeGameFromCollection(gameId, col.id).catch(() => { })
+    await window.api.removeGameFromCollection(gameId, col.id).catch(() => {})
     const games = collectionGames.value.get(col.id)
     if (games) {
-      collectionGames.value.set(col.id, games.filter((g) => g.id !== gameId))
+      collectionGames.value.set(
+        col.id,
+        games.filter((g) => g.id !== gameId)
+      )
     }
     col.gameIds = (collectionGames.value.get(col.id) || []).map((g) => g.id)
   }
@@ -206,7 +212,7 @@ const openDeleteModal = (col: UICollection) => {
           v-for="collection in filteredCollections"
           :key="collection.id"
           :collection="collection"
-          :isDefault="isDefault(collection)"
+          :is-default="isDefault(collection)"
           @open="openCollection(collection)"
           @rename="openRenameModal(collection)"
           @delete="openDeleteModal(collection)"
@@ -249,8 +255,8 @@ const openDeleteModal = (col: UICollection) => {
       <CollectionGameGrid
         :games="currentCollectionGames"
         :collections="collections"
-        @selectGame="emit('selectGame', $event)"
-        @moveGame="requestMoveGame($event)"
+        @select-game="emit('selectGame', $event)"
+        @move-game="requestMoveGame($event)"
       />
     </template>
 
@@ -264,7 +270,11 @@ const openDeleteModal = (col: UICollection) => {
       @rename="handleRename"
       @delete="handleDelete"
       @move="handleMoveGame"
-      @close="modalMode = null; editingCollection = null; selectedGameForMove = null"
+      @close="
+        modalMode = null
+        editingCollection = null
+        selectedGameForMove = null
+      "
     />
   </div>
 </template>

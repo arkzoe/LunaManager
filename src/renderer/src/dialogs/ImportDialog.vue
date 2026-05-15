@@ -45,16 +45,22 @@ const invalidateTokenCache = (): void => {
   cachedToken = null
 }
 
-watch(title, () => { searchNoResults.value = false })
+watch(title, () => {
+  searchNoResults.value = false
+})
 
-const ensureTokenCache = async (): Promise<{ source: 'vndb' | 'bangumi'; token: string | null }> => {
+const ensureTokenCache = async (): Promise<{
+  source: 'vndb' | 'bangumi'
+  token: string | null
+}> => {
   if (cachedSource === null) {
     cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
   }
   if (cachedToken === null) {
-    cachedToken = cachedSource === 'bangumi'
-      ? await window.api.getConfig('bangumiToken')
-      : await window.api.getConfig('vndbApiKey')
+    cachedToken =
+      cachedSource === 'bangumi'
+        ? await window.api.getConfig('bangumiToken')
+        : await window.api.getConfig('vndbApiKey')
   }
   return { source: cachedSource, token: cachedToken }
 }
@@ -165,10 +171,11 @@ const handleConfirm = async (): Promise<void> => {
     return
   }
 
-  const existing = store.games.find(g =>
-    g.executable_path === selectedExe.value ||
-    (vndbId.value && g.vndb_id === vndbId.value) ||
-    (bangumiId.value && g.bangumi_id === bangumiId.value)
+  const existing = store.games.find(
+    (g) =>
+      g.executable_path === selectedExe.value ||
+      (vndbId.value && g.vndb_id === vndbId.value) ||
+      (bangumiId.value && g.bangumi_id === bangumiId.value)
   )
   if (existing) {
     error.value = `"${existing.title}" 已存在于游戏库中，请勿重复导入`
@@ -324,10 +331,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
                   @click="handleSearch"
                 >
                   <svg v-if="searching" viewBox="0 0 24 24" class="w-3.5 h-3.5 spin">
-                    <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor"/>
+                    <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
                   </svg>
                   <svg v-else viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    <path
+                      d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                    />
                   </svg>
                   识别源数据
                 </button>
@@ -338,8 +347,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 class="form-input"
                 placeholder="输入游戏名称"
               />
-              <div v-if="metadataFilled" class="metadata-hint">已从 {{ searchSource === 'vndb' ? 'VNDB' : 'Bangumi' }} 获取元数据</div>
-              <div v-if="searchNoResults" class="search-no-results">未找到匹配结果，请尝试调整搜索名称</div>
+              <div v-if="metadataFilled" class="metadata-hint">
+                已从 {{ searchSource === 'vndb' ? 'VNDB' : 'Bangumi' }} 获取元数据
+              </div>
+              <div v-if="searchNoResults" class="search-no-results">
+                未找到匹配结果，请尝试调整搜索名称
+              </div>
             </div>
 
             <div class="form-group">
@@ -428,8 +441,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
             <div class="form-group">
               <label class="form-label">存档路径</label>
               <div class="save-path-row">
-                <div class="form-path save-path-text" :class="{ empty: !savePath }">{{ savePath || '未设置' }}</div>
-                <button class="btn-pick-path" :disabled="isLoading" @click="handlePickSavePath">选择</button>
+                <div class="form-path save-path-text" :class="{ empty: !savePath }">
+                  {{ savePath || '未设置' }}
+                </div>
+                <button class="btn-pick-path" :disabled="isLoading" @click="handlePickSavePath">
+                  选择
+                </button>
               </div>
             </div>
 
@@ -789,6 +806,8 @@ const handleOverlayClick = (e: MouseEvent): void => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

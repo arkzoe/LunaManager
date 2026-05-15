@@ -7,12 +7,15 @@ interface CollectionItem {
   gameIds: string[]
 }
 
-const props = withDefaults(defineProps<{
-  show: boolean
-  selectedCount?: number
-}>(), {
-  selectedCount: 0
-})
+const props = withDefaults(
+  defineProps<{
+    show: boolean
+    selectedCount?: number
+  }>(),
+  {
+    selectedCount: 0
+  }
+)
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -43,9 +46,12 @@ const handleSelect = (id: string): void => {
   emit('select', id)
 }
 
-watch(() => props.show, (val) => {
-  if (val) loadCollections()
-})
+watch(
+  () => props.show,
+  (val) => {
+    if (val) loadCollections()
+  }
+)
 </script>
 
 <template>
@@ -64,7 +70,9 @@ watch(() => props.show, (val) => {
             <span class="modal-list-name">{{ col.name }}</span>
             <span class="modal-list-count">{{ col.gameIds.length }} 个游戏</span>
           </button>
-          <div v-if="collections.length === 0" class="modal-empty">暂无收藏夹，请先在收藏页面创建</div>
+          <div v-if="collections.length === 0" class="modal-empty">
+            暂无收藏夹，请先在收藏页面创建
+          </div>
         </div>
         <div class="modal-actions">
           <button class="btn-cancel" @click="emit('close')">取消</button>

@@ -12,7 +12,7 @@ const emit = defineEmits<{
   'update:backupDir': [value: string]
   'update:backupFrequency': [value: string]
   'update:backupMaxCopies': [value: number]
-  'selectBackupDir': []
+  selectBackupDir: []
 }>()
 </script>
 
@@ -64,7 +64,9 @@ const emit = defineEmits<{
         <select
           :value="backupMaxCopies"
           class="sselect"
-          @change="emit('update:backupMaxCopies', Number(($event.target as HTMLSelectElement).value))"
+          @change="
+            emit('update:backupMaxCopies', Number(($event.target as HTMLSelectElement).value))
+          "
         >
           <option v-for="n in [3, 5, 10, 20, 50]" :key="n" :value="n">{{ n }}</option>
         </select>

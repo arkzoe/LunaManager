@@ -20,8 +20,8 @@ const emit = defineEmits<{
   'update:autoSyncMetadata': [value: boolean]
   'update:vndbApiKey': [value: string]
   'update:bangumiToken': [value: string]
-  'testBangumi': []
-  'testVndb': []
+  testBangumi: []
+  testVndb: []
 }>()
 </script>
 
@@ -74,15 +74,23 @@ const emit = defineEmits<{
         </div>
       </div>
       <!-- VNDB 测试结果 -->
-      <div v-if="testResult?.source === 'vndb'" class="test-feedback" :class="{ ok: testResult.ok, err: !testResult.ok && !testResult.loading }">
+      <div
+        v-if="testResult?.source === 'vndb'"
+        class="test-feedback"
+        :class="{ ok: testResult.ok, err: !testResult.ok && !testResult.loading }"
+      >
         <svg v-if="testResult.loading" viewBox="0 0 24 24" class="w-4 h-4 spin">
-          <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor"/>
+          <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
         </svg>
         <svg v-else-if="testResult.ok" viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+          />
         </svg>
         <svg v-else viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+          />
         </svg>
         <span>{{ testResult.loading ? '测试中...' : testResult.message }}</span>
       </div>
@@ -103,15 +111,23 @@ const emit = defineEmits<{
         </div>
       </div>
       <!-- Bangumi 测试结果 -->
-      <div v-if="testResult?.source === 'bangumi'" class="test-feedback" :class="{ ok: testResult.ok, err: !testResult.ok && !testResult.loading }">
+      <div
+        v-if="testResult?.source === 'bangumi'"
+        class="test-feedback"
+        :class="{ ok: testResult.ok, err: !testResult.ok && !testResult.loading }"
+      >
         <svg v-if="testResult.loading" viewBox="0 0 24 24" class="w-4 h-4 spin">
-          <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor"/>
+          <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
         </svg>
         <svg v-else-if="testResult.ok" viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+          />
         </svg>
         <svg v-else viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+          />
         </svg>
         <span>{{ testResult.loading ? '测试中...' : testResult.message }}</span>
       </div>
@@ -150,6 +166,8 @@ const emit = defineEmits<{
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

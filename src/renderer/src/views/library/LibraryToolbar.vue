@@ -18,13 +18,19 @@ const emit = defineEmits<{
 }>()
 
 const importBtnRef = ref<HTMLElement | null>(null)
-void importBtnRef /* TODO: 用于后续下拉菜单定位 */
+void importBtnRef.value /* TODO: 用于后续下拉菜单定位 */
 </script>
 
 <template>
   <div class="toolbar">
     <div class="search-box">
-      <svg viewBox="0 0 24 24" class="search-icon" fill="none" stroke="currentColor" stroke-width="1.75">
+      <svg
+        viewBox="0 0 24 24"
+        class="search-icon"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+      >
         <circle cx="11" cy="11" r="8" />
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
@@ -86,7 +92,9 @@ void importBtnRef /* TODO: 用于后续下拉菜单定位 */
           </button>
           <button class="ctx-item" @click="emit('batchImport')">
             <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-              <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm0-4H6v-2h8v2z" />
+              <path
+                d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm0-4H6v-2h8v2z"
+              />
             </svg>
             批量导入
           </button>

@@ -21,11 +21,9 @@ const emit = defineEmits<{
         <p class="modal-desc" v-html="message" />
         <div class="modal-actions">
           <button class="btn-cancel" @click="emit('cancel')">{{ cancelText || '取消' }}</button>
-          <button
-            class="btn-danger"
-            :class="{ 'btn-brand': !danger }"
-            @click="emit('confirm')"
-          >{{ confirmText || '确认' }}</button>
+          <button class="btn-danger" :class="{ 'btn-brand': !danger }" @click="emit('confirm')">
+            {{ confirmText || '确认' }}
+          </button>
         </div>
       </div>
     </div>
