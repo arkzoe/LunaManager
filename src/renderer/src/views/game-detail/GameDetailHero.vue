@@ -51,7 +51,13 @@ const hasMetadata = computed(() => {
 <template>
   <div class="hero">
     <div class="hero-cover" :class="{ 'hero-cover-wide': isCoverWide }">
-      <img v-if="game.cover" :src="game.cover" :alt="game.title" class="cover-img" @load="onCoverLoad" />
+      <img
+        v-if="game.cover"
+        :src="game.cover"
+        :alt="game.title"
+        class="cover-img"
+        @load="onCoverLoad"
+      />
       <div v-else class="cover-ph">
         <svg viewBox="0 0 24 24" class="w-16 h-16 fill-text-muted opacity-20">
           <path

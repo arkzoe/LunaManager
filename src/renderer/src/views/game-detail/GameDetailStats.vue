@@ -10,11 +10,21 @@ import {
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
 
 const props = defineProps<{ game: GameRecord }>()
 
@@ -53,9 +63,10 @@ const chartData = computed(() => {
     cutoff = now - 30 * 24 * 60 * 60 * 1000
   }
 
-  const filtered = timeRange.value === 'all'
-    ? sessions.value
-    : sessions.value.filter((s) => s.start_time >= cutoff)
+  const filtered =
+    timeRange.value === 'all'
+      ? sessions.value
+      : sessions.value.filter((s) => s.start_time >= cutoff)
 
   if (filtered.length === 0) return null
 
@@ -75,7 +86,7 @@ const chartData = computed(() => {
   }
 
   const labels = [...grouped.keys()]
-  const values = [...grouped.values()].map((d) => Math.round(d / 3600000 * 10) / 10)
+  const values = [...grouped.values()].map((d) => Math.round((d / 3600000) * 10) / 10)
 
   return {
     labels,
