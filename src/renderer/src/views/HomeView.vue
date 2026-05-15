@@ -18,6 +18,12 @@ onMounted(() => {
   if (store.games.length === 0) store.loadGames()
 })
 
+function onWheelScroll(e: WheelEvent) {
+  const el = e.currentTarget as HTMLElement
+  el.scrollBy({ left: e.deltaY, behavior: 'smooth' })
+  e.preventDefault()
+}
+
 // 全局概览
 const overview = computed(() => {
   const total = store.allGames.length
@@ -41,35 +47,30 @@ const recentGames = computed(() =>
 
 // 最近添加 — 按 created_at 排序
 const recentAdded = computed(() =>
-  [...store.allGames].sort((a, b) => (b.created_at || 0) - (a.created_at || 0)).slice(0, 6)
+  [...store.allGames].sort((a, b) => (b.created_at || 0) - (a.created_at || 0)).slice(0, 10)
 )
 
-// 活动动态
-const activities = computed(() => {
-  const list: { type: string; game: GameRecord; time: string }[] = []
-
+// 最近动态 — 游玩信息（左侧）
+const playedActs = computed(() =>
   store.allGames
     .filter((g) => g.last_played)
     .sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
-    .slice(0, 3)
-    .forEach((g) => {
-      list.push({ type: 'played', game: g, time: formatRelativeTime(g.last_played || '') })
-    })
+    .slice(0, 5)
+    .map((g) => ({ type: 'played' as const, game: g, time: formatRelativeTime(g.last_played || '') }))
+)
 
+// 最近动态 — 新入库（右侧）
+const addedActs = computed(() =>
   store.allGames
     .filter((g) => g.created_at)
     .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
-    .slice(0, 2)
-    .forEach((g) => {
-      list.push({
-        type: 'added',
-        game: g,
-        time: formatRelativeTime(g.created_at)
-      })
-    })
-
-  return list.slice(0, 5)
-})
+    .slice(0, 5)
+    .map((g) => ({
+      type: 'added' as const,
+      game: g,
+      time: formatRelativeTime(g.created_at)
+    }))
+)
 </script>
 
 <template>
@@ -110,7 +111,7 @@ const activities = computed(() => {
           <h2>最近游玩</h2>
           <button class="section-link" @click="emit('navigateLibrary')">查看全部</button>
         </div>
-        <div class="h-scroll">
+        <div class="h-scroll" @wheel="onWheelScroll">
           <div
             v-for="game in recentGames"
             :key="game.id"
@@ -122,19 +123,17 @@ const activities = computed(() => {
         </div>
       </section>
 
-      <!-- 最近添加 — 封面墙 -->
-      <section class="section-block">
+      <!-- 最近添加 — 横滑列表 -->
+      <section v-if="recentAdded.length > 0" class="section-block">
         <div class="section-head">
           <h2>最近添加</h2>
+          <button class="section-link" @click="emit('navigateLibrary')">查看全部</button>
         </div>
-        <div
-          class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3"
-          :style="{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }"
-        >
+        <div class="h-scroll" @wheel="onWheelScroll">
           <div
             v-for="game in recentAdded"
             :key="game.id"
-            :title="game.title"
+            class="scroll-card"
             @click="emit('selectGame', game)"
           >
             <GameCard :game="game" />
@@ -142,14 +141,21 @@ const activities = computed(() => {
         </div>
       </section>
 
-      <section v-if="activities.length > 0" class="section-block">
+      <!-- 最近动态 — 左：游玩信息 / 右：新入库 -->
+      <section v-if="playedActs.length > 0 || addedActs.length > 0" class="section-block">
         <div class="section-head">
           <h2>最近动态</h2>
         </div>
-        <HomeActivityTimeline
-          :activities="activities"
-          @select-game="(g) => emit('selectGame', g)"
-        />
+        <div class="activity-split">
+          <HomeActivityTimeline
+            :activities="playedActs"
+            @select-game="(g) => emit('selectGame', g)"
+          />
+          <HomeActivityTimeline
+            :activities="addedActs"
+            @select-game="(g) => emit('selectGame', g)"
+          />
+        </div>
       </section>
     </template>
   </div>
@@ -235,8 +241,9 @@ const activities = computed(() => {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding: 6px 0 8px;
   scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
 }
 
 .h-scroll::-webkit-scrollbar {
@@ -252,6 +259,13 @@ const activities = computed(() => {
   flex-shrink: 0;
   width: 150px;
   scroll-snap-align: start;
+}
+
+/* ===== 动态两栏 ===== */
+.activity-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 /* ===== 骨架屏 ===== */
