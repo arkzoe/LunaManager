@@ -165,6 +165,11 @@ const openDeleteModal = (col: UICollection): void => {
   editingCollection.value = col
   modalMode.value = 'delete'
 }
+const handleCloseModal = (): void => {
+  modalMode.value = null
+  editingCollection.value = null
+  selectedGameForMove.value = null
+}
 </script>
 
 <template>
@@ -274,11 +279,7 @@ const openDeleteModal = (col: UICollection): void => {
       @rename="handleRename"
       @delete="handleDelete"
       @move="handleMoveGame"
-      @close="
-        modalMode = null
-        editingCollection = null
-        selectedGameForMove = null
-      "
+      @close="handleCloseModal"
     />
   </div>
 </template>

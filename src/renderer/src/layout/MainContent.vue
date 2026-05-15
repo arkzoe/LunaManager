@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { GameRecord } from '../../../shared/types'
 import LibraryView from '../views/LibraryView.vue'
 import FavoritesView from '../views/FavoritesView.vue'
@@ -12,11 +12,15 @@ const props = defineProps<{ activeTab: string }>()
 const emit = defineEmits<{ (e: 'update:activeTab', tab: string): void }>()
 
 const selectedGame = ref<GameRecord | null>(null)
+const contentRef = ref<HTMLElement | null>(null)
 
 watch(
   () => props.activeTab,
   () => {
     selectedGame.value = null
+    nextTick(() => {
+      contentRef.value?.scrollTo(0, 0)
+    })
   }
 )
 
@@ -47,7 +51,7 @@ const handleBack = (): void => {
         <h1 v-else class="title">{{ tabTitle }}</h1>
       </div>
     </header>
-    <div class="content">
+    <div ref="contentRef" class="content">
       <Transition name="page" mode="out-in">
         <GameDetailView
           v-if="selectedGame"

@@ -75,13 +75,18 @@ const handlePickFolder = async (): Promise<void> => {
       isLoading.value = false
       return
     }
+    const EXCLUDE_EXE = ['update', 'unitycrashhandler', 'custom']
+    const filteredExe = result.executables.filter(
+      (e: { name: string }) => !EXCLUDE_EXE.includes(e.name.toLowerCase().replace(/\.exe$/i, ''))
+    )
+    result.executables = filteredExe
     scanResult.value = result
     title.value = result.folderName
     titleCn.value = ''
-    if (result.executables.length === 1) {
-      selectedExe.value = result.executables[0].fullPath
+    if (filteredExe.length === 1) {
+      selectedExe.value = filteredExe[0].fullPath
     } else {
-      selectedExe.value = result.executables.length > 0 ? result.executables[0].fullPath : ''
+      selectedExe.value = filteredExe.length > 0 ? filteredExe[0].fullPath : ''
     }
     isLoading.value = false
   } catch (e: unknown) {

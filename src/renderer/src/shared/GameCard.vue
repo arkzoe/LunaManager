@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { GameRecord } from '../../../shared/types'
 
-defineProps<{ game: GameRecord }>()
+defineProps<{ game: GameRecord; selected?: boolean }>()
 const emit = defineEmits<{ (e: 'click'): void }>()
 </script>
 
 <template>
-  <div class="game-card" @click="emit('click')">
+  <div class="game-card" :class="{ selected }" @click="emit('click')">
     <div class="cover">
       <img v-if="game.cover" :src="game.cover" :alt="game.title" class="cover-img" />
       <div v-else class="cover-placeholder">
@@ -35,6 +35,10 @@ const emit = defineEmits<{ (e: 'click'): void }>()
 
 .game-card:hover {
   box-shadow: var(--shadow-sm);
+}
+
+.game-card.selected {
+  box-shadow: 0 0 0 2px var(--accent-primary);
 }
 
 .cover {

@@ -33,7 +33,7 @@ const emit = defineEmits<{
           @change="emit('toggleSelectGame', game.id)"
         />
       </label>
-      <GameCard :game="game" />
+      <GameCard :game="game" :selected="batchMode && selectedIds.has(game.id)" />
     </div>
   </div>
 </template>
@@ -46,12 +46,9 @@ const emit = defineEmits<{
 }
 
 .grid-item {
-  cursor: pointer;
-}
-
-.grid-item {
   position: relative;
   cursor: pointer;
+  border-radius: 10px;
 }
 
 .grid-item.batch-active {

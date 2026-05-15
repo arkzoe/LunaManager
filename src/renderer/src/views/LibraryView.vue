@@ -431,7 +431,7 @@ const handleBatchImported = (result: ImportResult): void => {
     <ConfirmDialog
       :show="showDeleteConfirm"
       title="确认删除"
-      :message="`确定要删除选中的 <strong>${batchCount}</strong> 个游戏吗？此操作不可恢复。`"
+      :message="`确定要删除选中的 ${batchCount} 个游戏吗？此操作不可恢复。`"
       confirm-text="确认删除"
       danger
       @confirm="confirmBatchDelete"

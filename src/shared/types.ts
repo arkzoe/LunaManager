@@ -63,6 +63,9 @@ export interface BatchScanResult {
   items: ScanResult[]
 }
 
+export type RowMatchStatus = 'idle' | 'searching' | 'matched' | 'noresult'
+export type RowImportStatus = 'idle' | 'importing' | 'success' | 'failed' | 'skipped'
+
 export interface ImportRowState extends ScanResult {
   selected: boolean
   title: string
@@ -78,6 +81,9 @@ export interface ImportRowState extends ScanResult {
   description: string
   customTags: string
   savePath: string
+  matchStatus?: RowMatchStatus
+  importStatus?: RowImportStatus
+  importMessage?: string
 }
 
 export interface ImportResultItem {
