@@ -173,7 +173,7 @@ const timeRanges = [
 
 <style scoped>
 .stats-page {
-  max-width: 860px;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;

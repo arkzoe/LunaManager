@@ -437,7 +437,7 @@ const handleBatchImported = (_count: number): void => {
 
 <style scoped>
 .library {
-  max-width: 1000px;
+  max-width: 100%;
 }
 
 /* ===== 骨架屏 ===== */

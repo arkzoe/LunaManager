@@ -288,7 +288,7 @@ const iconPaths: Record<string, string> = {
 
 <style scoped>
 .detail {
-  max-width: 800px;
+  max-width: 100%;
 }
 
 .tabs {

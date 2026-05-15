@@ -157,7 +157,7 @@ const activities = computed(() => {
 
 <style scoped>
 .home-view {
-  max-width: 960px;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0;
