@@ -295,6 +295,7 @@ const hasMetadata = computed(() => {
 .meta-k {
   color: var(--text-tertiary);
   flex-shrink: 0;
+  font-weight: 700;
 }
 
 .meta-v {
@@ -339,6 +340,7 @@ const hasMetadata = computed(() => {
   color: var(--text-secondary);
   line-height: 1.6;
   margin: 0;
+  white-space: pre-wrap;
   max-height: 80px;
   overflow-y: auto;
 }

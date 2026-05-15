@@ -175,6 +175,32 @@ const onSourceChange = (val: string): void => {
         />
       </div>
 
+      <!-- 标签 -->
+      <div class="form-section-label">标签</div>
+      <div class="tag-area">
+        <div class="tag-chips">
+          <span v-for="tag in parsedTags" :key="tag" class="tag-chip">
+            {{ tag }}
+            <button class="tag-x" @click="removeTag(tag)">
+              <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current">
+                <path
+                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                />
+              </svg>
+            </button>
+          </span>
+        </div>
+        <div class="tag-input-row">
+          <input
+            v-model="tagInput"
+            type="text"
+            class="form-input"
+            placeholder="输入标签后回车添加..."
+            @keydown="handleTagKeydown"
+          />
+        </div>
+      </div>
+
       <!-- 数据源 -->
       <div class="form-section-label">元数据</div>
       <div class="form-row">
@@ -218,33 +244,6 @@ const onSourceChange = (val: string): void => {
         {{ fetching ? '获取中...' : '从远端更新信息' }}
       </button>
 
-      <!-- 标签 -->
-      <div class="form-section-label">标签</div>
-      <div class="tag-area">
-        <div class="tag-chips">
-          <span v-for="tag in parsedTags" :key="tag" class="tag-chip">
-            {{ tag }}
-            <button class="tag-x" @click="removeTag(tag)">
-              <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current">
-                <path
-                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                />
-              </svg>
-            </button>
-          </span>
-        </div>
-        <div class="tag-input-row">
-          <input
-            v-model="tagInput"
-            type="text"
-            class="form-input"
-            placeholder="输入标签后回车添加..."
-            @keydown="handleTagKeydown"
-          />
-          <button class="btn-secondary btn-sm" @click="addTag">添加标签</button>
-        </div>
-      </div>
-
       <div class="form-field">
         <label>个人备注</label>
         <textarea
@@ -268,7 +267,7 @@ const onSourceChange = (val: string): void => {
 
 <style scoped>
 .edit-form {
-  max-width: 560px;
+  max-width: 100%;
 }
 
 .form-field {

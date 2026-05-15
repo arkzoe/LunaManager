@@ -93,12 +93,7 @@ const handleStop = async (): Promise<void> => {
 const handleSave = async (): Promise<void> => {
   saving.value = true
   try {
-    let tagsJson = '[]'
-    const raw = tempTags.value.trim()
-    if (raw) {
-      const tags = raw.split(',').map(t => t.trim()).filter(Boolean)
-      tagsJson = JSON.stringify(tags)
-    }
+    const tagsJson = tempTags.value.trim() || '[]'
 
     const updates: Partial<GameRecord> = {
       title: tempTitle.value,

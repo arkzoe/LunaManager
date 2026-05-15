@@ -21,7 +21,6 @@ watch(
 )
 
 const tabTitle = computed(() => {
-  if (selectedGame.value) return selectedGame.value.title
   const map: Record<string, string> = {
     home: '首页',
     library: '游戏库',
@@ -43,9 +42,9 @@ const handleBack = (): void => {
 <template>
   <main class="main-area">
     <header class="header">
-      <h1 class="title">{{ tabTitle }}</h1>
-      <div v-if="selectedGame" class="header-right">
-        <button class="back-btn" @click="handleBack">← 返回</button>
+      <div class="header-left">
+        <button v-if="selectedGame" class="back-btn" @click="handleBack">← 返回</button>
+        <h1 v-else class="title">{{ tabTitle }}</h1>
       </div>
     </header>
     <div class="content">
@@ -79,9 +78,14 @@ const handleBack = (): void => {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 20px 24px 0;
   flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .title {
@@ -89,12 +93,6 @@ const handleBack = (): void => {
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .back-btn {
