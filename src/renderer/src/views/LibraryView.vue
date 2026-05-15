@@ -21,6 +21,26 @@ const searchQuery = ref('')
 const activeFilter = ref<GameStatus | 'all'>('all')
 const viewMode = ref<'grid' | 'list'>('grid')
 
+type SortKey = 'name' | 'playtime' | 'rating' | 'last_played'
+const sortKey = ref<SortKey>('name')
+const sortDir = ref<'asc' | 'desc'>('asc')
+
+const sortOptions = [
+  { key: 'name' as const, label: '名称' },
+  { key: 'playtime' as const, label: '时长' },
+  { key: 'rating' as const, label: '评分' },
+  { key: 'last_played' as const, label: '最后游玩' }
+]
+
+const toggleSort = (key: SortKey): void => {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDir.value = key === 'name' ? 'asc' : 'desc'
+  }
+}
+
 // 右键菜单
 const ctxMenu = ref<{ x: number; y: number; game: GameRecord } | null>(null)
 const showCtxMenu = ref(false)
@@ -224,7 +244,23 @@ const filteredGames = computed(() => {
         g.title.toLowerCase().includes(q) || (g.title_cn && g.title_cn.toLowerCase().includes(q))
     )
   }
-  return list
+  const key = sortKey.value
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  return [...list].sort((a, b) => {
+    let cmp = 0
+    if (key === 'name') {
+      const an = a.title_cn || a.title
+      const bn = b.title_cn || b.title
+      cmp = an.localeCompare(bn, 'zh-CN')
+    } else if (key === 'playtime') {
+      cmp = (parseInt(a.playtime) || 0) - (parseInt(b.playtime) || 0)
+    } else if (key === 'rating') {
+      cmp = (a.personal_rating || 0) - (b.personal_rating || 0)
+    } else if (key === 'last_played') {
+      cmp = (a.last_played || '').localeCompare(b.last_played || '')
+    }
+    return cmp * dir
+  })
 })
 
 const handleContextMenu = (e: MouseEvent, game: GameRecord): void => {
@@ -345,6 +381,21 @@ const handleBatchImported = (result: ImportResult): void => {
       @open-delete-confirm="openDeleteConfirm"
       @close-batch-status-menu="closeBatchStatusMenu"
     />
+
+    <!-- 排序栏 -->
+    <div class="sort-bar">
+      <span class="sort-label">排序</span>
+      <button
+        v-for="opt in sortOptions"
+        :key="opt.key"
+        class="sort-btn"
+        :class="{ active: sortKey === opt.key }"
+        @click="toggleSort(opt.key)"
+      >
+        {{ opt.label }}
+        <span v-if="sortKey === opt.key" class="sort-arrow">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+      </button>
+    </div>
 
     <!-- 骨架屏 -->
     <div v-if="store.isLoading" class="skeleton-grid">
@@ -480,6 +531,48 @@ const handleBatchImported = (result: ImportResult): void => {
   100% {
     background-position: -200% 0;
   }
+}
+
+/* ===== 排序栏 ===== */
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sort-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-right: 4px;
+}
+
+.sort-btn {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sort-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-secondary);
+}
+
+.sort-btn.active {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.sort-arrow {
+  margin-left: 2px;
 }
 
 /* ===== 空状态 ===== */
