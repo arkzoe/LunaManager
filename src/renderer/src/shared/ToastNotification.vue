@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 
-const props = defineProps<{
+defineProps<{
   message: string
   type: 'success' | 'error'
 }>()

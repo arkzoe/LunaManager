@@ -11,7 +11,8 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  type TooltipItem
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
 
@@ -112,7 +113,7 @@ const chartOptions = computed(() => ({
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (ctx: any) => `${ctx.parsed.y} 小时`
+        label: (ctx: TooltipItem<'line'>) => `${ctx.parsed.y ?? 0} 小时`
       }
     }
   },
@@ -127,7 +128,7 @@ const chartOptions = computed(() => ({
       ticks: {
         font: { size: 11 },
         color: '#9ca3af',
-        callback: (v: any) => `${v}h`
+        callback: (v: number | string) => `${v}h`
       }
     }
   }

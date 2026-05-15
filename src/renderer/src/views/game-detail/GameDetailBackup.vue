@@ -2,8 +2,10 @@
 import { ref, onMounted } from 'vue'
 import type { GameRecord, SaveSnapshot } from '../../../../shared/types'
 import { formatDate, formatFileSize } from '../../utils/format'
+import { useGameStore } from '../../stores/useGameStore'
 
 const props = defineProps<{ game: GameRecord }>()
+const store = useGameStore()
 
 const snapshots = ref<SaveSnapshot[]>([])
 const backingUp = ref(false)
@@ -18,7 +20,8 @@ async function handleSelectFolder(): Promise<void> {
   const dir = await window.api.pickDirectory()
   if (!dir) return
   await window.api.updateGame(props.game.id, { save_path: dir } as Partial<GameRecord>)
-  props.game.save_path = dir
+  const g = store.allGames.find((x) => x.id === props.game.id)
+  if (g) g.save_path = dir
 }
 
 async function handleBackup(): Promise<void> {
@@ -27,8 +30,8 @@ async function handleBackup(): Promise<void> {
   try {
     await window.api.backupSnapshot(props.game.id)
     await loadSnapshots()
-  } catch (e: any) {
-    error.value = e.message || '备份失败'
+  } catch (e: unknown) {
+    error.value = (e instanceof Error ? e.message : String(e)) || '备份失败'
   } finally {
     backingUp.value = false
   }
@@ -40,8 +43,8 @@ async function handleRestore(snapshotId: string): Promise<void> {
   restoring.value = snapshotId
   try {
     await window.api.restoreSnapshotInPlace(snapshotId)
-  } catch (e: any) {
-    error.value = e.message || '还原失败'
+  } catch (e: unknown) {
+    error.value = (e instanceof Error ? e.message : String(e)) || '还原失败'
   } finally {
     restoring.value = null
   }
@@ -56,6 +59,10 @@ async function handleDelete(snapshotId: string): Promise<void> {
 async function handleOpenBackupDir(): Promise<void> {
   const dir = await window.api.getBackupDir(props.game.id)
   await window.api.openPath(dir)
+}
+
+async function handleOpenPath(path: string): Promise<void> {
+  await window.api.openPath(path)
 }
 
 onMounted(() => {
@@ -113,7 +120,7 @@ onMounted(() => {
             <button
               class="btn-secondary btn-xs"
               :disabled="!snap.snapshot_path"
-              @click="window.api.openPath(snap.snapshot_path)"
+              @click="handleOpenPath(snap.snapshot_path)"
             >
               打开位置
             </button>

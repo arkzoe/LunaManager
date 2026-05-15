@@ -51,12 +51,12 @@ const handleTestBangumi = async (): Promise<void> => {
   try {
     const res = await window.api.testApiConnection('bangumi', bangumiToken.value || undefined)
     testResult.value = { source: 'bangumi', loading: false, ...res }
-  } catch (err: any) {
+  } catch (err: unknown) {
     testResult.value = {
       source: 'bangumi',
       loading: false,
       ok: false,
-      message: err.message || '测试失败'
+      message: (err instanceof Error ? err.message : String(err)) || '测试失败'
     }
   }
 }
@@ -66,12 +66,12 @@ const handleTestVNDB = async (): Promise<void> => {
   try {
     const res = await window.api.testApiConnection('vndb', vndbApiKey.value || undefined)
     testResult.value = { source: 'vndb', loading: false, ...res }
-  } catch (err: any) {
+  } catch (err: unknown) {
     testResult.value = {
       source: 'vndb',
       loading: false,
       ok: false,
-      message: err.message || '测试失败'
+      message: (err instanceof Error ? err.message : String(err)) || '测试失败'
     }
   }
 }

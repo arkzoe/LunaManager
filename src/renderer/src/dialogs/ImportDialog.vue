@@ -84,8 +84,8 @@ const handlePickFolder = async (): Promise<void> => {
       selectedExe.value = result.executables.length > 0 ? result.executables[0].fullPath : ''
     }
     isLoading.value = false
-  } catch (e: any) {
-    error.value = e.message || '选择文件夹失败'
+  } catch (e: unknown) {
+    error.value = (e instanceof Error ? e.message : String(e)) || '选择文件夹失败'
     isLoading.value = false
   }
 }
@@ -115,8 +115,8 @@ const handleSearch = async (): Promise<void> => {
     } else {
       searchNoResults.value = true
     }
-  } catch (err: any) {
-    error.value = err.message || '搜索失败'
+  } catch (err: unknown) {
+    error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
   } finally {
     searching.value = false
   }
@@ -149,8 +149,9 @@ const applySearchResult = async (result: SearchResult): Promise<void> => {
       if (detail.vndb_id) vndbId.value = detail.vndb_id
       if (detail.bangumi_id) bangumiId.value = detail.bangumi_id
       metadataFilled.value = true
-    } catch (err: any) {
-      console.error('获取元数据详情失败:', err.message || err)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('获取元数据详情失败:', msg)
     }
   }
 }
@@ -222,8 +223,8 @@ const handleConfirm = async (): Promise<void> => {
     const game = await window.api.createGame(gameData)
     store.games.unshift(game)
     emit('imported', game)
-  } catch (e: any) {
-    error.value = e.message || '导入失败'
+  } catch (e: unknown) {
+    error.value = (e instanceof Error ? e.message : String(e)) || '导入失败'
   } finally {
     isLoading.value = false
   }

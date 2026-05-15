@@ -34,7 +34,7 @@ const modalMode = ref<'create' | 'rename' | 'delete' | 'move' | null>(null)
 const editingCollection = ref<UICollection | null>(null)
 const selectedGameForMove = ref<GameRecord | null>(null)
 
-const loadCollectionGames = async () => {
+const loadCollectionGames = async (): Promise<void> => {
   for (const col of collections.value) {
     const games = await window.api.getCollectionGames(col.id)
     collectionGames.value.set(col.id, games)
@@ -63,7 +63,7 @@ const currentCollectionGames = computed(
 
 const defaultCollection = computed(() => collections.value.find((c) => c.name === '最喜欢的游戏'))
 
-const isDefault = (col: UICollection) => col.name === '最喜欢的游戏'
+const isDefault = (col: UICollection): boolean => col.name === '最喜欢的游戏'
 
 watch(
   () => effectiveGames.value.filter((g) => g.favorite).map((g) => g.id),
@@ -76,14 +76,18 @@ watch(
       if (!currentIds.has(id)) {
         try {
           await window.api.addGameToCollection(id, colId)
-        } catch {}
+        } catch {
+          /* ignore */
+        }
       }
     }
     for (const id of currentIds) {
       if (!favIds.includes(id)) {
         try {
           await window.api.removeGameFromCollection(id, colId)
-        } catch {}
+        } catch {
+          /* ignore */
+        }
       }
     }
     const games = await window.api.getCollectionGames(colId)
@@ -93,17 +97,17 @@ watch(
   { immediate: true }
 )
 
-const openCollection = (collection: UICollection) => {
+const openCollection = (collection: UICollection): void => {
   selectedCollectionId.value = collection.id
   viewMode.value = 'games'
 }
 
-const backToCollections = () => {
+const backToCollections = (): void => {
   viewMode.value = 'collections'
   selectedCollectionId.value = null
 }
 
-const handleCreate = async (name: string) => {
+const handleCreate = async (name: string): Promise<void> => {
   await createCollection(name)
   const last = collections.value[collections.value.length - 1]
   if (last) {
@@ -113,12 +117,12 @@ const handleCreate = async (name: string) => {
   modalMode.value = null
 }
 
-const handleRename = async (id: string, name: string) => {
+const handleRename = async (id: string, name: string): Promise<void> => {
   await renameCollection(id, name)
   modalMode.value = null
 }
 
-const handleDelete = async (id: string) => {
+const handleDelete = async (id: string): Promise<void> => {
   await deleteCollection(id)
   collectionGames.value.delete(id)
   if (viewMode.value === 'games') viewMode.value = 'collections'
@@ -126,7 +130,7 @@ const handleDelete = async (id: string) => {
   modalMode.value = null
 }
 
-const handleMoveGame = async (gameId: string, targetId: string) => {
+const handleMoveGame = async (gameId: string, targetId: string): Promise<void> => {
   for (const col of collections.value) {
     await window.api.removeGameFromCollection(gameId, col.id).catch(() => {})
     const games = collectionGames.value.get(col.id)
@@ -147,17 +151,17 @@ const handleMoveGame = async (gameId: string, targetId: string) => {
   selectedGameForMove.value = null
 }
 
-const requestMoveGame = (game: GameRecord) => {
+const requestMoveGame = (game: GameRecord): void => {
   selectedGameForMove.value = game
   modalMode.value = 'move'
 }
 
-const openRenameModal = (col: UICollection) => {
+const openRenameModal = (col: UICollection): void => {
   editingCollection.value = col
   modalMode.value = 'rename'
 }
 
-const openDeleteModal = (col: UICollection) => {
+const openDeleteModal = (col: UICollection): void => {
   editingCollection.value = col
   modalMode.value = 'delete'
 }

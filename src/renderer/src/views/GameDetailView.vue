@@ -77,8 +77,8 @@ const handleLaunch = async (mode: string): Promise<void> => {
     await window.api.launchGame(props.game.id, mode as LaunchMode)
     isRunning.value = true
     showToastMsg('游戏已启动', 'success')
-  } catch (err: any) {
-    showToastMsg(err.message || '启动失败', 'error')
+  } catch (err: unknown) {
+    showToastMsg((err instanceof Error ? err.message : String(err)) || '启动失败', 'error')
   }
 }
 
@@ -87,8 +87,8 @@ const handleStop = async (): Promise<void> => {
     await window.api.stopGame(props.game.id)
     isRunning.value = false
     showToastMsg('游戏已停止', 'success')
-  } catch (err: any) {
-    showToastMsg(err.message || '停止失败', 'error')
+  } catch (err: unknown) {
+    showToastMsg((err instanceof Error ? err.message : String(err)) || '停止失败', 'error')
   }
 }
 
@@ -114,15 +114,14 @@ const handleSave = async (): Promise<void> => {
 
     await window.api.updateGame(props.game.id, updates)
 
-    // Update local game object and notify parent
-    Object.assign(props.game, updates)
+    // Update store and notify parent
     const idx = store.games.findIndex((g) => g.id === props.game.id)
     if (idx !== -1) {
       store.games[idx] = { ...store.games[idx], ...updates }
     }
-    emit('updated', props.game)
+    emit('updated', { ...props.game, ...updates })
     showToastMsg('保存成功', 'success')
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('保存失败:', err)
     showToastMsg('保存失败', 'error')
   } finally {
@@ -162,21 +161,20 @@ const handleFetchMetadata = async (): Promise<void> => {
     if (detail.release_date) tempReleaseDate.value = detail.release_date
     if (detail.description) tempDescription.value = detail.description
     if (detail.cover) {
-      const coverPath = await window.api.downloadCover(props.game.id, detail.cover as any)
+      const coverPath = await window.api.downloadCover(props.game.id, detail.cover)
       if (coverPath) {
         await window.api.updateGame(props.game.id, { cover: coverPath })
-        props.game.cover = coverPath
         const idx = store.games.findIndex((g) => g.id === props.game.id)
         if (idx !== -1) {
           store.games[idx].cover = coverPath
         }
-        emit('updated', props.game)
+        emit('updated', { ...props.game, cover: coverPath })
       }
     }
     if (detail.custom_tags) tempTags.value = detail.custom_tags
     showToastMsg('远端信息已回填', 'success')
-  } catch (err: any) {
-    showToastMsg(err.message || '获取失败', 'error')
+  } catch (err: unknown) {
+    showToastMsg((err instanceof Error ? err.message : String(err)) || '获取失败', 'error')
   } finally {
     fetching.value = false
   }
@@ -186,10 +184,10 @@ const handleDeleteGame = async (): Promise<void> => {
   showDeleteConfirm.value = false
   try {
     await window.api.deleteGame(props.game.id)
-    store.games = store.games.filter((g) => g.id !== props.game.id) as any
+    store.games = store.games.filter((g) => g.id !== props.game.id)
     emit('back')
-  } catch (err: any) {
-    showToastMsg(err.message || '删除失败', 'error')
+  } catch (err: unknown) {
+    showToastMsg((err instanceof Error ? err.message : String(err)) || '删除失败', 'error')
   }
 }
 

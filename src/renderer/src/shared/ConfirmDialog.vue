@@ -18,7 +18,7 @@ const emit = defineEmits<{
     <div v-if="show" class="modal-overlay" @click.self="emit('cancel')">
       <div class="modal-card">
         <h3 class="modal-title">{{ title }}</h3>
-        <p class="modal-desc" v-html="message" />
+        <p class="modal-desc">{{ message }}</p>
         <div class="modal-actions">
           <button class="btn-cancel" @click="emit('cancel')">{{ cancelText || '取消' }}</button>
           <button class="btn-danger" :class="{ 'btn-brand': !danger }" @click="emit('confirm')">

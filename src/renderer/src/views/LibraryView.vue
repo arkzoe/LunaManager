@@ -117,7 +117,7 @@ const handleBatchStatus = async (status: GameStatus): Promise<void> => {
   const failed: string[] = []
   for (const id of ids) {
     try {
-      await window.api.updateGame(id, { status } as any)
+      await window.api.updateGame(id, { status } as Partial<GameRecord>)
       const g = store.allGames.find((x) => x.id === id)
       if (g) g.status = status
     } catch {
@@ -180,7 +180,7 @@ const confirmBatchDelete = async (): Promise<void> => {
   for (const id of ids) {
     try {
       await window.api.deleteGame(id)
-      store.games = store.games.filter((g) => g.id !== id) as any
+      store.games = store.games.filter((g) => g.id !== id)
     } catch {
       failed.push(id)
     }
@@ -264,7 +264,7 @@ const handleStatusChange = async (game: GameRecord, status: GameStatus): Promise
     await window.api.updateGame(game.id, { status })
     const g = store.allGames.find((x) => x.id === game.id)
     if (g) g.status = status
-  } catch (e) {
+  } catch {
     // fallback silently
   }
   closeContextMenu()

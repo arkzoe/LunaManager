@@ -5,7 +5,7 @@ import { formatDate } from '../../utils/format'
 
 const isCoverWide = ref(false)
 
-const onCoverLoad = (e: Event) => {
+const onCoverLoad = (e: Event): void => {
   const img = e.target as HTMLImageElement
   isCoverWide.value = img.naturalWidth >= img.naturalHeight
 }

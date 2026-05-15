@@ -100,10 +100,10 @@ function setupIpcHandlers(): void {
   ipcMain.handle('snap:getByGame', (_, gameId: string) => snapshotOps.getByGameId(gameId))
   ipcMain.handle('snap:create', (_, gameId: string, notes?: string) => snapshotOps.create(gameId, notes))
   ipcMain.handle('snap:delete', (_, id: string) => snapshotOps.delete(id))
-  ipcMain.handle('snap:restore', (_, _id: string) => {
+  ipcMain.handle('snap:restore', () => {
     throw new Error('Not implemented')
   })
-  ipcMain.handle('snap:detectSavePath', (_, _gameId: string) => null)
+  ipcMain.handle('snap:detectSavePath', () => null)
   ipcMain.handle('snap:backup', async (_e, gameId: string) => {
     const game = gameOps.getById(gameId)
     if (!game || !game.save_path) throw new Error('未设置存档路径')
@@ -150,16 +150,16 @@ function setupIpcHandlers(): void {
   ipcMain.handle('metadata:search', async (_e, { query, source, apiKey }) => {
     try {
       return await searchMetadata(query, source, apiKey)
-    } catch (err: any) {
-      throw new Error(err.message || '搜索失败')
+    } catch (err: unknown) {
+      throw new Error((err instanceof Error ? err.message : String(err)) || '搜索失败')
     }
   })
 
   ipcMain.handle('metadata:fetch-detail', async (_e, { sourceId, source, apiKey, gameId }) => {
     try {
       return await fetchMetadataDetail(sourceId, source, apiKey, gameId)
-    } catch (err: any) {
-      throw new Error(err.message || '获取元数据失败')
+    } catch (err: unknown) {
+      throw new Error((err instanceof Error ? err.message : String(err)) || '获取元数据失败')
     }
   })
 
@@ -175,7 +175,7 @@ import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
 import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 import { launchGame, stopGame, isGameRunning } from './services/game-launcher'
-import { backupSave, restoreSave, deleteSnapshotFiles, getSnapshotDirPath } from './services/backup'
+import { backupSave, restoreSave, getSnapshotDirPath } from './services/backup'
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')

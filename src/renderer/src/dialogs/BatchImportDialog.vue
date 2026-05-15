@@ -94,10 +94,6 @@ const toggleSort = (key: 'name' | 'size'): void => {
 }
 
 const existingPaths = computed(() => new Set(store.games.map((g) => g.executable_path)))
-const existingVndbIds = computed(() => new Set(store.games.map((g) => g.vndb_id).filter(Boolean)))
-const existingBangumiIds = computed(
-  () => new Set(store.games.map((g) => g.bangumi_id).filter(Boolean))
-)
 
 const selectedCount = computed(
   () => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length
@@ -143,8 +139,6 @@ const handlePickFolder = async (): Promise<void> => {
     }
     scanResult.value = result
     const paths = existingPaths.value
-    const vndbIds = existingVndbIds.value
-    const bangumiIds = existingBangumiIds.value
     rows.value = result.items.map((item) => {
       const hasDuplicate = item.executables.some((e) => paths.has(e.fullPath))
       return {
@@ -165,8 +159,8 @@ const handlePickFolder = async (): Promise<void> => {
         savePath: ''
       }
     })
-  } catch (e: any) {
-    error.value = e.message || '选择文件夹失败'
+  } catch (e: unknown) {
+    error.value = (e instanceof Error ? e.message : String(e)) || '选择文件夹失败'
   } finally {
     isLoading.value = false
   }
@@ -196,8 +190,8 @@ const handleSearchRow = async (folderPath: string): Promise<void> => {
       activeRowFolder.value = folderPath
       showSearchPicker.value = true
     }
-  } catch (err: any) {
-    error.value = err.message || '搜索失败'
+  } catch (err: unknown) {
+    error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
   } finally {
     searchingRow.value = ''
   }
@@ -234,8 +228,9 @@ const handlePickerSelect = async (result: SearchResult): Promise<void> => {
       if (detail.description) row.description = detail.description
       if (detail.custom_tags) row.customTags = detail.custom_tags
       if (detail.cover) row.cover = detail.cover
-    } catch (err: any) {
-      console.error('获取元数据详情失败:', err.message || err)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('获取元数据详情失败:', msg)
     }
   }
 }
@@ -405,19 +400,19 @@ const handleImportAll = async (): Promise<void> => {
               id: gameId,
               status: 'success'
             })
-          } catch (e: any) {
+          } catch (e: unknown) {
             resultItems.push({
               title: row.title || row.folderName,
               id: '',
               status: 'failed',
-              reason: e.message || '未知错误'
+              reason: (e instanceof Error ? e.message : String(e)) || '未知错误'
             })
           }
         })
       )
     }
-  } catch (e: any) {
-    error.value = e.message || '导入失败'
+  } catch (e: unknown) {
+    error.value = (e instanceof Error ? e.message : String(e)) || '导入失败'
   } finally {
     isImporting.value = false
   }

@@ -38,7 +38,7 @@ watch(
   }
 )
 
-const handleConfirm = () => {
+const handleConfirm = (): void => {
   if (props.mode === 'create') {
     emit('create', inputValue.value)
   } else if (props.mode === 'rename' && props.collection) {
@@ -48,7 +48,7 @@ const handleConfirm = () => {
   }
 }
 
-const handleMoveTarget = (targetId: string) => {
+const handleMoveTarget = (targetId: string): void => {
   if (props.game) emit('move', props.game.id, targetId)
 }
 </script>
