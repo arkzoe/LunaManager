@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
 import ImportDialog from '../dialogs/ImportDialog.vue'
@@ -24,6 +24,11 @@ const viewMode = ref<'grid' | 'list'>('grid')
 type SortKey = 'name' | 'playtime' | 'rating' | 'last_played'
 const sortKey = ref<SortKey>('name')
 const sortDir = ref<'asc' | 'desc'>('asc')
+
+const filterSortKey = ref(0)
+watch([activeFilter, sortKey, sortDir, searchQuery], () => {
+  filterSortKey.value++
+})
 
 const sortOptions = [
   { key: 'name' as const, label: '名称' },
@@ -410,6 +415,7 @@ const handleBatchImported = (result: ImportResult): void => {
     <template v-else-if="filteredGames.length > 0">
       <GameGridView
         v-if="viewMode === 'grid'"
+        :key="'grid-' + filterSortKey"
         :filtered-games="filteredGames"
         :batch-mode="batchMode"
         :selected-ids="selectedIds"
@@ -419,6 +425,7 @@ const handleBatchImported = (result: ImportResult): void => {
       />
       <GameListView
         v-else
+        :key="'list-' + filterSortKey"
         :filtered-games="filteredGames"
         :batch-mode="batchMode"
         :selected-ids="selectedIds"
