@@ -1,4 +1,3 @@
-import archiver from 'archiver'
 import fs from 'fs'
 import path from 'path'
 import { snapshotOps, gameOps } from '../database'
@@ -15,6 +14,8 @@ export async function backupSave(gameId: string, savePath: string): Promise<stri
 
   const snapshotId = `snap-${Date.now()}`
   const zipPath = path.join(snapshotDir, `${snapshotId}.zip`)
+
+  const { default: archiver } = await import('archiver')
 
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(zipPath)

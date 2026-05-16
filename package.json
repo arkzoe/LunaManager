@@ -21,6 +21,81 @@
     "build:linux": "npm run build && electron-builder --linux",
     "build:alpha": "npm run build && electron-builder --win"
   },
+  "build": {
+    "appId": "com.electron.app",
+    "productName": "lunamanager",
+    "directories": {
+      "buildResources": "build"
+    },
+    "files": [
+      "!**/.vscode/*",
+      "!src/*",
+      "!electron.vite.config.{js,ts,mjs,cjs}",
+      "!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}",
+      "!{.env,.env.*,.npmrc,pnpm-lock.yaml}",
+      "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}",
+      "!**/node_modules/**/{test,tests,__tests__,benchmark,benchmarks,demo,example,examples}/**",
+      "!**/node_modules/**/*.{ts,tsx}",
+      "!**/node_modules/**/*.map",
+      "!**/node_modules/**/{CHANGELOG,changelog,CONTRIBUTING,contributing,README,readme,History,history}*",
+      "!**/node_modules/**/{.github,.git,.idea,.vscode,.eslintrc*,eslint.config.*,.prettierrc*,babel.config.*,jest.config.*,tsconfig.*,rollup.config.*,webpack.config.*,vite.config.*}"
+    ],
+    "asar": {
+      "smartUnpack": true
+    },
+    "asarUnpack": [
+      "resources/**"
+    ],
+    "afterPack": null,
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": true,
+      "executableName": "lunamanager"
+    },
+    "nsis": {
+      "artifactName": "${name}-${version}-setup.${ext}",
+      "shortcutName": "${productName}",
+      "uninstallDisplayName": "${productName}",
+      "createDesktopShortcut": "always",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "icon": "build/icon.icns",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSCameraUsageDescription": "Application requests access to the device's camera.",
+        "NSMicrophoneUsageDescription": "Application requests access to the device's microphone.",
+        "NSDocumentsFolderUsageDescription": "Application requests access to the user's Documents folder.",
+        "NSDownloadsFolderUsageDescription": "Application requests access to the user's Downloads folder."
+      },
+      "notarize": false
+    },
+    "dmg": {
+      "artifactName": "${name}-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "snap",
+        "deb"
+      ],
+      "maintainer": "electronjs.org",
+      "category": "Utility"
+    },
+    "appImage": {
+      "artifactName": "${name}-${version}.${ext}"
+    },
+    "npmRebuild": false,
+    "publish": {
+      "provider": "generic",
+      "url": "https://example.com/auto-updates"
+    },
+    "electronDownload": {
+      "mirror": "https://npmmirror.com/mirrors/electron/"
+    }
+  },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
@@ -48,6 +123,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-vue": "^10.6.2",
     "prettier": "^3.7.4",
+    "rollup-plugin-visualizer": "^7.0.1",
     "typescript": "^5.9.3",
     "unocss": "^66.6.8",
     "vite": "^7.2.6",

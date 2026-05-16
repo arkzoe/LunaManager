@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import type { GameRecord } from '../../../shared/types'
-import LibraryView from '../views/LibraryView.vue'
-import FavoritesView from '../views/FavoritesView.vue'
-import StatsView from '../views/StatsView.vue'
-import SettingsView from '../views/SettingsView.vue'
-import GameDetailView from '../views/GameDetailView.vue'
-import HomeView from '../views/HomeView.vue'
+
+const HomeView = defineAsyncComponent(() => import('../views/HomeView.vue'))
+const LibraryView = defineAsyncComponent(() => import('../views/LibraryView.vue'))
+const FavoritesView = defineAsyncComponent(() => import('../views/FavoritesView.vue'))
+const StatsView = defineAsyncComponent(() => import('../views/StatsView.vue'))
+const SettingsView = defineAsyncComponent(() => import('../views/SettingsView.vue'))
+const GameDetailView = defineAsyncComponent(() => import('../views/GameDetailView.vue'))
 
 const props = defineProps<{ activeTab: string }>()
 const emit = defineEmits<{ (e: 'update:activeTab', tab: string): void }>()
