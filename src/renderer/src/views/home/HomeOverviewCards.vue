@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{
+import { useCountUp } from '../../composables/useCountUp'
+
+const props = defineProps<{
   overview: {
     totalGames: number
     totalHours: number
@@ -7,11 +9,16 @@ defineProps<{
     avgPerDay: number
   }
 }>()
+
+const { display: gamesDisplay } = useCountUp(() => props.overview.totalGames, 700)
+const { display: hoursDisplay } = useCountUp(() => props.overview.totalHours, 700)
+const { display: monthlyDisplay } = useCountUp(() => props.overview.monthlyHours, 700)
+const { display: avgDisplay } = useCountUp(() => props.overview.avgPerDay, 700)
 </script>
 
 <template>
   <div class="overview-cards">
-    <div class="ov-card">
+    <div class="ov-card" :style="{ animationDelay: '0s' }">
       <div class="ov-icon" style="background: var(--bg-active); color: var(--accent-primary)">
         <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
           <path
@@ -20,11 +27,11 @@ defineProps<{
         </svg>
       </div>
       <div class="ov-info">
-        <div class="ov-value">{{ overview.totalGames }}</div>
+        <div class="ov-value">{{ gamesDisplay }}<span class="ov-unit">个</span></div>
         <div class="ov-label">游戏总数</div>
       </div>
     </div>
-    <div class="ov-card">
+    <div class="ov-card" :style="{ animationDelay: '0.1s' }">
       <div class="ov-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success)">
         <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
           <path
@@ -33,11 +40,11 @@ defineProps<{
         </svg>
       </div>
       <div class="ov-info">
-        <div class="ov-value">{{ overview.totalHours }}<span class="ov-unit">h</span></div>
+        <div class="ov-value">{{ hoursDisplay }}<span class="ov-unit">h</span></div>
         <div class="ov-label">总游玩时长</div>
       </div>
     </div>
-    <div class="ov-card">
+    <div class="ov-card" :style="{ animationDelay: '0.2s' }">
       <div class="ov-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning)">
         <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
           <path
@@ -46,11 +53,11 @@ defineProps<{
         </svg>
       </div>
       <div class="ov-info">
-        <div class="ov-value">{{ overview.monthlyHours }}<span class="ov-unit">h</span></div>
+        <div class="ov-value">{{ monthlyDisplay }}<span class="ov-unit">h</span></div>
         <div class="ov-label">本月时长</div>
       </div>
     </div>
-    <div class="ov-card">
+    <div class="ov-card" :style="{ animationDelay: '0.3s' }">
       <div
         class="ov-icon"
         style="background: rgba(139, 124, 232, 0.1); color: var(--accent-primary)"
@@ -62,7 +69,7 @@ defineProps<{
         </svg>
       </div>
       <div class="ov-info">
-        <div class="ov-value">{{ overview.avgPerDay }}<span class="ov-unit">h</span></div>
+        <div class="ov-value">{{ avgDisplay }}<span class="ov-unit">h</span></div>
         <div class="ov-label">日均时长</div>
       </div>
     </div>
@@ -77,6 +84,22 @@ defineProps<{
   margin-bottom: 24px;
 }
 
+@media (max-width: 899px) {
+  .overview-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 599px) {
+  .overview-cards {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+}
+
 .ov-card {
   display: flex;
   align-items: center;
@@ -85,11 +108,16 @@ defineProps<{
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px 18px;
-  transition: border-color 0.15s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  animation: fade-in-up 0.5s ease forwards;
 }
 
 .ov-card:hover {
   border-color: var(--border-color-medium);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  will-change: transform;
 }
 
 .ov-icon {

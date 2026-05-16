@@ -29,21 +29,25 @@ const emit = defineEmits<{
         修改状态
         <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current"><path d="M7 10l5 5 5-5z" /></svg>
       </button>
-      <div
-        v-if="showBatchStatusMenu"
-        class="context-overlay"
-        @click="emit('closeBatchStatusMenu')"
-      />
-      <div v-if="showBatchStatusMenu" class="batch-status-menu">
-        <button
-          v-for="f in statusFilters"
-          :key="f.id"
-          class="ctx-item"
-          @click="emit('handleBatchStatus', f.id)"
-        >
-          {{ f.label }}
-        </button>
-      </div>
+      <Transition name="dropdown">
+        <div
+          v-if="showBatchStatusMenu"
+          class="context-overlay"
+          @click="emit('closeBatchStatusMenu')"
+        />
+      </Transition>
+      <Transition name="dropdown">
+        <div v-if="showBatchStatusMenu" class="batch-status-menu">
+          <button
+            v-for="f in statusFilters"
+            :key="f.id"
+            class="ctx-item"
+            @click="emit('handleBatchStatus', f.id)"
+          >
+            {{ f.label }}
+          </button>
+        </div>
+      </Transition>
     </div>
     <button class="bb-btn" :disabled="batchCount === 0" @click="emit('openCollectionPicker')">
       添加到收藏夹
@@ -68,6 +72,14 @@ const emit = defineEmits<{
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 10px;
+}
+
+.batch-enter-active {
+  animation: batch-bar-in 0.3s ease;
+}
+
+.batch-leave-active {
+  animation: batch-bar-out 0.2s ease forwards;
 }
 
 .bb-count {
@@ -131,6 +143,14 @@ const emit = defineEmits<{
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   padding: 4px;
   overflow: hidden;
+}
+
+.dropdown-enter-active {
+  animation: dropdown-in 0.18s ease;
+}
+
+.dropdown-leave-active {
+  animation: dropdown-out 0.15s ease forwards;
 }
 
 .ctx-item {

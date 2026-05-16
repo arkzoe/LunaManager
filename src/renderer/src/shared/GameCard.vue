@@ -1,14 +1,46 @@
 <script setup lang="ts">
+import { ref, onMounted, watch } from 'vue'
 import type { GameRecord } from '../../../shared/types'
 
-defineProps<{ game: GameRecord; selected?: boolean }>()
+const props = defineProps<{ game: GameRecord; selected?: boolean }>()
 const emit = defineEmits<{ (e: 'click'): void }>()
+
+const coverImg = ref<HTMLImageElement | null>(null)
+const imageLoaded = ref(false)
+
+const handleImageLoad = (): void => {
+  imageLoaded.value = true
+}
+
+// 浏览器缓存图片时 @load 在 Vue 绑定监听前同步触发，需通过 complete 属性兜底
+const checkCached = (): void => {
+  if (coverImg.value?.complete && props.game.cover) {
+    imageLoaded.value = true
+  }
+}
+
+onMounted(checkCached)
+watch(
+  () => props.game.cover,
+  () => {
+    imageLoaded.value = false
+    requestAnimationFrame(checkCached)
+  }
+)
 </script>
 
 <template>
   <div class="game-card" :class="{ selected }" @click="emit('click')">
     <div class="cover">
-      <img v-if="game.cover" :src="game.cover" :alt="game.title" class="cover-img" />
+      <img
+        v-if="game.cover"
+        ref="coverImg"
+        :src="game.cover"
+        :alt="game.title"
+        class="cover-img"
+        :class="{ loaded: imageLoaded }"
+        @load="handleImageLoad"
+      />
       <div v-else class="cover-placeholder">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -30,11 +62,18 @@ const emit = defineEmits<{ (e: 'click'): void }>()
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .game-card:hover {
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  will-change: transform;
+}
+
+.game-card:hover .cover-img {
+  transform: scale(1.08);
+  will-change: transform;
 }
 
 .game-card.selected {
@@ -53,6 +92,14 @@ const emit = defineEmits<{ (e: 'click'): void }>()
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition:
+    opacity 0.3s ease,
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cover-img.loaded {
+  opacity: 1;
 }
 
 .cover-placeholder {

@@ -278,6 +278,29 @@ const scrollToSection = (id: string): void => {
   margin-right: 16px;
 }
 
+@media (max-width: 899px) {
+  .settings-nav {
+    width: 48px;
+    min-width: 48px;
+    padding-right: 8px;
+    margin-right: 8px;
+  }
+
+  .settings-nav .nav-header span,
+  .settings-nav .nav-item span {
+    display: none;
+  }
+
+  .settings-nav .nav-item {
+    justify-content: center;
+    padding: 9px 0;
+  }
+
+  .settings-nav .nav-item.active::before {
+    left: -8px;
+  }
+}
+
 .nav-header {
   display: flex;
   align-items: center;
@@ -307,8 +330,9 @@ const scrollToSection = (id: string): void => {
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
   text-align: left;
+  position: relative;
 }
 
 .nav-item:hover {
@@ -322,11 +346,24 @@ const scrollToSection = (id: string): void => {
   font-weight: 600;
 }
 
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  background: var(--accent-primary);
+  border-radius: 0 3px 3px 0;
+  animation: active-bar-in 0.3s ease forwards;
+}
+
 .settings-content {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
   padding-right: 8px;
+  animation: fade-in-up 0.4s ease;
 }
 
 .settings-bottom-spacer {

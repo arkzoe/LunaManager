@@ -37,10 +37,11 @@ const emit = defineEmits<{
       <span class="lh-col lh-last">最后游玩</span>
     </div>
     <div
-      v-for="game in filteredGames"
+      v-for="(game, idx) in filteredGames"
       :key="game.id"
       class="list-row"
       :class="{ 'has-check': batchMode, selected: batchMode && selectedIds.has(game.id) }"
+      :style="{ animationDelay: Math.min(idx * 0.03, 0.45) + 's' }"
       @click="emit('selectGame', game)"
       @contextmenu="emit('contextMenu', $event, game)"
     >
@@ -103,6 +104,8 @@ const emit = defineEmits<{
   cursor: pointer;
   transition: background 0.1s;
   border-bottom: 1px solid var(--border-color-light);
+  opacity: 0;
+  animation: fade-in-left 0.35s ease forwards;
 }
 
 .list-row:last-child {

@@ -19,49 +19,55 @@ const emit = defineEmits<{
 
 <template>
   <Teleport to="body">
-    <div
-      v-if="show"
-      class="context-overlay"
-      @click="emit('close')"
-      @contextmenu.prevent="emit('close')"
-    />
-    <div v-if="show" class="context-menu" :style="{ left: x + 'px', top: y + 'px' }">
-      <button class="ctx-item" @click="emit('viewDetail')">
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-          <path
-            d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-          />
-        </svg>
-        查看详情
-      </button>
-      <div class="ctx-divider" />
-      <button class="ctx-item" @click="emit('addToCollection')">
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-          <path
-            d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
-          />
-        </svg>
-        添加到收藏夹
-      </button>
-      <div class="ctx-divider" />
-      <div class="ctx-label">更改状态</div>
-      <button
-        v-for="s in statusFilters"
-        :key="s.id"
-        class="ctx-item"
-        :class="{ current: gameStatus === s.id }"
-        @click="emit('statusChange', s.id)"
-      >
-        {{ s.label }}
-      </button>
-      <div class="ctx-divider" />
-      <button class="ctx-item danger" @click="emit('close')">
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-        </svg>
-        删除
-      </button>
-    </div>
+    <Transition name="ctx">
+      <div
+        v-if="show"
+        class="context-overlay"
+        @click="emit('close')"
+        @contextmenu.prevent="emit('close')"
+      />
+    </Transition>
+    <Transition name="dropdown">
+      <div v-if="show" class="context-menu" :style="{ left: x + 'px', top: y + 'px' }">
+        <button class="ctx-item" @click="emit('viewDetail')">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+            <path
+              d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+            />
+          </svg>
+          查看详情
+        </button>
+        <div class="ctx-divider" />
+        <button class="ctx-item" @click="emit('addToCollection')">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+            <path
+              d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
+            />
+          </svg>
+          添加到收藏夹
+        </button>
+        <div class="ctx-divider" />
+        <div class="ctx-label">更改状态</div>
+        <button
+          v-for="s in statusFilters"
+          :key="s.id"
+          class="ctx-item"
+          :class="{ current: gameStatus === s.id }"
+          @click="emit('statusChange', s.id)"
+        >
+          {{ s.label }}
+        </button>
+        <div class="ctx-divider" />
+        <button class="ctx-item danger" @click="emit('close')">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+            <path
+              d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+            />
+          </svg>
+          删除
+        </button>
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -70,6 +76,14 @@ const emit = defineEmits<{
   position: fixed;
   inset: 0;
   z-index: 999;
+}
+
+.ctx-enter-active {
+  animation: overlay-in 0.1s ease;
+}
+
+.ctx-leave-active {
+  animation: overlay-out 0.1s ease forwards;
 }
 
 .context-menu {
@@ -82,6 +96,14 @@ const emit = defineEmits<{
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   padding: 6px;
   overflow: hidden;
+}
+
+.dropdown-enter-active {
+  animation: dropdown-in 0.18s ease;
+}
+
+.dropdown-leave-active {
+  animation: dropdown-out 0.15s ease forwards;
 }
 
 .ctx-item {

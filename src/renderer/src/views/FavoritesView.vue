@@ -117,16 +117,18 @@ const defaultCollection = computed(() => collections.value.find((c) => c.name ==
 const isDefault = (col: UICollection): boolean => col.name === '最喜欢的游戏'
 
 const allColsSelected = computed(
-  () => colSelectedIds.value.size === sortedFilteredCollections.value.filter((c) => !isDefault(c)).length
-    && colSelectedIds.value.size > 0
+  () =>
+    colSelectedIds.value.size ===
+      sortedFilteredCollections.value.filter((c) => !isDefault(c)).length &&
+    colSelectedIds.value.size > 0
 )
 
-const hasBatchable = computed(() =>
-  sortedFilteredCollections.value.some((c) => !isDefault(c))
-)
+const hasBatchable = computed(() => sortedFilteredCollections.value.some((c) => !isDefault(c)))
 
 const allGamesSelected = computed(
-  () => gameSelectedIds.value.length === currentCollectionGames.value.length && gameSelectedIds.value.length > 0
+  () =>
+    gameSelectedIds.value.length === currentCollectionGames.value.length &&
+    gameSelectedIds.value.length > 0
 )
 
 watch(
@@ -403,7 +405,6 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
   toastMessage.value = message
   toastType.value = type
   showToast.value = true
-  setTimeout(() => { showToast.value = false }, 2000)
 }
 </script>
 
@@ -449,20 +450,26 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </button>
-            <div v-if="showSortMenu" class="context-overlay" @click="showSortMenu = false" />
-            <div v-if="showSortMenu" class="sort-menu">
-              <button
-                v-for="opt in sortOptions"
-                :key="opt.field"
-                class="sort-option"
-                :class="{ active: sortField === opt.field }"
-                @click="handleSortSelect(opt.field)"
-              >
-                <span>{{ opt.label }}</span>
-                <span v-if="sortField === opt.field" class="sort-arrow">{{ getSortArrow(opt.field) }}</span>
-                <span v-else class="sort-arrow-dim">↕</span>
-              </button>
-            </div>
+            <Transition name="ctx">
+              <div v-if="showSortMenu" class="context-overlay" @click="showSortMenu = false" />
+            </Transition>
+            <Transition name="dropdown">
+              <div v-if="showSortMenu" class="sort-menu">
+                <button
+                  v-for="opt in sortOptions"
+                  :key="opt.field"
+                  class="sort-option"
+                  :class="{ active: sortField === opt.field }"
+                  @click="handleSortSelect(opt.field)"
+                >
+                  <span>{{ opt.label }}</span>
+                  <span v-if="sortField === opt.field" class="sort-arrow">{{
+                    getSortArrow(opt.field)
+                  }}</span>
+                  <span v-else class="sort-arrow-dim">↕</span>
+                </button>
+              </div>
+            </Transition>
           </div>
           <button class="add-btn" @click="modalMode = 'create'">
             <svg viewBox="0 0 24 24" class="w-4 h-4 stroke-current stroke-2 fill-none">
@@ -473,19 +480,21 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
         </div>
       </div>
 
-      <div v-if="batchMode" class="batch-bar">
-        <span class="bb-count">已选 {{ colSelectedIds.size }} 项</span>
-        <button class="bb-btn" @click="toggleSelectAllCols">
-          {{ allColsSelected ? '取消全选' : '全选' }}
-        </button>
-        <button
-          class="bb-btn bb-danger"
-          :disabled="colSelectedIds.size === 0"
-          @click="showColBatchDeleteConfirm = true"
-        >
-          删除选中
-        </button>
-      </div>
+      <Transition name="batch">
+        <div v-if="batchMode" class="batch-bar">
+          <span class="bb-count">已选 {{ colSelectedIds.size }} 项</span>
+          <button class="bb-btn" @click="toggleSelectAllCols">
+            {{ allColsSelected ? '取消全选' : '全选' }}
+          </button>
+          <button
+            class="bb-btn bb-danger"
+            :disabled="colSelectedIds.size === 0"
+            @click="showColBatchDeleteConfirm = true"
+          >
+            删除选中
+          </button>
+        </div>
+      </Transition>
 
       <div
         class="flex flex-wrap gap-4 overflow-y-auto overflow-x-hidden pr-2 flex-1 content-start"
@@ -550,26 +559,28 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
         </div>
       </div>
 
-      <div v-if="gameBatchMode" class="batch-bar">
-        <span class="bb-count">已选 {{ gameSelectedIds.length }} 项</span>
-        <button class="bb-btn" @click="toggleSelectAllGames">
-          {{ allGamesSelected ? '取消全选' : '全选' }}
-        </button>
-        <button
-          class="bb-btn bb-danger"
-          :disabled="gameSelectedIds.length === 0"
-          @click="showGameBatchRemoveConfirm = true"
-        >
-          移出收藏夹
-        </button>
-        <button
-          class="bb-btn"
-          :disabled="gameSelectedIds.length === 0"
-          @click="openBatchMoveModal"
-        >
-          移动到...
-        </button>
-      </div>
+      <Transition name="batch">
+        <div v-if="gameBatchMode" class="batch-bar">
+          <span class="bb-count">已选 {{ gameSelectedIds.length }} 项</span>
+          <button class="bb-btn" @click="toggleSelectAllGames">
+            {{ allGamesSelected ? '取消全选' : '全选' }}
+          </button>
+          <button
+            class="bb-btn bb-danger"
+            :disabled="gameSelectedIds.length === 0"
+            @click="showGameBatchRemoveConfirm = true"
+          >
+            移出收藏夹
+          </button>
+          <button
+            class="bb-btn"
+            :disabled="gameSelectedIds.length === 0"
+            @click="openBatchMoveModal"
+          >
+            移动到...
+          </button>
+        </div>
+      </Transition>
 
       <CollectionGameGrid
         :games="currentCollectionGames"
@@ -625,12 +636,36 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
 </template>
 
 <style scoped>
+.h-full {
+  animation: fade-in-up 0.4s ease;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
   gap: 16px;
+}
+
+@media (max-width: 899px) {
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .toolbar .search-box {
+    max-width: 100%;
+    flex-basis: 100%;
+    order: 1;
+  }
+
+  .toolbar .toolbar-actions {
+    order: 2;
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .search-box {
@@ -718,6 +753,14 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
   z-index: 999;
 }
 
+.ctx-enter-active {
+  animation: overlay-in 0.1s ease;
+}
+
+.ctx-leave-active {
+  animation: overlay-out 0.1s ease forwards;
+}
+
 .sort-menu {
   position: absolute;
   top: 100%;
@@ -731,6 +774,14 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
   padding: 4px;
   overflow: hidden;
   margin-top: 4px;
+}
+
+.dropdown-enter-active {
+  animation: dropdown-in 0.18s ease;
+}
+
+.dropdown-leave-active {
+  animation: dropdown-out 0.15s ease forwards;
 }
 
 .sort-option {
@@ -800,6 +851,14 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 10px;
+}
+
+.batch-enter-active {
+  animation: batch-bar-in 0.3s ease;
+}
+
+.batch-leave-active {
+  animation: batch-bar-out 0.2s ease forwards;
 }
 
 .bb-count {

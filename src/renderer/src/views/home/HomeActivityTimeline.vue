@@ -16,6 +16,7 @@ const emit = defineEmits<{
       v-for="(act, idx) in activities"
       :key="idx"
       class="tl-item"
+      :style="{ animationDelay: idx * 0.06 + 's' }"
       @click="emit('selectGame', act.game)"
     >
       <div class="tl-dot" :class="act.type" />
@@ -48,11 +49,14 @@ const emit = defineEmits<{
   gap: 14px;
   padding: 14px 18px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.2s ease;
+  opacity: 0;
+  animation: fade-in-left 0.4s ease forwards;
 }
 
 .tl-item:hover {
   background: var(--bg-hover);
+  padding-left: 22px;
 }
 
 .tl-item + .tl-item {
@@ -71,8 +75,16 @@ const emit = defineEmits<{
   background: var(--accent-primary);
 }
 
+.tl-item:hover .tl-dot.played {
+  animation: pulse-dot 1.2s ease infinite;
+}
+
 .tl-dot.added {
   background: var(--success);
+}
+
+.tl-item:hover .tl-dot.added {
+  animation: pulse-dot-green 1.2s ease infinite;
 }
 
 .tl-content {

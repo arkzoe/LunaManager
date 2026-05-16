@@ -12,6 +12,10 @@ import { useGameStore } from '../stores/useGameStore'
 import BatchImportRow from './BatchImportRow.vue'
 import SearchInputDialog from '../shared/SearchInputDialog.vue'
 
+defineProps<{
+  show: boolean
+}>()
+
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'imported', result: ImportResult): void
@@ -461,195 +465,202 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 <template>
   <Teleport to="body">
-    <div class="dialog-overlay" @click="handleOverlayClick" @keydown.esc="handleClose">
-      <div class="dialog-card">
-        <div class="dialog-header">
-          <h2 class="dialog-title">批量导入游戏</h2>
-          <button class="dialog-close" @click="handleClose">&times;</button>
-        </div>
-
-        <!-- Step 1: Select Folder (non-scrollable) -->
-        <div v-if="!scanResult" class="dialog-body">
-          <div class="folder-pick-area">
-            <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
-              <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-                <path
-                  d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
-                />
-              </svg>
-              {{ isLoading ? '扫描中...' : '选择游戏库根文件夹' }}
-            </button>
-            <p class="folder-hint">选择包含多个游戏子文件夹的根目录</p>
+    <Transition name="modal">
+      <div
+        v-if="show"
+        class="dialog-overlay"
+        @click="handleOverlayClick"
+        @keydown.esc="handleClose"
+      >
+        <div class="dialog-card">
+          <div class="dialog-header">
+            <h2 class="dialog-title">批量导入游戏</h2>
+            <button class="dialog-close" @click="handleClose">&times;</button>
           </div>
-        </div>
 
-        <!-- Import result report (scrollable) -->
-        <div v-else-if="showResult && importResult" class="dialog-body">
-          <div class="result-panel">
-            <div class="result-summary">
-              <div class="result-stat success">
-                <span class="result-num">{{ importResult.successCount }}</span>
-                <span class="result-label">成功</span>
-              </div>
-              <div class="result-stat skipped">
-                <span class="result-num">{{ importResult.skippedCount }}</span>
-                <span class="result-label">跳过</span>
-              </div>
-              <div class="result-stat failed">
-                <span class="result-num">{{ importResult.failedCount }}</span>
-                <span class="result-label">失败</span>
-              </div>
-              <div class="result-stat">
-                <span class="result-num"
-                  >{{ (importResult.totalDuration / 1000).toFixed(1) }}s</span
-                >
-                <span class="result-label">耗时</span>
-              </div>
-            </div>
-            <div v-if="importResult.successCount > 0" class="result-detail">
-              <div class="result-section-title">成功详情 ({{ importResult.successCount }})</div>
-              <div
-                v-for="item in importResult.items.filter((i) => i.status === 'success')"
-                :key="item.title + item.id"
-                class="result-item success"
-              >
-                <span class="result-item-icon">✓</span>
-                <span class="result-item-title">{{ item.title || '(未知)' }}</span>
-              </div>
-            </div>
-            <div v-if="importResult.failedCount > 0" class="result-detail">
-              <div class="result-section-title">失败详情 ({{ importResult.failedCount }})</div>
-              <div
-                v-for="item in importResult.items.filter((i) => i.status === 'failed')"
-                :key="item.title + item.reason"
-                class="result-item failed"
-              >
-                <span class="result-item-icon">✗</span>
-                <span class="result-item-title">{{ item.title || '(未知)' }}</span>
-                <span class="result-item-reason">{{ item.reason }}</span>
-              </div>
-            </div>
-            <div v-if="importResult.skippedCount > 0" class="result-detail">
-              <div class="result-section-title">跳过详情 ({{ importResult.skippedCount }})</div>
-              <div
-                v-for="item in importResult.items.filter((i) => i.status === 'skipped')"
-                :key="item.title + item.reason"
-                class="result-item skipped"
-              >
-                <span class="result-item-icon">⏭</span>
-                <span class="result-item-title">{{ item.title }}</span>
-                <span class="result-item-reason">{{ item.reason }}</span>
-              </div>
-            </div>
-            <div class="result-actions">
-              <button class="btn-brand" @click="handleFinish">完成</button>
+          <!-- Step 1: Select Folder (non-scrollable) -->
+          <div v-if="!scanResult" class="dialog-body">
+            <div class="folder-pick-area">
+              <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
+                <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+                  <path
+                    d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
+                  />
+                </svg>
+                {{ isLoading ? '扫描中...' : '选择游戏库根文件夹' }}
+              </button>
+              <p class="folder-hint">选择包含多个游戏子文件夹的根目录</p>
             </div>
           </div>
-        </div>
 
-        <!-- Step 2: Review & Import (split layout: fixed top/bottom, scrollable middle) -->
-        <template v-else-if="scanResult">
-          <div v-if="error" class="form-error batch-error">{{ error }}</div>
-          <div class="batch-summary">
-            <div class="bs-left">
-              <label class="bs-select-all">
-                <input
-                  type="checkbox"
-                  :checked="isAllSelected"
-                  :indeterminate="
-                    selectedSelectableCount > 0 && selectedSelectableCount < allSelectableCount
-                  "
-                  :disabled="isImporting"
-                  @change="handleSelectAll(($event.target as HTMLInputElement).checked)"
-                />
-                <span
-                  >共检测到 <strong>{{ totalCount }}</strong> 个游戏目录</span
+          <!-- Import result report (scrollable) -->
+          <div v-else-if="showResult && importResult" class="dialog-body">
+            <div class="result-panel">
+              <div class="result-summary">
+                <div class="result-stat success">
+                  <span class="result-num">{{ importResult.successCount }}</span>
+                  <span class="result-label">成功</span>
+                </div>
+                <div class="result-stat skipped">
+                  <span class="result-num">{{ importResult.skippedCount }}</span>
+                  <span class="result-label">跳过</span>
+                </div>
+                <div class="result-stat failed">
+                  <span class="result-num">{{ importResult.failedCount }}</span>
+                  <span class="result-label">失败</span>
+                </div>
+                <div class="result-stat">
+                  <span class="result-num"
+                    >{{ (importResult.totalDuration / 1000).toFixed(1) }}s</span
+                  >
+                  <span class="result-label">耗时</span>
+                </div>
+              </div>
+              <div v-if="importResult.successCount > 0" class="result-detail">
+                <div class="result-section-title">成功详情 ({{ importResult.successCount }})</div>
+                <div
+                  v-for="item in importResult.items.filter((i) => i.status === 'success')"
+                  :key="item.title + item.id"
+                  class="result-item success"
                 >
-              </label>
-              <div class="bs-sort">
+                  <span class="result-item-icon">✓</span>
+                  <span class="result-item-title">{{ item.title || '(未知)' }}</span>
+                </div>
+              </div>
+              <div v-if="importResult.failedCount > 0" class="result-detail">
+                <div class="result-section-title">失败详情 ({{ importResult.failedCount }})</div>
+                <div
+                  v-for="item in importResult.items.filter((i) => i.status === 'failed')"
+                  :key="item.title + item.reason"
+                  class="result-item failed"
+                >
+                  <span class="result-item-icon">✗</span>
+                  <span class="result-item-title">{{ item.title || '(未知)' }}</span>
+                  <span class="result-item-reason">{{ item.reason }}</span>
+                </div>
+              </div>
+              <div v-if="importResult.skippedCount > 0" class="result-detail">
+                <div class="result-section-title">跳过详情 ({{ importResult.skippedCount }})</div>
+                <div
+                  v-for="item in importResult.items.filter((i) => i.status === 'skipped')"
+                  :key="item.title + item.reason"
+                  class="result-item skipped"
+                >
+                  <span class="result-item-icon">⏭</span>
+                  <span class="result-item-title">{{ item.title }}</span>
+                  <span class="result-item-reason">{{ item.reason }}</span>
+                </div>
+              </div>
+              <div class="result-actions">
+                <button class="btn-brand" @click="handleFinish">完成</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Review & Import (split layout: fixed top/bottom, scrollable middle) -->
+          <template v-else-if="scanResult">
+            <div v-if="error" class="form-error batch-error">{{ error }}</div>
+            <div class="batch-summary">
+              <div class="bs-left">
+                <label class="bs-select-all">
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    :indeterminate="
+                      selectedSelectableCount > 0 && selectedSelectableCount < allSelectableCount
+                    "
+                    :disabled="isImporting"
+                    @change="handleSelectAll(($event.target as HTMLInputElement).checked)"
+                  />
+                  <span
+                    >共检测到 <strong>{{ totalCount }}</strong> 个游戏目录</span
+                  >
+                </label>
+                <div class="bs-sort">
+                  <button
+                    class="sort-btn"
+                    :class="{ active: sortKey === 'name' }"
+                    :disabled="isImporting"
+                    @click="toggleSort('name')"
+                  >
+                    名称 {{ sortKey === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+                  </button>
+                  <button
+                    class="sort-btn"
+                    :class="{ active: sortKey === 'size' }"
+                    :disabled="isImporting"
+                    @click="toggleSort('size')"
+                  >
+                    大小 {{ sortKey === 'size' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+                  </button>
+                </div>
+              </div>
+              <div class="bs-right">
                 <button
-                  class="sort-btn"
-                  :class="{ active: sortKey === 'name' }"
-                  :disabled="isImporting"
-                  @click="toggleSort('name')"
+                  v-if="!isMatchingAll"
+                  class="btn-match-all"
+                  :disabled="isImporting || unmatchedCount === 0"
+                  @click="handleMatchAll"
                 >
-                  名称 {{ sortKey === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+                  一键匹配全部 ({{ unmatchedCount }})
+                </button>
+                <button v-else class="btn-match-cancel" @click="handleCancelMatchAll">
+                  取消匹配
+                </button>
+              </div>
+            </div>
+
+            <div class="batch-scroll">
+              <div class="batch-list">
+                <BatchImportRow
+                  v-for="row in sortedRows"
+                  :key="row.folderPath"
+                  :row="row"
+                  :searching="searchingRow === row.folderPath"
+                  :importing="isImporting || isMatchingAll"
+                  @update:selected="row.selected = $event"
+                  @update:title="row.title = $event"
+                  @update:selected-exe="row.selectedExe = $event"
+                  @search="handleSearchRow(row.folderPath)"
+                />
+              </div>
+
+              <div v-if="totalCount === 0" class="empty-hint">该文件夹下没有子目录</div>
+            </div>
+
+            <div class="batch-actions">
+              <div class="ba-count">
+                {{
+                  isImporting
+                    ? `正在导入 ${importedCount}/${selectedCount} ...`
+                    : `已选 ${selectedCount} 个游戏${skipCount > 0 ? `，${skipCount} 个跳过（已存在）` : ''}`
+                }}
+              </div>
+              <div class="ba-buttons">
+                <button
+                  class="btn-cancel"
+                  :disabled="isImporting || isMatchingAll"
+                  @click="handleClose"
+                >
+                  取消
                 </button>
                 <button
-                  class="sort-btn"
-                  :class="{ active: sortKey === 'size' }"
-                  :disabled="isImporting"
-                  @click="toggleSort('size')"
+                  class="btn-brand"
+                  :disabled="isImporting || isMatchingAll || selectedCount === 0"
+                  @click="handleImportAll"
                 >
-                  大小 {{ sortKey === 'size' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+                  {{ isImporting ? '导入中...' : '导入选中' }}
                 </button>
               </div>
             </div>
-            <div class="bs-right">
-              <button
-                v-if="!isMatchingAll"
-                class="btn-match-all"
-                :disabled="isImporting || unmatchedCount === 0"
-                @click="handleMatchAll"
-              >
-                一键匹配全部 ({{ unmatchedCount }})
-              </button>
-              <button v-else class="btn-match-cancel" @click="handleCancelMatchAll">
-                取消匹配
-              </button>
-            </div>
-          </div>
-
-          <div class="batch-scroll">
-            <div class="batch-list">
-              <BatchImportRow
-                v-for="row in sortedRows"
-                :key="row.folderPath"
-                :row="row"
-                :searching="searchingRow === row.folderPath"
-                :importing="isImporting || isMatchingAll"
-                @update:selected="row.selected = $event"
-                @update:title="row.title = $event"
-                @update:selected-exe="row.selectedExe = $event"
-                @search="handleSearchRow(row.folderPath)"
-              />
-            </div>
-
-            <div v-if="totalCount === 0" class="empty-hint">该文件夹下没有子目录</div>
-          </div>
-
-          <div class="batch-actions">
-            <div class="ba-count">
-              {{
-                isImporting
-                  ? `正在导入 ${importedCount}/${selectedCount} ...`
-                  : `已选 ${selectedCount} 个游戏${skipCount > 0 ? `，${skipCount} 个跳过（已存在）` : ''}`
-              }}
-            </div>
-            <div class="ba-buttons">
-              <button
-                class="btn-cancel"
-                :disabled="isImporting || isMatchingAll"
-                @click="handleClose"
-              >
-                取消
-              </button>
-              <button
-                class="btn-brand"
-                :disabled="isImporting || isMatchingAll || selectedCount === 0"
-                @click="handleImportAll"
-              >
-                {{ isImporting ? '导入中...' : '导入选中' }}
-              </button>
-            </div>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 
   <SearchInputDialog
-    v-if="showSearchInput"
+    :show="showSearchInput"
     :initial-query="searchInputQuery"
     :initial-source="searchSource"
     @select="handleSearchInputSelect"
@@ -668,6 +679,14 @@ const handleOverlayClick = (e: MouseEvent): void => {
   justify-content: center;
 }
 
+.modal-enter-active {
+  animation: overlay-in 0.2s ease;
+}
+
+.modal-leave-active {
+  animation: overlay-out 0.15s ease forwards;
+}
+
 .dialog-card {
   width: 680px;
   max-width: 90vw;
@@ -678,6 +697,14 @@ const handleOverlayClick = (e: MouseEvent): void => {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+.modal-enter-active .dialog-card {
+  animation: modal-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-leave-active .dialog-card {
+  animation: modal-out 0.15s ease forwards;
 }
 
 .dialog-header {

@@ -18,10 +18,11 @@ const emit = defineEmits<{
 <template>
   <div class="game-grid">
     <div
-      v-for="game in filteredGames"
+      v-for="(game, idx) in filteredGames"
       :key="game.id"
       class="grid-item"
       :class="{ 'batch-active': batchMode }"
+      :style="{ animationDelay: Math.min(idx * 0.04, 0.6) + 's' }"
       @click="emit('selectGame', game)"
       @contextmenu="emit('contextMenu', $event, game)"
     >
@@ -45,10 +46,26 @@ const emit = defineEmits<{
   gap: 10px;
 }
 
+@media (max-width: 899px) {
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (max-width: 699px) {
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+  }
+}
+
 .grid-item {
   position: relative;
   cursor: pointer;
   border-radius: 10px;
+  opacity: 0;
+  animation: fade-in-up 0.4s ease forwards;
 }
 
 .grid-item.batch-active {

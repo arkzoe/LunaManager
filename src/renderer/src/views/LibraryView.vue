@@ -368,19 +368,21 @@ const handleBatchImported = (result: ImportResult): void => {
     />
 
     <!-- 批量操作栏 -->
-    <LibraryBatchBar
-      v-if="batchMode"
-      :batch-count="batchCount"
-      :all-filtered-selected="allFilteredSelected"
-      :status-filters="statusFilters"
-      :show-batch-status-menu="showBatchStatusMenu"
-      @toggle-select-all="toggleSelectAll"
-      @toggle-batch-status="showBatchStatusMenu = !showBatchStatusMenu"
-      @handle-batch-status="handleBatchStatus"
-      @open-collection-picker="openCollectionPicker"
-      @open-delete-confirm="openDeleteConfirm"
-      @close-batch-status-menu="closeBatchStatusMenu"
-    />
+    <Transition name="batch">
+      <LibraryBatchBar
+        v-if="batchMode"
+        :batch-count="batchCount"
+        :all-filtered-selected="allFilteredSelected"
+        :status-filters="statusFilters"
+        :show-batch-status-menu="showBatchStatusMenu"
+        @toggle-select-all="toggleSelectAll"
+        @toggle-batch-status="showBatchStatusMenu = !showBatchStatusMenu"
+        @handle-batch-status="handleBatchStatus"
+        @open-collection-picker="openCollectionPicker"
+        @open-delete-confirm="openDeleteConfirm"
+        @close-batch-status-menu="closeBatchStatusMenu"
+      />
+    </Transition>
 
     <!-- 排序栏 -->
     <div class="sort-bar">
@@ -463,11 +465,11 @@ const handleBatchImported = (result: ImportResult): void => {
     />
 
     <!-- 手动导入对话框 -->
-    <ImportDialog v-if="showImportDialog" @close="handleImportClose" @imported="handleImported" />
+    <ImportDialog :show="showImportDialog" @close="handleImportClose" @imported="handleImported" />
 
     <!-- 批量导入对话框 -->
     <BatchImportDialog
-      v-if="showBatchImportDialog"
+      :show="showBatchImportDialog"
       @close="handleBatchImportClose"
       @imported="handleBatchImported"
     />
@@ -504,6 +506,7 @@ const handleBatchImported = (result: ImportResult): void => {
 <style scoped>
 .library {
   max-width: 100%;
+  animation: fade-in-up 0.4s ease;
 }
 
 /* ===== 骨架屏 ===== */
@@ -524,15 +527,6 @@ const handleBatchImported = (result: ImportResult): void => {
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
 }
 
 /* ===== 排序栏 ===== */

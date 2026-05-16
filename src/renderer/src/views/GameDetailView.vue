@@ -251,7 +251,7 @@ const iconPaths: Record<string, string> = {
       @close="showToast = false"
     />
 
-    <div class="tab-body">
+    <div key="tab-body" class="tab-body">
       <GameDetailStats v-if="activeTab === 'stats'" :game="game" />
       <GameDetailEdit
         v-else-if="activeTab === 'edit'"
@@ -338,5 +338,6 @@ const iconPaths: Record<string, string> = {
 
 .tab-body {
   min-height: 200px;
+  animation: fade-in-up 0.3s ease;
 }
 </style>

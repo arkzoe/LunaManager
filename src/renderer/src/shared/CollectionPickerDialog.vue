@@ -56,29 +56,31 @@ watch(
 
 <template>
   <Teleport to="body">
-    <div v-if="show" class="modal-overlay" @click.self="emit('close')">
-      <div class="modal-card">
-        <h3 class="modal-title">添加到收藏夹</h3>
-        <div v-if="loading" class="modal-loading">加载中...</div>
-        <div v-else class="modal-list">
-          <button
-            v-for="col in collections"
-            :key="col.id"
-            class="modal-list-item"
-            @click="handleSelect(col.id)"
-          >
-            <span class="modal-list-name">{{ col.name }}</span>
-            <span class="modal-list-count">{{ col.gameIds.length }} 个游戏</span>
-          </button>
-          <div v-if="collections.length === 0" class="modal-empty">
-            暂无收藏夹，请先在收藏页面创建
+    <Transition name="modal">
+      <div v-if="show" class="modal-overlay" @click.self="emit('close')">
+        <div class="modal-card">
+          <h3 class="modal-title">添加到收藏夹</h3>
+          <div v-if="loading" class="modal-loading">加载中...</div>
+          <div v-else class="modal-list">
+            <button
+              v-for="col in collections"
+              :key="col.id"
+              class="modal-list-item"
+              @click="handleSelect(col.id)"
+            >
+              <span class="modal-list-name">{{ col.name }}</span>
+              <span class="modal-list-count">{{ col.gameIds.length }} 个游戏</span>
+            </button>
+            <div v-if="collections.length === 0" class="modal-empty">
+              暂无收藏夹，请先在收藏页面创建
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="emit('close')">取消</button>
           </div>
         </div>
-        <div class="modal-actions">
-          <button class="btn-cancel" @click="emit('close')">取消</button>
-        </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -92,6 +94,15 @@ watch(
   align-items: center;
   justify-content: center;
 }
+
+.modal-enter-active {
+  animation: overlay-in 0.2s ease;
+}
+
+.modal-leave-active {
+  animation: overlay-out 0.15s ease forwards;
+}
+
 .modal-card {
   width: 360px;
   max-width: 90vw;
@@ -101,6 +112,15 @@ watch(
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
   padding: 20px;
 }
+
+.modal-enter-active .modal-card {
+  animation: modal-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-leave-active .modal-card {
+  animation: modal-out 0.15s ease forwards;
+}
+
 .modal-title {
   font-size: 15px;
   font-weight: 700;

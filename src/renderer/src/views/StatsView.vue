@@ -196,7 +196,7 @@ const timeRanges = [
   <div class="stats-page">
     <!-- 总览卡片行 -->
     <div class="overview-row">
-      <div class="ov-card">
+      <div class="ov-card" :style="{ animationDelay: '0s' }">
         <div class="ov-icon ac">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path
@@ -207,7 +207,7 @@ const timeRanges = [
         <div class="ov-num">{{ libraryStats.totalGames }}</div>
         <div class="ov-lbl">游戏总数</div>
       </div>
-      <div class="ov-card">
+      <div class="ov-card" :style="{ animationDelay: '0.1s' }">
         <div class="ov-icon gr">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path
@@ -218,7 +218,7 @@ const timeRanges = [
         <div class="ov-num">{{ libraryStats.totalHours }}<span class="ov-u">h</span></div>
         <div class="ov-lbl">总时长</div>
       </div>
-      <div class="ov-card">
+      <div class="ov-card" :style="{ animationDelay: '0.2s' }">
         <div class="ov-icon am">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path
@@ -229,7 +229,7 @@ const timeRanges = [
         <div class="ov-num">{{ libraryStats.completedGames }}</div>
         <div class="ov-lbl">已通关</div>
       </div>
-      <div class="ov-card">
+      <div class="ov-card" :style="{ animationDelay: '0.2s' }">
         <div class="ov-icon pu">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path
@@ -254,22 +254,24 @@ const timeRanges = [
           <path d="M7 10l5 5 5-5z" />
         </svg>
       </div>
-      <div v-show="showLibraryOverview" class="panel-body overview-grid">
-        <div class="og-item">
-          <div class="og-val">{{ libraryStats.totalGames }}</div>
-          <div class="og-lbl">库中所有游戏</div>
-        </div>
-        <div class="og-item">
-          <div class="og-val">{{ totalSessionCount || '-' }}</div>
-          <div class="og-lbl">总游玩次数</div>
-        </div>
-        <div class="og-item">
-          <div class="og-val">{{ libraryStats.totalHours }}h</div>
-          <div class="og-lbl">总游玩时长</div>
-        </div>
-        <div class="og-item">
-          <div class="og-val">{{ libraryStats.completedGames }}</div>
-          <div class="og-lbl">通关游戏数</div>
+      <div class="panel-collapse" :class="{ open: showLibraryOverview }">
+        <div class="panel-body overview-grid">
+          <div class="og-item">
+            <div class="og-val">{{ libraryStats.totalGames }}</div>
+            <div class="og-lbl">库中所有游戏</div>
+          </div>
+          <div class="og-item">
+            <div class="og-val">{{ totalSessionCount || '-' }}</div>
+            <div class="og-lbl">总游玩次数</div>
+          </div>
+          <div class="og-item">
+            <div class="og-val">{{ libraryStats.totalHours }}h</div>
+            <div class="og-lbl">总游玩时长</div>
+          </div>
+          <div class="og-item">
+            <div class="og-val">{{ libraryStats.completedGames }}</div>
+            <div class="og-lbl">通关游戏数</div>
+          </div>
         </div>
       </div>
     </div>
@@ -323,6 +325,20 @@ const timeRanges = [
   gap: 12px;
 }
 
+@media (max-width: 899px) {
+  .overview-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 599px) {
+  .overview-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
 .ov-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -332,12 +348,17 @@ const timeRanges = [
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: border-color 0.15s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
+  opacity: 0;
+  animation: fade-in-up 0.5s ease forwards;
 }
 
 .ov-card:hover {
   border-color: var(--border-color-medium);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  will-change: transform;
 }
 
 .ov-icon {
@@ -416,12 +437,41 @@ const timeRanges = [
   border-top: 1px solid var(--border-color-light);
 }
 
+/* 面板折叠动画 */
+.panel-collapse {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease;
+}
+
+.panel-collapse.open {
+  max-height: 200px;
+  opacity: 1;
+}
+
 /* 库概览网格 */
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   text-align: center;
+}
+
+@media (max-width: 899px) {
+  .overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 599px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
 .og-val {

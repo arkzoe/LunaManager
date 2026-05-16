@@ -21,16 +21,18 @@ const emit = defineEmits<{
   <div
     class="collection-card w-70 h-20 flex items-center gap-3 p-4 bg-bg-primary rounded-xl cursor-pointer transition-all duration-250 flex-shrink-0 box-border hover:-translate-y-0.5"
     :class="{ 'ring-2 ring-brand-500/50': selected }"
-    @click="batchMode ? (!isDefault && emit('toggleSelect', collection.id)) : emit('open')"
+    @click="batchMode ? !isDefault && emit('toggleSelect', collection.id) : emit('open')"
   >
     <div v-if="batchMode" class="flex-shrink-0">
       <div
         class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer"
-        :class="isDefault
-          ? 'border-gray-300 opacity-30 cursor-not-allowed'
-          : selected
-            ? 'bg-brand-500 border-brand-500'
-            : 'border-gray-400 hover:border-brand-400'"
+        :class="
+          isDefault
+            ? 'border-gray-300 opacity-30 cursor-not-allowed'
+            : selected
+              ? 'bg-brand-500 border-brand-500'
+              : 'border-gray-400 hover:border-brand-400'
+        "
         @click.stop="!isDefault && emit('toggleSelect', collection.id)"
       >
         <svg v-if="selected" viewBox="0 0 24 24" class="w-3 h-3 fill-white">

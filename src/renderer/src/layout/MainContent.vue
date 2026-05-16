@@ -99,6 +99,18 @@ const handleBack = (): void => {
   flex-shrink: 0;
 }
 
+@media (max-width: 899px) {
+  .header {
+    padding: 16px 16px 0;
+  }
+}
+
+@media (max-width: 699px) {
+  .header {
+    padding: 12px 12px 0;
+  }
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -134,6 +146,18 @@ const handleBack = (): void => {
   overflow-y: auto;
   padding: 16px 24px 24px;
   min-height: 0;
+}
+
+@media (max-width: 899px) {
+  .content {
+    padding: 12px 16px 20px;
+  }
+}
+
+@media (max-width: 699px) {
+  .content {
+    padding: 8px 12px 16px;
+  }
 }
 
 /* ===== 页面过渡 ===== */

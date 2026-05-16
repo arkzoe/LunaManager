@@ -46,6 +46,15 @@ body {
   -webkit-font-smoothing: antialiased;
   font-size: 13px;
   line-height: 1.5;
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
+}
+
+.app-shell * {
+  transition-property: background-color, border-color, box-shadow;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
 }
 
 :root {
@@ -106,8 +115,8 @@ html.dark {
   display: flex;
   height: 100vh;
   width: 100vw;
-  min-width: 1024px;
-  min-height: 700px;
+  min-width: 520px;
+  min-height: 400px;
   overflow: hidden;
 }
 

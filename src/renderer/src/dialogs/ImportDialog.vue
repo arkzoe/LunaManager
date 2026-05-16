@@ -4,6 +4,10 @@ import type { ScanResult, GameRecord, SearchResult } from '../../../shared/types
 import { useGameStore } from '../stores/useGameStore'
 import SearchResultPicker from '../shared/SearchResultPicker.vue'
 
+defineProps<{
+  show: boolean
+}>()
+
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'imported', game: GameRecord): void
@@ -251,225 +255,232 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 <template>
   <Teleport to="body">
-    <div class="dialog-overlay" @click="handleOverlayClick" @keydown.esc="handleClose">
-      <div class="dialog-card">
-        <div class="dialog-header">
-          <h2 class="dialog-title">导入游戏</h2>
-          <button class="dialog-close" @click="handleClose">&times;</button>
-        </div>
-
-        <div class="dialog-body">
-          <div v-if="error" class="form-error">{{ error }}</div>
-
-          <!-- Step 1: Select Folder -->
-          <div v-if="!scanResult" class="folder-pick-area">
-            <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
-              <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-                <path
-                  d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
-                />
-              </svg>
-              {{ isLoading ? '扫描中...' : '选择游戏文件夹' }}
-            </button>
+    <Transition name="modal">
+      <div
+        v-if="show"
+        class="dialog-overlay"
+        @click="handleOverlayClick"
+        @keydown.esc="handleClose"
+      >
+        <div class="dialog-card">
+          <div class="dialog-header">
+            <h2 class="dialog-title">导入游戏</h2>
+            <button class="dialog-close" @click="handleClose">&times;</button>
           </div>
 
-          <!-- Step 2: Edit Metadata -->
-          <div v-else class="import-form">
-            <div class="form-group">
-              <label class="form-label">文件夹路径</label>
-              <div class="form-path">{{ scanResult.folderPath }}</div>
-            </div>
+          <div class="dialog-body">
+            <div v-if="error" class="form-error">{{ error }}</div>
 
-            <div class="form-group">
-              <label class="form-label">游戏大小</label>
-              <div class="form-value">{{ scanResult.totalSize }}</div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">主程序 <span class="text-danger">*</span></label>
-              <div v-if="scanResult.executables.length === 0" class="form-warning">
-                未检测到可执行文件
-              </div>
-              <div v-else class="exe-list">
-                <label
-                  v-for="exe in scanResult.executables"
-                  :key="exe.fullPath"
-                  class="exe-item"
-                  :class="{ selected: selectedExe === exe.fullPath }"
-                >
-                  <input
-                    v-model="selectedExe"
-                    type="radio"
-                    :value="exe.fullPath"
-                    class="exe-radio"
+            <!-- Step 1: Select Folder -->
+            <div v-if="!scanResult" class="folder-pick-area">
+              <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
+                <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+                  <path
+                    d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
                   />
-                  <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current exe-icon">
-                    <path
-                      d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"
-                    />
-                  </svg>
-                  <span class="exe-name">{{ exe.name }}</span>
-                </label>
-              </div>
+                </svg>
+                {{ isLoading ? '扫描中...' : '选择游戏文件夹' }}
+              </button>
             </div>
 
-            <!-- Cover preview -->
-            <div v-if="coverUrl" class="form-group">
-              <label class="form-label">封面预览</label>
-              <div class="cover-preview-wrap">
-                <img
-                  :src="coverUrl"
-                  class="cover-preview-img"
-                  @error="($event.target as HTMLImageElement).style.display = 'none'"
+            <!-- Step 2: Edit Metadata -->
+            <div v-else class="import-form">
+              <div class="form-group">
+                <label class="form-label">文件夹路径</label>
+                <div class="form-path">{{ scanResult.folderPath }}</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">游戏大小</label>
+                <div class="form-value">{{ scanResult.totalSize }}</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">主程序 <span class="text-danger">*</span></label>
+                <div v-if="scanResult.executables.length === 0" class="form-warning">
+                  未检测到可执行文件
+                </div>
+                <div v-else class="exe-list">
+                  <label
+                    v-for="exe in scanResult.executables"
+                    :key="exe.fullPath"
+                    class="exe-item"
+                    :class="{ selected: selectedExe === exe.fullPath }"
+                  >
+                    <input
+                      v-model="selectedExe"
+                      type="radio"
+                      :value="exe.fullPath"
+                      class="exe-radio"
+                    />
+                    <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current exe-icon">
+                      <path
+                        d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"
+                      />
+                    </svg>
+                    <span class="exe-name">{{ exe.name }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Cover preview -->
+              <div v-if="coverUrl" class="form-group">
+                <label class="form-label">封面预览</label>
+                <div class="cover-preview-wrap">
+                  <img
+                    :src="coverUrl"
+                    class="cover-preview-img"
+                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label class="form-label" for="input-title"
+                    >游戏名称 <span class="text-danger">*</span></label
+                  >
+                  <button
+                    class="search-btn"
+                    :disabled="searching"
+                    title="识别源数据"
+                    @click="handleSearch"
+                  >
+                    <svg v-if="searching" viewBox="0 0 24 24" class="w-3.5 h-3.5 spin">
+                      <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
+                    </svg>
+                    <svg v-else viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                      <path
+                        d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                      />
+                    </svg>
+                    识别源数据
+                  </button>
+                </div>
+                <input
+                  id="input-title"
+                  v-model="title"
+                  class="form-input"
+                  placeholder="输入游戏名称"
+                />
+                <div v-if="metadataFilled" class="metadata-hint">
+                  已从 {{ searchSource === 'vndb' ? 'VNDB' : 'Bangumi' }} 获取元数据
+                </div>
+                <div v-if="searchNoResults" class="search-no-results">
+                  未找到匹配结果，请尝试调整搜索名称
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="input-title-cn">中文名称</label>
+                <input
+                  id="input-title-cn"
+                  v-model="titleCn"
+                  class="form-input"
+                  placeholder="输入中文名称（可选）"
                 />
               </div>
-            </div>
 
-            <div class="form-group">
-              <div class="form-label-row">
-                <label class="form-label" for="input-title"
-                  >游戏名称 <span class="text-danger">*</span></label
-                >
-                <button
-                  class="search-btn"
-                  :disabled="searching"
-                  title="识别源数据"
-                  @click="handleSearch"
-                >
-                  <svg v-if="searching" viewBox="0 0 24 24" class="w-3.5 h-3.5 spin">
-                    <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
-                  </svg>
-                  <svg v-else viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-                    <path
-                      d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                    />
-                  </svg>
-                  识别源数据
-                </button>
+              <div class="form-group">
+                <label class="form-label" for="input-developer">开发商</label>
+                <input
+                  id="input-developer"
+                  v-model="developer"
+                  class="form-input"
+                  placeholder="开发商（可自动获取）"
+                />
               </div>
-              <input
-                id="input-title"
-                v-model="title"
-                class="form-input"
-                placeholder="输入游戏名称"
-              />
-              <div v-if="metadataFilled" class="metadata-hint">
-                已从 {{ searchSource === 'vndb' ? 'VNDB' : 'Bangumi' }} 获取元数据
+
+              <div class="form-group">
+                <label class="form-label" for="input-publisher">发行商</label>
+                <input
+                  id="input-publisher"
+                  v-model="publisher"
+                  class="form-input"
+                  placeholder="发行商（可自动获取）"
+                />
               </div>
-              <div v-if="searchNoResults" class="search-no-results">
-                未找到匹配结果，请尝试调整搜索名称
+
+              <div class="form-group">
+                <label class="form-label" for="input-date">发行日期</label>
+                <input
+                  id="input-date"
+                  v-model="releaseDate"
+                  class="form-input"
+                  placeholder="发行日期（可自动获取）"
+                />
               </div>
-            </div>
 
-            <div class="form-group">
-              <label class="form-label" for="input-title-cn">中文名称</label>
-              <input
-                id="input-title-cn"
-                v-model="titleCn"
-                class="form-input"
-                placeholder="输入中文名称（可选）"
-              />
-            </div>
+              <div class="form-group">
+                <label class="form-label" for="input-status">游戏状态</label>
+                <select id="input-status" v-model="status" class="form-select">
+                  <option value="want">想玩</option>
+                  <option value="playing">在玩</option>
+                  <option value="played">玩过</option>
+                  <option value="shelved">搁置</option>
+                  <option value="abandoned">弃坑</option>
+                </select>
+              </div>
 
-            <div class="form-group">
-              <label class="form-label" for="input-developer">开发商</label>
-              <input
-                id="input-developer"
-                v-model="developer"
-                class="form-input"
-                placeholder="开发商（可自动获取）"
-              />
-            </div>
+              <div class="form-group">
+                <label class="form-label" for="input-description">游戏描述</label>
+                <textarea
+                  id="input-description"
+                  v-model="description"
+                  class="form-textarea"
+                  placeholder="游戏描述（可自动获取）"
+                  rows="3"
+                />
+              </div>
 
-            <div class="form-group">
-              <label class="form-label" for="input-publisher">发行商</label>
-              <input
-                id="input-publisher"
-                v-model="publisher"
-                class="form-input"
-                placeholder="发行商（可自动获取）"
-              />
-            </div>
+              <div class="form-group">
+                <label class="form-label" for="input-notes">备注</label>
+                <textarea
+                  id="input-notes"
+                  v-model="notes"
+                  class="form-textarea"
+                  placeholder="输入备注信息（可选）"
+                  rows="2"
+                />
+              </div>
 
-            <div class="form-group">
-              <label class="form-label" for="input-date">发行日期</label>
-              <input
-                id="input-date"
-                v-model="releaseDate"
-                class="form-input"
-                placeholder="发行日期（可自动获取）"
-              />
-            </div>
+              <div class="form-group">
+                <label class="form-label" for="input-tags">自定义标签</label>
+                <input
+                  id="input-tags"
+                  v-model="customTags"
+                  class="form-input"
+                  placeholder="标签（JSON 数组，可自动获取）"
+                />
+              </div>
 
-            <div class="form-group">
-              <label class="form-label" for="input-status">游戏状态</label>
-              <select id="input-status" v-model="status" class="form-select">
-                <option value="want">想玩</option>
-                <option value="playing">在玩</option>
-                <option value="played">玩过</option>
-                <option value="shelved">搁置</option>
-                <option value="abandoned">弃坑</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="input-description">游戏描述</label>
-              <textarea
-                id="input-description"
-                v-model="description"
-                class="form-textarea"
-                placeholder="游戏描述（可自动获取）"
-                rows="3"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="input-notes">备注</label>
-              <textarea
-                id="input-notes"
-                v-model="notes"
-                class="form-textarea"
-                placeholder="输入备注信息（可选）"
-                rows="2"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="input-tags">自定义标签</label>
-              <input
-                id="input-tags"
-                v-model="customTags"
-                class="form-input"
-                placeholder="标签（JSON 数组，可自动获取）"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">存档路径</label>
-              <div class="save-path-row">
-                <div class="form-path save-path-text" :class="{ empty: !savePath }">
-                  {{ savePath || '未设置' }}
+              <div class="form-group">
+                <label class="form-label">存档路径</label>
+                <div class="save-path-row">
+                  <div class="form-path save-path-text" :class="{ empty: !savePath }">
+                    {{ savePath || '未设置' }}
+                  </div>
+                  <button class="btn-pick-path" :disabled="isLoading" @click="handlePickSavePath">
+                    选择
+                  </button>
                 </div>
-                <button class="btn-pick-path" :disabled="isLoading" @click="handlePickSavePath">
-                  选择
+              </div>
+
+              <div class="form-actions">
+                <button class="btn-cancel" :disabled="isLoading" @click="handleClose">取消</button>
+                <button class="btn-brand" :disabled="isLoading" @click="handleConfirm">
+                  {{ isLoading ? '导入中...' : '确认导入' }}
                 </button>
               </div>
-            </div>
-
-            <div class="form-actions">
-              <button class="btn-cancel" :disabled="isLoading" @click="handleClose">取消</button>
-              <button class="btn-brand" :disabled="isLoading" @click="handleConfirm">
-                {{ isLoading ? '导入中...' : '确认导入' }}
-              </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 
   <SearchResultPicker
-    v-if="showSearchPicker"
+    :show="showSearchPicker"
     :results="searchResults"
     :loading="false"
     :source="searchSource"
@@ -489,6 +500,14 @@ const handleOverlayClick = (e: MouseEvent): void => {
   justify-content: center;
 }
 
+.modal-enter-active {
+  animation: overlay-in 0.2s ease;
+}
+
+.modal-leave-active {
+  animation: overlay-out 0.15s ease forwards;
+}
+
 .dialog-card {
   width: 520px;
   max-width: 90vw;
@@ -498,6 +517,14 @@ const handleOverlayClick = (e: MouseEvent): void => {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+.modal-enter-active .dialog-card {
+  animation: modal-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-leave-active .dialog-card {
+  animation: modal-out 0.15s ease forwards;
 }
 
 .dialog-header {
@@ -809,11 +836,5 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 .spin {
   animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

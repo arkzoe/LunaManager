@@ -15,18 +15,20 @@ const emit = defineEmits<{
 
 <template>
   <Teleport to="body">
-    <div v-if="show" class="modal-overlay" @click.self="emit('cancel')">
-      <div class="modal-card">
-        <h3 class="modal-title">{{ title }}</h3>
-        <p class="modal-desc">{{ message }}</p>
-        <div class="modal-actions">
-          <button class="btn-cancel" @click="emit('cancel')">{{ cancelText || '取消' }}</button>
-          <button class="btn-danger" :class="{ 'btn-brand': !danger }" @click="emit('confirm')">
-            {{ confirmText || '确认' }}
-          </button>
+    <Transition name="modal">
+      <div v-if="show" class="modal-overlay" @click.self="emit('cancel')">
+        <div class="modal-card">
+          <h3 class="modal-title">{{ title }}</h3>
+          <p class="modal-desc">{{ message }}</p>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="emit('cancel')">{{ cancelText || '取消' }}</button>
+            <button class="btn-danger" :class="{ 'btn-brand': !danger }" @click="emit('confirm')">
+              {{ confirmText || '确认' }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -40,6 +42,15 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
 }
+
+.modal-enter-active {
+  animation: overlay-in 0.2s ease;
+}
+
+.modal-leave-active {
+  animation: overlay-out 0.15s ease forwards;
+}
+
 .modal-card {
   width: 360px;
   max-width: 90vw;
@@ -49,6 +60,15 @@ const emit = defineEmits<{
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
   padding: 20px;
 }
+
+.modal-enter-active .modal-card {
+  animation: modal-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-leave-active .modal-card {
+  animation: modal-out 0.15s ease forwards;
+}
+
 .modal-title {
   font-size: 15px;
   font-weight: 700;

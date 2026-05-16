@@ -98,6 +98,37 @@ const iconMap: Record<string, string> = {
   border-right: 1px solid var(--border-color);
   padding: 0 8px;
   user-select: none;
+  transition:
+    width 0.3s ease,
+    min-width 0.3s ease,
+    padding 0.3s ease;
+}
+
+@media (max-width: 899px) {
+  .sidebar {
+    width: 56px;
+    min-width: 56px;
+    padding: 0 6px;
+  }
+
+  .sidebar .logo-text,
+  .sidebar .nav-label {
+    display: none;
+  }
+
+  .sidebar .logo {
+    padding: 16px 0 20px;
+    justify-content: center;
+  }
+
+  .sidebar .nav-item {
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  .sidebar .active-bar {
+    left: -6px;
+  }
 }
 
 .logo {
@@ -118,6 +149,7 @@ const iconMap: Record<string, string> = {
   border-radius: 6px;
   font-size: 14px;
   font-weight: 700;
+  animation: logo-glow 3s ease-in-out infinite;
 }
 
 .logo-text {
@@ -148,11 +180,16 @@ const iconMap: Record<string, string> = {
   cursor: pointer;
   transition: all 0.15s ease;
   text-align: left;
+  overflow: hidden;
 }
 
 .nav-item:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.nav-item:hover .nav-icon {
+  animation: icon-wiggle 0.4s ease;
 }
 
 .nav-item.active {
@@ -163,11 +200,11 @@ const iconMap: Record<string, string> = {
   position: absolute;
   left: -8px;
   top: 50%;
-  transform: translateY(-50%);
   width: 3px;
   height: 18px;
   background: var(--accent-primary);
   border-radius: 0 3px 3px 0;
+  animation: active-bar-in 0.3s ease forwards;
 }
 
 .nav-icon {

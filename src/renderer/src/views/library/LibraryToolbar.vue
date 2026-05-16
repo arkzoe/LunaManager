@@ -83,22 +83,24 @@ void importBtnRef.value /* TODO: 用于后续下拉菜单定位 */
             <path d="M7 10l5 5 5-5z" />
           </svg>
         </button>
-        <div v-if="showImportMenu" class="import-menu-local">
-          <button class="ctx-item" @click="emit('manualImport')">
-            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-            </svg>
-            手动导入
-          </button>
-          <button class="ctx-item" @click="emit('batchImport')">
-            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-              <path
-                d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm0-4H6v-2h8v2z"
-              />
-            </svg>
-            批量导入
-          </button>
-        </div>
+        <Transition name="dropdown">
+          <div v-if="showImportMenu" class="import-menu-local">
+            <button class="ctx-item" @click="emit('manualImport')">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+              </svg>
+              手动导入
+            </button>
+            <button class="ctx-item" @click="emit('batchImport')">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+                <path
+                  d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm0-4H6v-2h8v2z"
+                />
+              </svg>
+              批量导入
+            </button>
+          </div>
+        </Transition>
       </div>
     </div>
   </div>
@@ -213,6 +215,14 @@ void importBtnRef.value /* TODO: 用于后续下拉菜单定位 */
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   padding: 6px;
   overflow: hidden;
+}
+
+.dropdown-enter-active {
+  animation: dropdown-in 0.18s ease;
+}
+
+.dropdown-leave-active {
+  animation: dropdown-out 0.15s ease forwards;
 }
 
 .ctx-item {

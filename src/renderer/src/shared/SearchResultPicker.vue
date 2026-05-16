@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import type { SearchResult } from '../../../shared/types'
 
 const props = defineProps<{
+  show: boolean
   results: SearchResult[]
   loading: boolean
   source: 'vndb' | 'bangumi'
@@ -31,55 +32,62 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 <template>
   <Teleport to="body">
-    <div class="dialog-overlay" @click="handleOverlayClick" @keydown.esc="emit('close')">
-      <div class="dialog-card">
-        <div class="dialog-header">
-          <h2 class="dialog-title">选择 {{ sourceLabel }} 条目</h2>
-          <button class="dialog-close" @click="emit('close')">&times;</button>
-        </div>
-
-        <div class="dialog-body">
-          <div v-if="loading" class="picker-loading">
-            <svg viewBox="0 0 24 24" class="w-5 h-5 spin">
-              <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
-            </svg>
-            <span>搜索中...</span>
+    <Transition name="modal">
+      <div
+        v-if="show"
+        class="dialog-overlay"
+        @click="handleOverlayClick"
+        @keydown.esc="emit('close')"
+      >
+        <div class="dialog-card">
+          <div class="dialog-header">
+            <h2 class="dialog-title">选择 {{ sourceLabel }} 条目</h2>
+            <button class="dialog-close" @click="emit('close')">&times;</button>
           </div>
 
-          <div v-else-if="results.length === 0" class="picker-empty">未找到相关结果</div>
+          <div class="dialog-body">
+            <div v-if="loading" class="picker-loading">
+              <svg viewBox="0 0 24 24" class="w-5 h-5 spin">
+                <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
+              </svg>
+              <span>搜索中...</span>
+            </div>
 
-          <div v-else class="picker-list">
-            <label
-              v-for="item in results"
-              :key="item.id"
-              class="picker-item"
-              :class="{ selected: selectedId === item.id }"
-            >
-              <input v-model="selectedId" type="radio" :value="item.id" class="picker-radio" />
-              <div class="picker-info">
-                <div class="picker-title">{{ item.title }}</div>
-                <div v-if="item.titleCn && item.titleCn !== item.title" class="picker-subtitle">
-                  {{ item.titleCn }}
+            <div v-else-if="results.length === 0" class="picker-empty">未找到相关结果</div>
+
+            <div v-else class="picker-list">
+              <label
+                v-for="item in results"
+                :key="item.id"
+                class="picker-item"
+                :class="{ selected: selectedId === item.id }"
+              >
+                <input v-model="selectedId" type="radio" :value="item.id" class="picker-radio" />
+                <div class="picker-info">
+                  <div class="picker-title">{{ item.title }}</div>
+                  <div v-if="item.titleCn && item.titleCn !== item.title" class="picker-subtitle">
+                    {{ item.titleCn }}
+                  </div>
+                  <div class="picker-meta">
+                    <span v-if="item.date">{{ item.date }}</span>
+                    <span v-if="item.rating > 0" class="picker-rating"
+                      >★ {{ item.rating.toFixed(1) }}</span
+                    >
+                  </div>
                 </div>
-                <div class="picker-meta">
-                  <span v-if="item.date">{{ item.date }}</span>
-                  <span v-if="item.rating > 0" class="picker-rating"
-                    >★ {{ item.rating.toFixed(1) }}</span
-                  >
-                </div>
-              </div>
-            </label>
+              </label>
+            </div>
           </div>
-        </div>
 
-        <div class="dialog-footer">
-          <button class="btn-cancel" @click="emit('close')">取消</button>
-          <button class="btn-brand" :disabled="!selectedId || loading" @click="handleSelect">
-            确认选择
-          </button>
+          <div class="dialog-footer">
+            <button class="btn-cancel" @click="emit('close')">取消</button>
+            <button class="btn-brand" :disabled="!selectedId || loading" @click="handleSelect">
+              确认选择
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -94,6 +102,14 @@ const handleOverlayClick = (e: MouseEvent): void => {
   justify-content: center;
 }
 
+.modal-enter-active {
+  animation: overlay-in 0.2s ease;
+}
+
+.modal-leave-active {
+  animation: overlay-out 0.15s ease forwards;
+}
+
 .dialog-card {
   width: 480px;
   max-width: 90vw;
@@ -104,6 +120,14 @@ const handleOverlayClick = (e: MouseEvent): void => {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+.modal-enter-active .dialog-card {
+  animation: modal-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-leave-active .dialog-card {
+  animation: modal-out 0.15s ease forwards;
 }
 
 .dialog-header {
@@ -237,12 +261,6 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 .spin {
   animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .btn-cancel {

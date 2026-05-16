@@ -56,8 +56,27 @@ const playedActs = computed(() =>
     .filter((g) => g.last_played)
     .sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
     .slice(0, 5)
-    .map((g) => ({ type: 'played' as const, game: g, time: formatRelativeTime(g.last_played || '') }))
+    .map((g) => ({
+      type: 'played' as const,
+      game: g,
+      time: formatRelativeTime(g.last_played || '')
+    }))
 )
+
+// section 交错动画索引 — 先预计算可见性，仅对可见 section 递增 i
+const sectionDelays = computed(() => {
+  const visible: boolean[] = [
+    recentGames.value.length > 0,
+    recentAdded.value.length > 0,
+    playedActs.value.length > 0 || addedActs.value.length > 0
+  ]
+  let i = 0
+  return {
+    recentGames: visible[0] ? i++ * 0.1 : -1,
+    recentAdded: visible[1] ? i++ * 0.1 : -1,
+    activity: visible[2] ? i++ * 0.1 : -1
+  }
+})
 
 // 最近动态 — 新入库（右侧）
 const addedActs = computed(() =>
@@ -106,7 +125,11 @@ const addedActs = computed(() =>
 
     <template v-else>
       <!-- 最近游玩 — 横滑列表 -->
-      <section v-if="recentGames.length > 0" class="section-block">
+      <section
+        v-if="recentGames.length > 0"
+        class="section-block"
+        :style="{ animationDelay: sectionDelays.recentGames + 's' }"
+      >
         <div class="section-head">
           <h2>最近游玩</h2>
           <button class="section-link" @click="emit('navigateLibrary')">查看全部</button>
@@ -124,7 +147,11 @@ const addedActs = computed(() =>
       </section>
 
       <!-- 最近添加 — 横滑列表 -->
-      <section v-if="recentAdded.length > 0" class="section-block">
+      <section
+        v-if="recentAdded.length > 0"
+        class="section-block"
+        :style="{ animationDelay: sectionDelays.recentAdded + 's' }"
+      >
         <div class="section-head">
           <h2>最近添加</h2>
           <button class="section-link" @click="emit('navigateLibrary')">查看全部</button>
@@ -142,7 +169,11 @@ const addedActs = computed(() =>
       </section>
 
       <!-- 最近动态 — 左：游玩信息 / 右：新入库 -->
-      <section v-if="playedActs.length > 0 || addedActs.length > 0" class="section-block">
+      <section
+        v-if="playedActs.length > 0 || addedActs.length > 0"
+        class="section-block"
+        :style="{ animationDelay: sectionDelays.activity + 's' }"
+      >
         <div class="section-head">
           <h2>最近动态</h2>
         </div>
@@ -177,6 +208,15 @@ const addedActs = computed(() =>
   justify-content: center;
   padding: 80px 0;
   text-align: center;
+  animation: fade-in-up 0.5s ease;
+}
+
+.empty-icon {
+  transition: transform 0.3s ease;
+}
+
+.empty-state:hover .empty-icon {
+  transform: scale(1.08) rotate(-4deg);
 }
 
 .empty-icon {
@@ -206,6 +246,8 @@ const addedActs = computed(() =>
 /* ===== 区块 ===== */
 .section-block {
   margin-bottom: 28px;
+  opacity: 0;
+  animation: fade-in-up 0.5s ease forwards;
 }
 
 .section-head {
@@ -268,6 +310,13 @@ const addedActs = computed(() =>
   gap: 16px;
 }
 
+@media (max-width: 899px) {
+  .activity-split {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
 /* ===== 骨架屏 ===== */
 .skeleton-grid {
   display: grid;
@@ -326,14 +375,5 @@ const addedActs = computed(() =>
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
 }
 </style>
