@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useGameStore } from '../stores/useGameStore'
-import { formatPlaytime } from '../utils/format'
-import type { PlaySession } from '../../../shared/types'
+import { onMounted, ref } from 'vue'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,179 +7,23 @@ import {
   PointElement,
   LineElement,
   Tooltip,
-  Filler,
-  type TooltipItem
+  Filler
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
+import { useStats } from '../composables/useStats'
+import { useStatsChart } from '../composables/useStatsChart'
 import StatsRanking from './stats/StatsRanking.vue'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
-const store = useGameStore()
 const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
 const rankRange = ref<'week' | 'month'>('week')
 const showLibraryOverview = ref(true)
 
-interface AggregatedStat {
-  game_id: string
-  total_sessions: number
-  total_duration: number
-  last_played: number | null
-}
+const { totalSessionCount, libraryStats, rankings, topGame, loadStats, allSessions } = useStats()
+const { chartData, chartOptions } = useStatsChart(allSessions, timeRange)
 
-const allStats = ref<AggregatedStat[]>([])
-const totalSessionCount = ref(0)
-const allSessions = ref<PlaySession[]>([])
-
-onMounted(async () => {
-  if (store.games.length === 0) await store.loadGames()
-  const [stats, count, sessions] = await Promise.all([
-    window.api.getAllAggregatedStats(),
-    window.api.getTotalSessionCount(),
-    window.api.getAllSessions()
-  ])
-  allStats.value = stats
-  totalSessionCount.value = count
-  allSessions.value = sessions
-})
-
-const libraryStats = computed(() => {
-  const totalGames = store.allGames.length
-  let totalMs = 0
-  for (const s of allStats.value) {
-    totalMs += s.total_duration
-  }
-  const totalHours = Math.floor(totalMs / 3600000) || 0
-  const completedGames = store.allGames.filter((g) => g.status === 'played').length
-  return {
-    totalGames,
-    totalHours,
-    completedGames,
-    avgPerDay: totalGames > 0 ? Math.round(totalHours / Math.max(totalGames, 1)) : 0
-  }
-})
-
-const rankings = computed(() => {
-  const gameMap = new Map(store.allGames.map((g) => [g.id, g]))
-  const ranked = allStats.value
-    .filter((s) => s.total_duration > 0)
-    .slice(0, 10)
-    .map((s, idx) => {
-      const game = gameMap.get(s.game_id)
-      return {
-        rank: idx + 1,
-        title: game ? game.title_cn || game.title : s.game_id,
-        playtime: formatPlaytime(Math.floor(s.total_duration / 1000)),
-        cover: game?.cover || ''
-      }
-    })
-
-  if (ranked.length === 0) {
-    return [
-      { rank: 1, title: '-', playtime: '-', cover: '' },
-      { rank: 2, title: '-', playtime: '-', cover: '' }
-    ]
-  }
-  return ranked
-})
-
-const topGame = computed(() => rankings.value[0])
-
-const chartData = computed(() => {
-  if (allSessions.value.length === 0) return null
-
-  const now = Date.now()
-  let cutoff: number
-  if (timeRange.value === 'week') {
-    cutoff = now - 7 * 24 * 60 * 60 * 1000
-  } else if (timeRange.value === 'month') {
-    cutoff = now - 30 * 24 * 60 * 60 * 1000
-  } else if (timeRange.value === 'year') {
-    cutoff = now - 365 * 24 * 60 * 60 * 1000
-  } else {
-    cutoff = 0
-  }
-
-  const sessions = cutoff
-    ? allSessions.value.filter((s) => s.start_time >= cutoff)
-    : allSessions.value
-
-  if (sessions.length === 0) return null
-
-  type GroupEntry = { total: number; sortKey: number }
-  const grouped = new Map<string, GroupEntry>()
-
-  for (const s of sessions) {
-    if (s.duration <= 0) continue
-    const d = new Date(s.start_time)
-    let key: string
-    let sortKey: number
-    if (timeRange.value === 'all') {
-      key = `${d.getFullYear()}/${d.getMonth() + 1}`
-      sortKey = d.getFullYear() * 12 + d.getMonth()
-    } else if (timeRange.value === 'year') {
-      key = `${d.getMonth() + 1}/${d.getDate()}`
-      sortKey = d.getTime()
-    } else {
-      key = `${d.getMonth() + 1}/${d.getDate()}`
-      sortKey = d.getTime()
-    }
-    const prev = grouped.get(key)
-    if (prev) {
-      prev.total += s.duration
-    } else {
-      grouped.set(key, { total: s.duration, sortKey })
-    }
-  }
-
-  const entries = [...grouped.entries()].sort((a, b) => a[1].sortKey - b[1].sortKey)
-  const labels = entries.map(([k]) => k)
-  const values = entries.map(([, v]) => Math.round((v.total / 3600000) * 10) / 10)
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: '游玩时长 (小时)',
-        data: values,
-        borderColor: '#6366f1',
-        backgroundColor: 'rgba(99, 102, 241, 0.08)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 4,
-        pointBackgroundColor: '#6366f1'
-      }
-    ]
-  }
-})
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx: TooltipItem<'line'>) => `${ctx.parsed.y ?? 0} 小时`
-      }
-    }
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { font: { size: 11 }, color: '#9ca3af' }
-    },
-    y: {
-      beginAtZero: true,
-      grid: { color: 'rgba(156, 163, 175, 0.1)' },
-      ticks: {
-        font: { size: 11 },
-        color: '#9ca3af',
-        callback: (v: number | string) => `${v}h`
-      }
-    }
-  }
-}
+onMounted(() => loadStats())
 
 const timeRanges = [
   { id: 'week' as const, label: '周' },
@@ -229,7 +70,7 @@ const timeRanges = [
         <div class="ov-num">{{ libraryStats.completedGames }}</div>
         <div class="ov-lbl">已通关</div>
       </div>
-      <div class="ov-card" :style="{ animationDelay: '0.2s' }">
+      <div class="ov-card" :style="{ animationDelay: '0.3s' }">
         <div class="ov-icon pu">
           <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path
@@ -305,7 +146,6 @@ const timeRanges = [
       </div>
     </div>
 
-    <!-- 排行榜 -->
     <StatsRanking v-model:rank-range="rankRange" :rankings="rankings" :top-game="topGame" />
   </div>
 </template>
@@ -317,28 +157,23 @@ const timeRanges = [
   flex-direction: column;
   gap: 16px;
 }
-
-/* ===== 总览卡片 ===== */
 .overview-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
-
 @media (max-width: 899px) {
   .overview-row {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 }
-
 @media (max-width: 599px) {
   .overview-row {
     grid-template-columns: 1fr;
     gap: 8px;
   }
 }
-
 .ov-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -353,14 +188,12 @@ const timeRanges = [
   opacity: 0;
   animation: fade-in-up 0.5s ease forwards;
 }
-
 .ov-card:hover {
   border-color: var(--border-color-medium);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   will-change: transform;
 }
-
 .ov-icon {
   width: 42px;
   height: 42px;
@@ -370,7 +203,6 @@ const timeRanges = [
   justify-content: center;
   margin-bottom: 10px;
 }
-
 .ov-icon.ac {
   background: var(--bg-active);
   color: var(--accent-primary);
@@ -387,34 +219,28 @@ const timeRanges = [
   background: rgba(139, 124, 232, 0.1);
   color: var(--accent-primary);
 }
-
 .ov-num {
   font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
 }
-
 .ov-u {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-tertiary);
   margin-left: 2px;
 }
-
 .ov-lbl {
   font-size: 12px;
   color: var(--text-tertiary);
   margin-top: 2px;
 }
-
-/* ===== 面板 ===== */
 .panel {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
 }
-
 .panel-header {
   display: flex;
   align-items: center;
@@ -427,17 +253,13 @@ const timeRanges = [
   user-select: none;
   transition: background 0.15s;
 }
-
 .panel-header:hover {
   background: var(--bg-hover);
 }
-
 .panel-body {
   padding: 18px;
   border-top: 1px solid var(--border-color-light);
 }
-
-/* 面板折叠动画 */
 .panel-collapse {
   max-height: 0;
   overflow: hidden;
@@ -446,47 +268,38 @@ const timeRanges = [
     max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.25s ease;
 }
-
 .panel-collapse.open {
   max-height: 200px;
   opacity: 1;
 }
-
-/* 库概览网格 */
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   text-align: center;
 }
-
 @media (max-width: 899px) {
   .overview-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 }
-
 @media (max-width: 599px) {
   .overview-grid {
     grid-template-columns: 1fr;
     gap: 8px;
   }
 }
-
 .og-val {
   font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
-
 .og-lbl {
   font-size: 12px;
   color: var(--text-tertiary);
 }
-
-/* 时间切换 */
 .time-toggle {
   display: flex;
   gap: 2px;
@@ -494,7 +307,6 @@ const timeRanges = [
   border-radius: 6px;
   padding: 2px;
 }
-
 .tt-btn {
   padding: 4px 12px;
   border: none;
@@ -506,24 +318,19 @@ const timeRanges = [
   border-radius: 4px;
   transition: all 0.15s;
 }
-
 .tt-btn:hover {
   color: var(--text-primary);
 }
-
 .tt-btn.active {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
-
-/* ===== 图表 ===== */
 .chart-container {
   height: 200px;
   position: relative;
 }
-
 .chart-ph {
   display: flex;
   flex-direction: column;
@@ -531,7 +338,6 @@ const timeRanges = [
   justify-content: center;
   padding: 48px 0;
 }
-
 .chart-ph p {
   font-size: 13px;
   color: var(--text-tertiary);

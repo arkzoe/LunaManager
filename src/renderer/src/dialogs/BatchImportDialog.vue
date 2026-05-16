@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type {
-  BatchScanResult,
-  GameRecord,
-  SearchResult,
-  ImportRowState,
-  ImportResult,
-  ImportResultItem
-} from '../../../shared/types'
+import { ref } from 'vue'
+import type { GameRecord, ImportResult, ImportResultItem } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import { useBatchScan } from '../composables/useBatchScan'
+import { useBatchMatch } from '../composables/useBatchMatch'
 import BatchImportRow from './BatchImportRow.vue'
+import BatchImportResult from './BatchImportResult.vue'
 import SearchInputDialog from '../shared/SearchInputDialog.vue'
 
 defineProps<{
@@ -22,326 +18,27 @@ const emit = defineEmits<{
 }>()
 
 const store = useGameStore()
-const isLoading = ref(false)
 const isImporting = ref(false)
-const scanResult = ref<BatchScanResult | null>(null)
-const error = ref('')
-const importedCount = ref(0)
 
-// Token cache
-let cachedSource: 'vndb' | 'bangumi' | null = null
-let cachedToken: string | null = null
-
-const invalidateTokenCache = (): void => {
-  cachedSource = null
-  cachedToken = null
-}
-
-const ensureTokenCache = async (): Promise<{
-  source: 'vndb' | 'bangumi'
-  token: string | null
-}> => {
-  if (cachedSource === null) {
-    cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
-  }
-  if (cachedToken === null) {
-    cachedToken =
-      cachedSource === 'bangumi'
-        ? await window.api.getConfig('bangumiToken')
-        : await window.api.getConfig('vndbApiKey')
-  }
-  return { source: cachedSource, token: cachedToken }
-}
-
-const rows = ref<ImportRowState[]>([])
-
-// Search state
-const searchingRow = ref('')
-const searchSource = ref<'vndb' | 'bangumi'>('vndb')
-const showSearchInput = ref(false)
-const searchInputFolder = ref('')
-const searchInputQuery = ref('')
-
-// Match-all state
-const isMatchingAll = ref(false)
-let matchAllAbortController: AbortController | null = null
+const scan = useBatchScan()
+const match = useBatchMatch(scan.rows, scan.error)
 
 // Import result state
 const showResult = ref(false)
 const importResult = ref<ImportResult | null>(null)
 
-// Sort state
-const sortKey = ref<'name' | 'size'>('name')
-const sortDir = ref<'asc' | 'desc'>('asc')
-
-const matchStatusOrder: Record<string, number> = {
-  matched: 0,
-  noresult: 1,
-  searching: 2,
-  idle: 3
-}
-
-const sortedRows = computed(() => {
-  const arr = [...rows.value]
-  arr.sort((a, b) => {
-    const ma = matchStatusOrder[a.matchStatus ?? 'idle'] ?? 3
-    const mb = matchStatusOrder[b.matchStatus ?? 'idle'] ?? 3
-    if (ma !== mb) return ma - mb
-    let cmp = 0
-    if (sortKey.value === 'name') {
-      cmp = (a.title || a.folderName).localeCompare(b.title || b.folderName)
-    } else {
-      cmp = a.totalSize.localeCompare(b.totalSize, undefined, { numeric: true })
-    }
-    return sortDir.value === 'asc' ? cmp : -cmp
-  })
-  return arr
-})
-
-const toggleSort = (key: 'name' | 'size'): void => {
-  if (sortKey.value === key) {
-    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortKey.value = key
-    sortDir.value = 'asc'
-  }
-}
-
-const existingPaths = computed(() => new Set(store.games.map((g) => g.executable_path)))
-
-const selectedCount = computed(
-  () => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length
-)
-const skipCount = computed(() => rows.value.filter((r) => r.isDuplicate).length)
-const totalCount = computed(() => rows.value.length)
-const allSelectableCount = computed(
-  () => rows.value.filter((r) => r.selectedExe && !r.isDuplicate).length
-)
-const selectedSelectableCount = computed(
-  () => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length
-)
-
-const isAllSelected = computed(
-  () => allSelectableCount.value > 0 && selectedSelectableCount.value === allSelectableCount.value
-)
-
-const unmatchedCount = computed(
-  () =>
-    rows.value.filter(
-      (r) => r.selected && r.selectedExe && !r.isDuplicate && !r.vndbId && !r.bangumiId
-    ).length
-)
-
-const handleSelectAll = (checked: boolean): void => {
-  rows.value.forEach((r) => {
-    if (r.selectedExe && !r.isDuplicate) {
-      r.selected = checked
-    }
-  })
-}
-
-const handlePickFolder = async (): Promise<void> => {
-  invalidateTokenCache()
-  isLoading.value = true
-  error.value = ''
-  importedCount.value = 0
-  try {
-    const result = await window.api.pickBatchImportFolder()
-    if (!result) {
-      isLoading.value = false
-      return
-    }
-    scanResult.value = result
-    const paths = existingPaths.value
-    const EXCLUDE_EXE = ['update', 'unitycrashhandler', 'custom']
-    rows.value = result.items.map((item) => {
-      const filtered = item.executables.filter(
-        (e) => !EXCLUDE_EXE.includes(e.name.toLowerCase().replace(/\.exe$/i, ''))
-      )
-      const hasDuplicate = filtered.some((e) => paths.has(e.fullPath))
-      return {
-        ...item,
-        executables: filtered,
-        selected: filtered.length > 0 && !hasDuplicate,
-        title: item.folderName,
-        selectedExe: filtered.length > 0 ? filtered[0].fullPath : '',
-        isDuplicate: hasDuplicate,
-        vndbId: '',
-        bangumiId: '',
-        cover: '',
-        rating: 0,
-        developer: '',
-        publisher: '',
-        releaseDate: '',
-        description: '',
-        customTags: '[]',
-        savePath: '',
-        matchStatus: 'idle',
-        importStatus: 'idle',
-        importMessage: ''
-      }
-    })
-  } catch (e: unknown) {
-    error.value = (e instanceof Error ? e.message : String(e)) || '选择文件夹失败'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const handleSearchRow = (folderPath: string): void => {
-  const row = rows.value.find((r) => r.folderPath === folderPath)
-  if (!row) return
-  searchInputFolder.value = folderPath
-  searchInputQuery.value = row.title || row.folderName
-  showSearchInput.value = true
-}
-
-const handleSearchInputSelect = async (result: SearchResult): Promise<void> => {
-  showSearchInput.value = false
-  const row = rows.value.find((r) => r.folderPath === searchInputFolder.value)
-  if (!row) return
-
-  row.matchStatus = 'matched'
-  row.title = result.titleCn || result.title || row.title
-  if (result.source === 'vndb') row.vndbId = result.id
-  if (result.source === 'bangumi') row.bangumiId = result.id
-  if (result.cover) row.cover = result.cover
-  if (result.rating) row.rating = result.rating
-  if (result.date) row.releaseDate = result.date
-  searchSource.value = result.source
-
-  if (result.id) {
-    const token =
-      result.source === 'bangumi'
-        ? await window.api.getConfig('bangumiToken')
-        : await window.api.getConfig('vndbApiKey')
-    try {
-      const detail = await window.api.fetchMetadataDetail(
-        result.id,
-        result.source,
-        token || undefined,
-        undefined
-      )
-      if (detail.developer) row.developer = detail.developer
-      if (detail.publisher) row.publisher = detail.publisher
-      if (detail.release_date) row.releaseDate = detail.release_date
-      if (detail.rating) row.rating = detail.rating
-      if (detail.title) row.title = detail.title_cn || detail.title || row.title
-      if (detail.title_cn) row.title = detail.title_cn || row.title
-      if (detail.description) row.description = detail.description
-      if (detail.custom_tags) row.customTags = detail.custom_tags
-      if (detail.cover) row.cover = detail.cover
-    } catch (err) {
-      console.error('获取元数据详情失败:', err)
-    }
-  }
-}
-
-const handleSearchInputClose = (): void => {
-  showSearchInput.value = false
-  const row = rows.value.find((r) => r.folderPath === searchInputFolder.value)
-  if (row) row.matchStatus = 'idle'
-}
-
-const handleMatchAll = async (): Promise<void> => {
-  const toMatch = rows.value.filter(
-    (r) => r.selected && r.selectedExe && !r.isDuplicate && !r.vndbId && !r.bangumiId
-  )
-  if (toMatch.length === 0) return
-
-  isMatchingAll.value = true
-  error.value = ''
-  matchAllAbortController = new AbortController()
-  const { signal } = matchAllAbortController
-
-  try {
-    const { source, token } = await ensureTokenCache()
-    searchSource.value = source
-
-    if (source === 'bangumi' && !token) {
-      error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
-      return
-    }
-
-    let matchFailedCount = 0
-
-    for (let i = 0; i < toMatch.length; i++) {
-      if (signal.aborted) break
-      const row = toMatch[i]
-      const query = row.title || row.folderName
-      row.matchStatus = 'searching'
-
-      try {
-        const results = await window.api.searchMetadata(query, source, token || undefined)
-        if (results.length > 0) {
-          const best = results[0]
-          row.title = best.titleCn || best.title || row.title
-          if (best.source === 'vndb') row.vndbId = best.id
-          if (best.source === 'bangumi') row.bangumiId = best.id
-          if (best.cover) row.cover = best.cover
-          if (best.rating) row.rating = best.rating
-          if (best.date) row.releaseDate = best.date
-
-          if (best.id) {
-            try {
-              const detail = await window.api.fetchMetadataDetail(
-                best.id,
-                best.source,
-                token || undefined,
-                undefined
-              )
-              if (detail.developer) row.developer = detail.developer
-              if (detail.publisher) row.publisher = detail.publisher
-              if (detail.release_date) row.releaseDate = detail.release_date
-              if (detail.rating) row.rating = detail.rating
-              if (detail.title) row.title = detail.title_cn || detail.title || row.title
-              if (detail.title_cn) row.title = detail.title_cn || row.title
-              if (detail.description) row.description = detail.description
-              if (detail.custom_tags) row.customTags = detail.custom_tags
-              if (detail.cover) row.cover = detail.cover
-            } catch {
-              matchFailedCount++
-            }
-          }
-          row.matchStatus = 'matched'
-        } else {
-          row.matchStatus = 'noresult'
-          matchFailedCount++
-        }
-      } catch {
-        row.matchStatus = 'noresult'
-        matchFailedCount++
-      }
-
-      if (i < toMatch.length - 1 && !signal.aborted) {
-        await new Promise((resolve) => setTimeout(resolve, 300))
-      }
-    }
-
-    if (matchFailedCount > 0 && !signal.aborted) {
-      error.value = `${matchFailedCount} 个游戏匹配失败，可手动搜索`
-    }
-  } finally {
-    isMatchingAll.value = false
-    matchAllAbortController = null
-  }
-}
-
-const handleCancelMatchAll = (): void => {
-  matchAllAbortController?.abort()
-  error.value = ''
-}
+const handlePickFolder = (): Promise<void> => scan.handlePickFolder(match.invalidateTokenCache)
 
 const handleImportAll = async (): Promise<void> => {
-  const toImport = rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate)
+  const toImport = scan.rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate)
   if (toImport.length === 0) {
-    error.value = '请至少选择一个有效的游戏'
+    scan.error.value = '请至少选择一个有效的游戏'
     return
   }
 
   isImporting.value = true
-  error.value = ''
-  importedCount.value = 0
+  scan.error.value = ''
+  scan.importedCount.value = 0
   showResult.value = false
 
   const startedAt = Date.now()
@@ -410,13 +107,9 @@ const handleImportAll = async (): Promise<void> => {
             }
             const game = await window.api.createGame(gameData)
             store.games.unshift(game)
-            importedCount.value++
+            scan.importedCount.value++
             row.importStatus = 'success'
-            resultItems.push({
-              title: row.title || row.folderName,
-              id: gameId,
-              status: 'success'
-            })
+            resultItems.push({ title: row.title || row.folderName, id: gameId, status: 'success' })
           } catch (e: unknown) {
             row.importStatus = 'failed'
             row.importMessage = (e instanceof Error ? e.message : String(e)) || '未知错误'
@@ -431,20 +124,16 @@ const handleImportAll = async (): Promise<void> => {
       )
     }
   } catch (e: unknown) {
-    error.value = (e instanceof Error ? e.message : String(e)) || '导入失败'
+    scan.error.value = (e instanceof Error ? e.message : String(e)) || '导入失败'
   } finally {
     isImporting.value = false
   }
 
-  const successItems = resultItems.filter((r) => r.status === 'success')
-  const skippedItems = resultItems.filter((r) => r.status === 'skipped')
-  const failedItems = resultItems.filter((r) => r.status === 'failed')
-
   importResult.value = {
     items: resultItems,
-    successCount: successItems.length,
-    skippedCount: skippedItems.length,
-    failedCount: failedItems.length,
+    successCount: resultItems.filter((r) => r.status === 'success').length,
+    skippedCount: resultItems.filter((r) => r.status === 'skipped').length,
+    failedCount: resultItems.filter((r) => r.status === 'failed').length,
     totalDuration: Date.now() - startedAt
   }
   showResult.value = true
@@ -455,7 +144,7 @@ const handleFinish = (): void => {
 }
 
 const handleClose = (): void => {
-  if (!isLoading.value && !isImporting.value && !isMatchingAll.value) emit('close')
+  if (!scan.isLoading.value && !isImporting.value && !match.isMatchingAll.value) emit('close')
 }
 
 const handleOverlayClick = (e: MouseEvent): void => {
@@ -478,133 +167,89 @@ const handleOverlayClick = (e: MouseEvent): void => {
             <button class="dialog-close" @click="handleClose">&times;</button>
           </div>
 
-          <!-- Step 1: Select Folder (non-scrollable) -->
-          <div v-if="!scanResult" class="dialog-body">
+          <!-- Step 1: Select Folder -->
+          <div v-if="!scan.scanResult.value" class="dialog-body">
             <div class="folder-pick-area">
-              <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
+              <button class="btn-brand" :disabled="scan.isLoading.value" @click="handlePickFolder">
                 <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
                   <path
                     d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
                   />
                 </svg>
-                {{ isLoading ? '扫描中...' : '选择游戏库根文件夹' }}
+                {{ scan.isLoading.value ? '扫描中...' : '选择游戏库根文件夹' }}
               </button>
               <p class="folder-hint">选择包含多个游戏子文件夹的根目录</p>
             </div>
           </div>
 
-          <!-- Import result report (scrollable) -->
+          <!-- Import result report -->
           <div v-else-if="showResult && importResult" class="dialog-body">
-            <div class="result-panel">
-              <div class="result-summary">
-                <div class="result-stat success">
-                  <span class="result-num">{{ importResult.successCount }}</span>
-                  <span class="result-label">成功</span>
-                </div>
-                <div class="result-stat skipped">
-                  <span class="result-num">{{ importResult.skippedCount }}</span>
-                  <span class="result-label">跳过</span>
-                </div>
-                <div class="result-stat failed">
-                  <span class="result-num">{{ importResult.failedCount }}</span>
-                  <span class="result-label">失败</span>
-                </div>
-                <div class="result-stat">
-                  <span class="result-num"
-                    >{{ (importResult.totalDuration / 1000).toFixed(1) }}s</span
-                  >
-                  <span class="result-label">耗时</span>
-                </div>
-              </div>
-              <div v-if="importResult.successCount > 0" class="result-detail">
-                <div class="result-section-title">成功详情 ({{ importResult.successCount }})</div>
-                <div
-                  v-for="item in importResult.items.filter((i) => i.status === 'success')"
-                  :key="item.title + item.id"
-                  class="result-item success"
-                >
-                  <span class="result-item-icon">✓</span>
-                  <span class="result-item-title">{{ item.title || '(未知)' }}</span>
-                </div>
-              </div>
-              <div v-if="importResult.failedCount > 0" class="result-detail">
-                <div class="result-section-title">失败详情 ({{ importResult.failedCount }})</div>
-                <div
-                  v-for="item in importResult.items.filter((i) => i.status === 'failed')"
-                  :key="item.title + item.reason"
-                  class="result-item failed"
-                >
-                  <span class="result-item-icon">✗</span>
-                  <span class="result-item-title">{{ item.title || '(未知)' }}</span>
-                  <span class="result-item-reason">{{ item.reason }}</span>
-                </div>
-              </div>
-              <div v-if="importResult.skippedCount > 0" class="result-detail">
-                <div class="result-section-title">跳过详情 ({{ importResult.skippedCount }})</div>
-                <div
-                  v-for="item in importResult.items.filter((i) => i.status === 'skipped')"
-                  :key="item.title + item.reason"
-                  class="result-item skipped"
-                >
-                  <span class="result-item-icon">⏭</span>
-                  <span class="result-item-title">{{ item.title }}</span>
-                  <span class="result-item-reason">{{ item.reason }}</span>
-                </div>
-              </div>
-              <div class="result-actions">
-                <button class="btn-brand" @click="handleFinish">完成</button>
-              </div>
-            </div>
+            <BatchImportResult :result="importResult" @finish="handleFinish" />
           </div>
 
-          <!-- Step 2: Review & Import (split layout: fixed top/bottom, scrollable middle) -->
-          <template v-else-if="scanResult">
-            <div v-if="error" class="form-error batch-error">{{ error }}</div>
+          <!-- Step 2: Review & Import -->
+          <template v-else-if="scan.scanResult.value">
+            <div v-if="scan.error.value" class="form-error batch-error">{{ scan.error.value }}</div>
             <div class="batch-summary">
               <div class="bs-left">
                 <label class="bs-select-all">
                   <input
                     type="checkbox"
-                    :checked="isAllSelected"
+                    :checked="scan.isAllSelected.value"
                     :indeterminate="
-                      selectedSelectableCount > 0 && selectedSelectableCount < allSelectableCount
+                      scan.selectedSelectableCount.value > 0 &&
+                      scan.selectedSelectableCount.value < scan.allSelectableCount.value
                     "
                     :disabled="isImporting"
-                    @change="handleSelectAll(($event.target as HTMLInputElement).checked)"
+                    @change="scan.handleSelectAll(($event.target as HTMLInputElement).checked)"
                   />
                   <span
-                    >共检测到 <strong>{{ totalCount }}</strong> 个游戏目录</span
+                    >共检测到 <strong>{{ scan.totalCount.value }}</strong> 个游戏目录</span
                   >
                 </label>
                 <div class="bs-sort">
                   <button
                     class="sort-btn"
-                    :class="{ active: sortKey === 'name' }"
+                    :class="{ active: scan.sortKey.value === 'name' }"
                     :disabled="isImporting"
-                    @click="toggleSort('name')"
+                    @click="scan.toggleSort('name')"
                   >
-                    名称 {{ sortKey === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+                    名称
+                    {{
+                      scan.sortKey.value === 'name'
+                        ? scan.sortDir.value === 'asc'
+                          ? '↑'
+                          : '↓'
+                        : ''
+                    }}
                   </button>
                   <button
                     class="sort-btn"
-                    :class="{ active: sortKey === 'size' }"
+                    :class="{ active: scan.sortKey.value === 'size' }"
                     :disabled="isImporting"
-                    @click="toggleSort('size')"
+                    @click="scan.toggleSort('size')"
                   >
-                    大小 {{ sortKey === 'size' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+                    大小
+                    {{
+                      scan.sortKey.value === 'size'
+                        ? scan.sortDir.value === 'asc'
+                          ? '↑'
+                          : '↓'
+                        : ''
+                    }}
                   </button>
                 </div>
               </div>
               <div class="bs-right">
                 <button
-                  v-if="!isMatchingAll"
+                  v-if="!match.isMatchingAll.value"
                   class="btn-match-all"
-                  :disabled="isImporting || unmatchedCount === 0"
-                  @click="handleMatchAll"
+                  :disabled="isImporting || match.unmatchedCount.value === 0"
+                  @click="match.handleMatchAll()"
                 >
-                  一键匹配全部 ({{ unmatchedCount }})
+                  一键匹配全部 ({{ match.unmatchedCount.value }})
                 </button>
-                <button v-else class="btn-match-cancel" @click="handleCancelMatchAll">
+                <button v-else class="btn-match-cancel" @click="match.handleCancelMatchAll()">
                   取消匹配
                 </button>
               </div>
@@ -613,40 +258,41 @@ const handleOverlayClick = (e: MouseEvent): void => {
             <div class="batch-scroll">
               <div class="batch-list">
                 <BatchImportRow
-                  v-for="row in sortedRows"
+                  v-for="row in scan.sortedRows.value"
                   :key="row.folderPath"
                   :row="row"
-                  :searching="searchingRow === row.folderPath"
-                  :importing="isImporting || isMatchingAll"
+                  :searching="match.searchingRow.value === row.folderPath"
+                  :importing="isImporting || match.isMatchingAll.value"
                   @update:selected="row.selected = $event"
                   @update:title="row.title = $event"
                   @update:selected-exe="row.selectedExe = $event"
-                  @search="handleSearchRow(row.folderPath)"
+                  @search="match.handleSearchRow(row.folderPath)"
                 />
               </div>
-
-              <div v-if="totalCount === 0" class="empty-hint">该文件夹下没有子目录</div>
+              <div v-if="scan.totalCount.value === 0" class="empty-hint">该文件夹下没有子目录</div>
             </div>
 
             <div class="batch-actions">
               <div class="ba-count">
                 {{
                   isImporting
-                    ? `正在导入 ${importedCount}/${selectedCount} ...`
-                    : `已选 ${selectedCount} 个游戏${skipCount > 0 ? `，${skipCount} 个跳过（已存在）` : ''}`
+                    ? `正在导入 ${scan.importedCount.value}/${scan.selectedCount.value} ...`
+                    : `已选 ${scan.selectedCount.value} 个游戏${scan.skipCount.value > 0 ? `，${scan.skipCount.value} 个跳过（已存在）` : ''}`
                 }}
               </div>
               <div class="ba-buttons">
                 <button
                   class="btn-cancel"
-                  :disabled="isImporting || isMatchingAll"
+                  :disabled="isImporting || match.isMatchingAll.value"
                   @click="handleClose"
                 >
                   取消
                 </button>
                 <button
                   class="btn-brand"
-                  :disabled="isImporting || isMatchingAll || selectedCount === 0"
+                  :disabled="
+                    isImporting || match.isMatchingAll.value || scan.selectedCount.value === 0
+                  "
                   @click="handleImportAll"
                 >
                   {{ isImporting ? '导入中...' : '导入选中' }}
@@ -660,11 +306,11 @@ const handleOverlayClick = (e: MouseEvent): void => {
   </Teleport>
 
   <SearchInputDialog
-    :show="showSearchInput"
-    :initial-query="searchInputQuery"
-    :initial-source="searchSource"
-    @select="handleSearchInputSelect"
-    @close="handleSearchInputClose"
+    :show="match.showSearchInput.value"
+    :initial-query="match.searchInputQuery.value"
+    :initial-source="match.searchSource.value"
+    @select="match.handleSearchInputSelect"
+    @close="match.handleSearchInputClose"
   />
 </template>
 
@@ -916,124 +562,6 @@ const handleOverlayClick = (e: MouseEvent): void => {
 .ba-buttons {
   display: flex;
   gap: 8px;
-}
-
-/* Result panel */
-.result-panel {
-  padding: 0;
-}
-
-.result-summary {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-.result-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 20px;
-  border-radius: 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.result-stat.success .result-num {
-  color: #22c55e;
-}
-.result-stat.skipped .result-num {
-  color: #f59e0b;
-}
-.result-stat.failed .result-num {
-  color: var(--danger);
-}
-
-.result-num {
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.result-label {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  margin-top: 2px;
-}
-
-.result-detail {
-  margin-top: 12px;
-}
-
-.result-section-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
-.result-item {
-  display: flex;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  margin-bottom: 4px;
-  align-items: center;
-}
-
-.result-item.success {
-  background: rgba(34, 197, 94, 0.06);
-}
-
-.result-item.failed {
-  background: rgba(239, 68, 68, 0.08);
-}
-
-.result-item.skipped {
-  background: rgba(245, 158, 11, 0.08);
-}
-
-.result-item-icon {
-  font-weight: 700;
-  font-size: 12px;
-  flex-shrink: 0;
-  width: 16px;
-  text-align: center;
-}
-
-.result-item.success .result-item-icon {
-  color: #22c55e;
-}
-
-.result-item.failed .result-item-icon {
-  color: var(--danger);
-}
-
-.result-item.skipped .result-item-icon {
-  color: #f59e0b;
-}
-
-.result-item-title {
-  color: var(--text-primary);
-  font-weight: 500;
-  flex-shrink: 0;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.result-item-reason {
-  color: var(--text-tertiary);
-}
-
-.result-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color-light);
-  margin-top: 16px;
 }
 
 .btn-cancel {
