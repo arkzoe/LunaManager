@@ -68,7 +68,7 @@ const skippedItems = (items: ImportResultItem[]) => items.filter((i) => i.status
       </div>
     </div>
     <div class="result-actions">
-      <button class="btn-brand" @click="emit('finish')">完成</button>
+      <button class="btn-primary" @click="emit('finish')">完成</button>
     </div>
   </div>
 </template>

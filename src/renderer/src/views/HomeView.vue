@@ -121,7 +121,7 @@ const addedActs = computed(() =>
     <!-- 空状态 -->
     <div v-if="!store.isLoading && overview.totalGames === 0" class="empty-state">
       <div class="empty-icon">
-        <svg viewBox="0 0 24 24" class="w-12 h-12 fill-brand-300">
+        <svg viewBox="0 0 24 24" class="w-12 h-12 fill-accent-300">
           <path
             d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
           />
@@ -129,7 +129,7 @@ const addedActs = computed(() =>
       </div>
       <h3>还没有游戏</h3>
       <p>去游戏库添加或导入游戏开始管理吧</p>
-      <button class="btn-brand" @click="emit('navigateLibrary')">浏览游戏库</button>
+      <button class="btn-primary" @click="emit('navigateLibrary')">浏览游戏库</button>
     </div>
 
     <template v-else>

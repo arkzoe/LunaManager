@@ -22,7 +22,7 @@ const emit = defineEmits<{
           <p class="modal-desc">{{ message }}</p>
           <div class="modal-actions">
             <button class="btn-cancel" @click="emit('cancel')">{{ cancelText || '取消' }}</button>
-            <button class="btn-danger" :class="{ 'btn-brand': !danger }" @click="emit('confirm')">
+            <button class="btn-danger" :class="{ 'btn-primary': !danger }" @click="emit('confirm')">
               {{ confirmText || '确认' }}
             </button>
           </div>
@@ -117,7 +117,7 @@ const emit = defineEmits<{
 .btn-danger:hover {
   opacity: 0.85;
 }
-.btn-brand {
+.btn-primary {
   background: var(--accent-primary);
 }
 </style>

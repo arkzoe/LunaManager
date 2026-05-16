@@ -60,7 +60,7 @@ const { display: avgDisplay } = useCountUp(() => props.overview.avgPerDay, 700)
     <div class="ov-card" :style="{ animationDelay: '0.3s' }">
       <div
         class="ov-icon"
-        style="background: rgba(139, 124, 232, 0.1); color: var(--accent-primary)"
+        style="background: rgba(59, 130, 246, 0.1); color: var(--accent-primary)"
       >
         <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current">
           <path

@@ -216,7 +216,7 @@ const timeRanges = [
   color: var(--warning);
 }
 .ov-icon.pu {
-  background: rgba(139, 124, 232, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   color: var(--accent-primary);
 }
 .ov-num {

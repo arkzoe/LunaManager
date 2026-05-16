@@ -63,7 +63,7 @@ const handleSortSelect = (field: string): void => {
       <div class="toolbar-actions">
         <button
           class="icon-btn"
-          :class="{ 'bg-brand-500/10 border-brand-500 text-brand-500': batchMode }"
+          :class="{ 'bg-accent-500/10 border-accent-500 text-accent-500': batchMode }"
           title="批量管理"
           @click="emit('toggleBatchMode')"
         >
@@ -197,7 +197,7 @@ const handleSortSelect = (field: string): void => {
 .search-input:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .toolbar-actions {
@@ -320,7 +320,7 @@ const handleSortSelect = (field: string): void => {
   align-items: center;
   gap: 6px;
   padding: 0 16px;
-  background: #6366f1;
+  background: #3b82f6;
   border: none;
   border-radius: 8px;
   color: white;

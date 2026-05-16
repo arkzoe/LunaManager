@@ -85,7 +85,7 @@ const handleMoveTarget = (targetId: string): void => {
             v-model="inputValue"
             type="text"
             placeholder="输入收藏夹名称"
-            class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-1 transition-all duration-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-1 transition-all duration-200 focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
             @keyup.enter="handleConfirm"
           />
           <p v-if="nameError" class="text-xs text-danger-500 m-0 mb-4 ml-1">{{ nameError }}</p>
@@ -101,13 +101,13 @@ const handleMoveTarget = (targetId: string): void => {
               class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200"
               :class="
                 canSubmit
-                  ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand hover:shadow-brand-lg'
+                  ? 'bg-neutral-700 text-white hover:bg-neutral-800 shadow-neutral hover:shadow-neutral-lg'
                   : 'bg-bg-tertiary text-text-muted cursor-not-allowed'
               "
               :disabled="!canSubmit"
               @click="handleConfirm"
             >
-              创建
+               创建
             </button>
           </div>
         </template>
@@ -118,7 +118,7 @@ const handleMoveTarget = (targetId: string): void => {
             v-model="inputValue"
             type="text"
             placeholder="输入新名称"
-            class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-1 transition-all duration-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-1 transition-all duration-200 focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
             @keyup.enter="handleConfirm"
           />
           <p v-if="nameError" class="text-xs text-danger-500 m-0 mb-4 ml-1">{{ nameError }}</p>
@@ -134,13 +134,13 @@ const handleMoveTarget = (targetId: string): void => {
               class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200"
               :class="
                 canSubmit
-                  ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand hover:shadow-brand-lg'
+                  ? 'bg-neutral-700 text-white hover:bg-neutral-800 shadow-neutral hover:shadow-neutral-lg'
                   : 'bg-bg-tertiary text-text-muted cursor-not-allowed'
               "
               :disabled="!canSubmit"
               @click="handleConfirm"
             >
-              确认
+               确认
             </button>
           </div>
         </template>

@@ -153,7 +153,7 @@ const matchStatusClass = (status?: string): string => {
 
 .batch-row.row-importing {
   border-color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(59, 130, 246, 0.05);
 }
 
 .batch-row.row-success {
@@ -298,7 +298,7 @@ const matchStatusClass = (status?: string): string => {
 
 .br-select:focus {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
 }
 
 .br-select:disabled {

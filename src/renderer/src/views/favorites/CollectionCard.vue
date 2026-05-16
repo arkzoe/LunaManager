@@ -20,7 +20,7 @@ const emit = defineEmits<{
 <template>
   <div
     class="collection-card w-70 h-20 flex items-center gap-3 p-4 bg-bg-primary rounded-xl cursor-pointer transition-all duration-250 flex-shrink-0 box-border hover:-translate-y-0.5"
-    :class="{ 'ring-2 ring-brand-500/50': selected }"
+    :class="{ 'ring-2 ring-accent-500/50': selected }"
     @click="batchMode ? !isDefault && emit('toggleSelect', collection.id) : emit('open')"
   >
     <div class="flex-shrink-0 batch-check-wrap" :class="{ 'cb-hidden': !batchMode }">
@@ -30,8 +30,8 @@ const emit = defineEmits<{
           isDefault
             ? 'border-gray-300 opacity-30 cursor-not-allowed'
             : selected
-              ? 'bg-brand-500 border-brand-500'
-              : 'border-gray-400 hover:border-brand-400'
+              ? 'bg-accent-500 border-accent-500'
+              : 'border-gray-400 hover:border-accent-400'
         "
         @click.stop="!isDefault && emit('toggleSelect', collection.id)"
       >

@@ -24,7 +24,7 @@ const emit = defineEmits<{
       :key="game.id"
       class="flc-game"
       :class="{
-        'ring-2 ring-brand-500/50 rounded-xl': batchMode && selectedIds?.includes(game.id)
+        'ring-2 ring-accent-500/50 rounded-xl': batchMode && selectedIds?.includes(game.id)
       }"
       @click="emit('cardClick', game)"
     >
@@ -33,8 +33,8 @@ const emit = defineEmits<{
           class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer"
           :class="
             selectedIds?.includes(game.id)
-              ? 'bg-brand-500 border-brand-500'
-              : 'border-gray-400 hover:border-brand-400'
+              ? 'bg-accent-500 border-accent-500'
+              : 'border-gray-400 hover:border-accent-400'
           "
         >
           <svg v-if="selectedIds?.includes(game.id)" viewBox="0 0 24 24" class="w-3 h-3 fill-white">

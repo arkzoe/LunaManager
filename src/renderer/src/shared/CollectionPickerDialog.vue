@@ -159,7 +159,7 @@ watch(
 }
 .modal-list-item:hover {
   border-color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.04);
+  background: rgba(59, 130, 246, 0.04);
 }
 .modal-list-name {
   font-weight: 600;

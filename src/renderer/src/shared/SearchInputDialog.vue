@@ -99,7 +99,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 />
               </div>
               <button
-                class="btn-brand sf-btn"
+                class="btn-primary sf-btn"
                 :disabled="searching || !query.trim()"
                 @click="handleSearch"
               >
@@ -148,7 +148,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
           <div class="dialog-footer">
             <button class="btn-cancel" @click="emit('close')">取消</button>
-            <button class="btn-brand" :disabled="!selectedId || searching" @click="handleSelect">
+            <button class="btn-primary" :disabled="!selectedId || searching" @click="handleSelect">
               确认选择
             </button>
           </div>
@@ -339,12 +339,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
 
 .picker-item:hover {
   border-color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.04);
+  background: rgba(59, 130, 246, 0.04);
 }
 
 .picker-item.selected {
   border-color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .picker-radio {

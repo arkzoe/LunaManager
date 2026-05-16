@@ -58,24 +58,25 @@ body {
 }
 
 :root {
-  --bg-base: #f7f7fa;
-  --bg-sidebar: #f0f0f4;
+  --bg-base: #f8f9fa;
+  --bg-sidebar: #ffffff;
   --bg-primary: #ffffff;
-  --bg-secondary: #f3f3f8;
+  --bg-secondary: #f9fafb;
   --bg-hover: rgba(0, 0, 0, 0.03);
-  --bg-active: rgba(99, 102, 241, 0.06);
+  --bg-active: rgba(59, 130, 246, 0.06);
 
-  --text-primary: #1c1c2e;
-  --text-secondary: #6b6b84;
-  --text-tertiary: #9494aa;
-  --text-muted: #b5b5c8;
+  --text-primary: #374151;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-muted: #9ca3af;
 
-  --border-color: transparent;
-  --border-color-light: transparent;
-  --border-color-medium: rgba(0, 0, 0, 0.04);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-color-light: rgba(0, 0, 0, 0.04);
+  --border-color-medium: rgba(0, 0, 0, 0.12);
   --bg-overlay: rgba(0, 0, 0, 0.35);
 
-  --accent-primary: #6366f1;
+  --accent-primary: #3b82f6;
+  --accent-primary-dark: #2563eb;
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
@@ -85,24 +86,25 @@ body {
 }
 
 html.dark {
-  --bg-base: #0e0e16;
-  --bg-sidebar: #12121c;
-  --bg-primary: #181824;
-  --bg-secondary: #1e1e2e;
+  --bg-base: #121416;
+  --bg-sidebar: #1c1e1f;
+  --bg-primary: #1c1e1f;
+  --bg-secondary: #303235;
   --bg-hover: rgba(255, 255, 255, 0.05);
-  --bg-active: rgba(129, 140, 248, 0.12);
+  --bg-active: rgba(59, 130, 246, 0.12);
 
-  --text-primary: #e8e8f0;
-  --text-secondary: #8888a8;
-  --text-tertiary: #5a5a7a;
-  --text-muted: #3a3a58;
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --text-muted: #6b7280;
 
-  --border-color: rgba(255, 255, 255, 0.07);
-  --border-color-light: rgba(255, 255, 255, 0.03);
-  --border-color-medium: rgba(255, 255, 255, 0.11);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-light: rgba(255, 255, 255, 0.04);
+  --border-color-medium: rgba(255, 255, 255, 0.12);
   --bg-overlay: rgba(0, 0, 0, 0.6);
 
-  --accent-primary: #818cf8;
+  --accent-primary: #60a5fa;
+  --accent-primary-dark: #3b82f6;
   --success: #34d399;
   --danger: #f87171;
   --warning: #fbbf24;
@@ -136,7 +138,7 @@ html.dark {
 }
 
 ::selection {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(59, 130, 246, 0.15);
 }
 :focus-visible {
   outline: 2px solid var(--accent-primary);

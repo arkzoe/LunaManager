@@ -256,7 +256,7 @@ const onSourceChange = (val: string): void => {
       </div>
 
       <div class="form-actions">
-        <button class="btn-brand" :disabled="!hasChanges || saving" @click="emit('save')">
+        <button class="btn-primary" :disabled="!hasChanges || saving" @click="emit('save')">
           {{ saving ? '保存中...' : '保存修改' }}
         </button>
         <button class="btn-danger" @click="emit('deleteGame')">删除游戏</button>
@@ -377,8 +377,8 @@ const onSourceChange = (val: string): void => {
   padding: 4px 8px 4px 12px;
   font-size: 12px;
   color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: 20px;
   line-height: 1.5;
 }
@@ -415,7 +415,7 @@ const onSourceChange = (val: string): void => {
   padding-top: 8px;
 }
 
-.btn-brand:disabled {
+.btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

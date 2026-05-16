@@ -89,7 +89,7 @@ onMounted(() => {
 
       <div class="action-row">
         <button
-          class="btn-brand btn-sm"
+          class="btn-primary btn-sm"
           :disabled="!game.save_path || backingUp"
           @click="handleBackup"
         >

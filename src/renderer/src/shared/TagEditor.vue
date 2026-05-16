@@ -76,8 +76,8 @@ const handleKeydown = (e: KeyboardEvent): void => {
   padding: 2px 10px;
   font-size: 11px;
   color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: 20px;
 }
 

@@ -51,7 +51,7 @@ const emit = defineEmits<{
         </div>
         <button
           class="icon-btn"
-          :class="{ 'bg-brand-500/10 border-brand-500 text-brand-500': gameBatchMode }"
+          :class="{ 'bg-accent-500/10 border-accent-500 text-accent-500': gameBatchMode }"
           title="批量管理"
           @click="emit('toggleGameBatchMode')"
         >

@@ -78,7 +78,7 @@ void importBtnRef.value /* TODO: 用于后续下拉菜单定位 */
       </button>
 
       <div class="import-dropdown">
-        <button ref="importBtnRef" class="btn-brand btn-sm" @click="emit('toggleImportMenu')">
+        <button ref="importBtnRef" class="btn-primary btn-sm" @click="emit('toggleImportMenu')">
           <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
           </svg>
@@ -157,7 +157,7 @@ void importBtnRef.value /* TODO: 用于后续下拉菜单定位 */
 
 .search-input:focus {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .tb-actions {

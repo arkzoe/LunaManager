@@ -117,7 +117,7 @@ const emit = defineEmits<{
 }
 
 .list-row.selected {
-  background: rgba(99, 102, 241, 0.06);
+  background: rgba(59, 130, 246, 0.06);
   border-left: 3px solid var(--accent-primary);
 }
 
@@ -169,7 +169,7 @@ const emit = defineEmits<{
 }
 
 .status-tag.want {
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   color: var(--accent-primary);
 }
 .status-tag.playing {

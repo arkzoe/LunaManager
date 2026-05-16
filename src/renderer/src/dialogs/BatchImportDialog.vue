@@ -170,7 +170,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
           <!-- Step 1: Select Folder -->
           <div v-if="!scan.scanResult.value" class="dialog-body">
             <div class="folder-pick-area">
-              <button class="btn-brand" :disabled="scan.isLoading.value" @click="handlePickFolder">
+              <button class="btn-primary" :disabled="scan.isLoading.value" @click="handlePickFolder">
                 <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
                   <path
                     d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
@@ -289,7 +289,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
                   取消
                 </button>
                 <button
-                  class="btn-brand"
+                  class="btn-primary"
                   :disabled="
                     isImporting || match.isMatchingAll.value || scan.selectedCount.value === 0
                   "
@@ -477,7 +477,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
 .sort-btn.active {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.06);
+  background: rgba(59, 130, 246, 0.06);
 }
 
 .sort-btn:disabled {

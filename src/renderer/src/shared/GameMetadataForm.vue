@@ -227,7 +227,7 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
 
     <div class="form-actions">
       <button class="btn-cancel" :disabled="isLoading" @click="emit('cancel')">取消</button>
-      <button class="btn-brand" :disabled="isLoading" @click="emit('confirm')">
+      <button class="btn-primary" :disabled="isLoading" @click="emit('confirm')">
         {{ isLoading ? '导入中...' : '确认导入' }}
       </button>
     </div>
@@ -335,7 +335,7 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
 .form-input:focus,
 .form-select:focus {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 .form-select {
   cursor: pointer;
@@ -358,7 +358,7 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
 }
 .form-textarea:focus {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-warning {
@@ -383,11 +383,11 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
 }
 .exe-item:hover {
   border-color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.04);
+  background: rgba(59, 130, 246, 0.04);
 }
 .exe-item.selected {
   border-color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(59, 130, 246, 0.08);
 }
 .exe-radio {
   accent-color: var(--accent-primary);

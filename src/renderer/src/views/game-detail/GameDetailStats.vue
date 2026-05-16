@@ -50,7 +50,7 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${(v >> 16) & 255}, ${(v >> 8) & 255}, ${v & 255}, ${alpha})`
 }
 
-const accentColor = computed(() => (theme.isDark ? '#818cf8' : '#6366f1'))
+const accentColor = computed(() => (theme.isDark ? '#60a5fa' : '#3b82f6'))
 
 const chartData = computed(() => {
   if (sessions.value.length === 0) return null

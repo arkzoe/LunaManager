@@ -445,7 +445,7 @@ const handleBatchImported = (result: ImportResult): void => {
         />
       </svg>
       <p>游戏库还是空的</p>
-      <button class="btn-brand btn-sm" @click="handleManualImport">导入你的第一个游戏</button>
+      <button class="btn-primary btn-sm" @click="handleManualImport">导入你的第一个游戏</button>
     </div>
 
     <!-- 空状态：搜索无结果 -->
@@ -570,7 +570,7 @@ const handleBatchImported = (result: ImportResult): void => {
 .sort-btn.active {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.06);
+  background: rgba(59, 130, 246, 0.06);
 }
 
 .sort-arrow {

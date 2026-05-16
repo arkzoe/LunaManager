@@ -13,104 +13,128 @@ export default defineConfig({
   ],
   theme: {
     colors: {
-      // ========== 主色调系统 ==========
-      // 品牌主色 - 柔和蓝紫色系，降低饱和度更护眼
+      // ========== 品牌主色 - 月光灰系统 ==========
+      // 用于所有 UI 表面和文字，克制中性
       brand: {
-        50: '#f5f3ff',
-        100: '#ede9fe',
-        200: '#ddd6fe',
-        300: '#c4b5fd',
-        400: '#a78bfa',
-        500: '#8b7ce8', // 主色 - 柔和紫
-        600: '#7c6ad4', // 悬停色
-        700: '#6d5bbf', // 按下色
-        800: '#5e4aa8',
-        900: '#4c3d8a',
+        50: '#fdfdfd',
+        100: '#f3f4f6',
+        200: '#e5e7eb',
+        300: '#d1d5db',
+        400: '#9ca3af',
+        500: '#6b7280',
+        600: '#4b5563',
+        700: '#44484e',
+        750: '#303235',
+        800: '#1c1e1f',
+        900: '#121416',
       },
 
-      // ========== 中性色系统 ==========
-      // 背景层级 - 更柔和的灰色调，降低对比度
+      // ========== 中性色 - 石板灰（按钮专用） ==========
+      neutral: {
+        50: '#f8fafc',
+        100: '#f1f5f9',
+        200: '#e2e8f0',
+        300: '#cbd5e1',
+        400: '#94a3b8',
+        500: '#64748b',
+        600: '#475569',
+        700: '#334155',
+        800: '#1e293b',
+        900: '#0f172a',
+      },
+
+      // ========== 强调色 - 星光蓝 ==========
+      accent: {
+        50: '#eff6ff',
+        100: '#dbeafe',
+        200: '#bfdbfe',
+        300: '#93c5fd',
+        400: '#60a5fa',
+        500: '#3b82f6',
+        600: '#2563eb',
+        700: '#1d4ed8',
+        800: '#1e40af',
+        900: '#1e3a8a',
+      },
+
+      // ========== 背景层级 ==========
       bg: {
-        base: '#f8f9fa',        // 最底层背景（页面背景）- 暖灰
-        sidebar: '#ffffff',     // 侧边栏背景
-        primary: '#ffffff',     // 主要卡片背景
-        secondary: '#f9fafb',   // 次级卡片/模块背景
-        tertiary: '#f3f4f6',    // 第三层级背景（输入框、按钮等）
-        quaternary: '#e5e7eb',  // 第四层级（分隔区域、禁用状态）
-        hover: '#f9fafb',       // 悬停状态
-        active: '#ede9fe',      // 激活状态（品牌色浅色调）
+        base: '#f8f9fa',
+        sidebar: '#ffffff',
+        primary: '#ffffff',
+        secondary: '#f9fafb',
+        tertiary: '#f3f4f6',
+        quaternary: '#e5e7eb',
+        hover: '#f9fafb',
+        active: '#eff6ff',
       },
 
-      // 文字颜色 - 柔和灰色调，降低刺眼感
+      // ========== 文字颜色 ==========
       text: {
-        primary: '#374151',     // 主要文字 - 柔和深灰
-        secondary: '#4b5563',   // 次要文字 - 中深灰
-        tertiary: '#6b7280',    // 辅助文字 - 中灰
-        muted: '#9ca3af',       // 弱化文字 - 浅灰
-        inverse: '#ffffff',     // 反色文字（用于深色背景）
-        brand: '#7c6ad4',       // 品牌色文字 - 与主色协调
+        primary: '#374151',
+        secondary: '#4b5563',
+        tertiary: '#6b7280',
+        muted: '#9ca3af',
+        inverse: '#ffffff',
+        brand: '#44484e',
       },
 
-      // 边框颜色 - 更柔和的边框，降低视觉干扰
+      // ========== 边框颜色 ==========
       border: {
-        DEFAULT: '#e5e7eb',     // 默认边框 - 柔和灰
-        light: '#f3f4f6',       // 浅色边框（分隔线）
-        medium: '#d1d5db',      // 中等边框（悬停状态）
-        strong: '#9ca3af',      // 强调边框（聚焦状态）
-        brand: '#c4b5fd',       // 品牌色边框 - 柔和紫
+        DEFAULT: '#e5e7eb',
+        light: '#f3f4f6',
+        medium: '#d1d5db',
+        strong: '#9ca3af',
+        brand: '#cbd5e1',
       },
 
       // ========== 功能色系统 ==========
-      // 成功色 - 柔和绿色系
       success: {
         50: '#f0fdf4',
         100: '#dcfce7',
         200: '#bbf7d0',
         300: '#86efac',
         400: '#4ade80',
-        500: '#10b981', // 柔和绿
+        500: '#10b981',
         600: '#059669',
         700: '#047857',
         800: '#065f46',
         900: '#064e3b',
       },
 
-      // 警告色 - 柔和橙色系
       warning: {
         50: '#fffbeb',
         100: '#fef3c7',
         200: '#fde68a',
         300: '#fcd34d',
         400: '#fbbf24',
-        500: '#f59e0b', // 柔和琥珀
+        500: '#f59e0b',
         600: '#d97706',
         700: '#b45309',
         800: '#92400e',
         900: '#78350f',
       },
 
-      // 危险色 - 柔和红色系
       danger: {
         50: '#fef2f2',
         100: '#fee2e2',
         200: '#fecaca',
         300: '#fca5a5',
         400: '#f87171',
-        500: '#ef4444', // 柔和红
+        500: '#ef4444',
         600: '#dc2626',
         700: '#b91c1c',
         800: '#991b1b',
         900: '#7f1d1d',
       },
 
-      // 信息色 - 柔和蓝色系
       info: {
         50: '#eff6ff',
         100: '#dbeafe',
         200: '#bfdbfe',
         300: '#93c5fd',
         400: '#60a5fa',
-        500: '#3b82f6', // 柔和蓝
+        500: '#3b82f6',
         600: '#2563eb',
         700: '#1d4ed8',
         800: '#1e40af',
@@ -118,21 +142,6 @@ export default defineConfig({
       },
 
       // ========== 扩展色板 ==========
-      // 紫色调 - 用于特殊强调
-      purple: {
-        50: '#faf5ff',
-        100: '#f3e8ff',
-        200: '#e9d5ff',
-        300: '#d8b4fe',
-        400: '#c084fc',
-        500: '#a855f7',
-        600: '#9333ea',
-        700: '#7c3aed',
-        800: '#6b21a8',
-        900: '#581c87',
-      },
-
-      // 粉色调 - 用于收藏、喜欢等
       pink: {
         50: '#fdf2f8',
         100: '#fce7f3',
@@ -146,7 +155,6 @@ export default defineConfig({
         900: '#831843',
       },
 
-      // 青绿色调
       teal: {
         50: '#f0fdfa',
         100: '#ccfbf1',
@@ -160,7 +168,6 @@ export default defineConfig({
         900: '#134e4a',
       },
 
-      // 琥珀色调
       amber: {
         50: '#fffbeb',
         100: '#fef3c7',
@@ -198,13 +205,16 @@ export default defineConfig({
       xl: '0 10px 20px rgba(0, 0, 0, 0.05), 0 20px 25px rgba(0, 0, 0, 0.03)',
       '2xl': '0 20px 40px rgba(0, 0, 0, 0.06), 0 30px 50px rgba(0, 0, 0, 0.04)',
       inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.03)',
-      // 品牌色按钮阴影 - 柔和紫
-      'brand': '0 2px 4px rgba(139, 124, 232, 0.2), 0 4px 8px rgba(139, 124, 232, 0.12)',
-      'brand-lg': '0 4px 8px rgba(139, 124, 232, 0.25), 0 8px 16px rgba(139, 124, 232, 0.15)',
-      // 危险色按钮阴影 - 柔和红
+      // 主按钮阴影 - 中性深灰
+      'neutral': '0 2px 4px rgba(51, 65, 85, 0.2), 0 4px 8px rgba(51, 65, 85, 0.12)',
+      'neutral-lg': '0 4px 8px rgba(51, 65, 85, 0.25), 0 8px 16px rgba(51, 65, 85, 0.15)',
+      // 强调按钮阴影 - 星光蓝
+      'accent': '0 2px 4px rgba(59, 130, 246, 0.2), 0 4px 8px rgba(59, 130, 246, 0.12)',
+      'accent-lg': '0 4px 8px rgba(59, 130, 246, 0.25), 0 8px 16px rgba(59, 130, 246, 0.15)',
+      // 危险色按钮阴影
       'danger': '0 2px 4px rgba(239, 68, 68, 0.2), 0 4px 8px rgba(239, 68, 68, 0.12)',
       'danger-lg': '0 4px 8px rgba(239, 68, 68, 0.25), 0 8px 16px rgba(239, 68, 68, 0.15)',
-      // 成功色按钮阴影 - 柔和绿
+      // 成功色按钮阴影
       'success': '0 2px 4px rgba(16, 185, 129, 0.2), 0 4px 8px rgba(16, 185, 129, 0.12)',
       'success-lg': '0 4px 8px rgba(16, 185, 129, 0.25), 0 8px 16px rgba(16, 185, 129, 0.15)',
     },
@@ -225,14 +235,15 @@ export default defineConfig({
   // ========== 快捷类定义 ==========
   shortcuts: {
     // ===== 按钮组件 =====
-    'btn': 'px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer inline-flex items-center justify-center gap-2 select-none shadow-sm hover:shadow-md',
-    'btn-brand': 'btn bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-brand hover:shadow-brand-lg',
-    'btn-brand-outline': 'btn bg-transparent text-brand-600 border border-brand-500 hover:bg-brand-50',
-    'btn-secondary': 'btn bg-bg-tertiary text-text-secondary border border-border hover:bg-bg-quaternary hover:border-border-medium shadow-sm hover:shadow-md',
+    'btn': 'px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer inline-flex items-center justify-center gap-2 select-none shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
+    'btn-primary': 'btn bg-neutral-700 text-white hover:bg-neutral-800 active:bg-neutral-900 shadow-neutral hover:shadow-neutral-lg',
+    'btn-primary-outline': 'btn bg-transparent text-neutral-700 border border-neutral-700 hover:bg-neutral-100',
+    'btn-secondary': 'btn bg-bg-tertiary text-text-secondary border border-border hover:bg-bg-quaternary hover:border-border-medium',
     'btn-ghost': 'btn bg-transparent text-text-secondary hover:bg-bg-secondary',
     'btn-danger': 'btn bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 shadow-danger hover:shadow-danger-lg',
     'btn-danger-outline': 'btn bg-transparent text-danger-600 border border-danger-500 hover:bg-danger-50',
     'btn-success': 'btn bg-success-500 text-white hover:bg-success-600 active:bg-success-700 shadow-success hover:shadow-success-lg',
+    'btn-accent': 'btn bg-accent-500 text-white hover:bg-accent-600 active:bg-accent-700 shadow-accent hover:shadow-accent-lg',
     'btn-sm': 'px-3 py-1.5 text-sm rounded-md',
     'btn-lg': 'px-6 py-3 text-base rounded-xl',
     'btn-icon': 'w-9 h-9 p-0 rounded-lg',
@@ -245,7 +256,7 @@ export default defineConfig({
     'card-filled': 'bg-bg-secondary rounded-xl border border-border-light',
 
     // ===== 输入框组件 =====
-    'input': 'w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200',
+    'input': 'w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 transition-all duration-200',
     'input-error': 'input border-danger-500 focus:border-danger-500 focus:ring-danger-500/20',
     'input-success': 'input border-success-500 focus:border-success-500 focus:ring-success-500/20',
 
@@ -260,7 +271,7 @@ export default defineConfig({
     'text-subtitle': 'text-lg font-semibold text-text-secondary',
     'text-body': 'text-sm text-text-secondary leading-relaxed',
     'text-caption': 'text-xs text-text-muted',
-    'text-brand': 'text-brand-600 font-medium',
+    'text-accent': 'text-accent-600 font-medium',
 
     // ===== 滚动条 =====
     'scrollbar-thin': 'scrollbar:w-2 scrollbar:h-2 scrollbar-track:bg-transparent scrollbar-thumb:bg-border-medium scrollbar-thumb:rounded',
@@ -271,17 +282,17 @@ export default defineConfig({
 
     // ===== 侧边栏导航 =====
     'nav-item': 'w-full h-10 flex items-center gap-3 px-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
-    'nav-item-active': 'nav-item bg-brand-100 text-brand-700',
+    'nav-item-active': 'nav-item bg-accent-50 text-accent-700',
     'nav-item-inactive': 'nav-item text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
 
     // ===== 标签组件 =====
     'tag': 'inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full',
-    'tag-brand': 'tag bg-brand-100 text-brand-700',
+    'tag-neutral': 'tag bg-neutral-100 text-neutral-700',
     'tag-success': 'tag bg-success-100 text-success-700',
     'tag-warning': 'tag bg-warning-100 text-warning-700',
     'tag-danger': 'tag bg-danger-100 text-danger-700',
     'tag-info': 'tag bg-info-100 text-info-700',
-    'tag-purple': 'tag bg-purple-100 text-purple-700',
+    'tag-accent': 'tag bg-accent-100 text-accent-700',
     'tag-pink': 'tag bg-pink-100 text-pink-700',
     'tag-teal': 'tag bg-teal-100 text-teal-700',
     'tag-amber': 'tag bg-amber-100 text-amber-700',
@@ -297,7 +308,7 @@ export default defineConfig({
     // ===== 工具栏 =====
     'toolbar': 'flex items-center justify-between gap-4 mb-6',
     'search-box': 'relative flex items-center flex-1 max-w-md',
-    'search-input': 'w-full h-10 pl-10 pr-4 bg-bg-primary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-500 transition-all duration-200',
+    'search-input': 'w-full h-10 pl-10 pr-4 bg-bg-primary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-500 transition-all duration-200',
 
     // ===== 图标按钮 =====
     'icon-btn': 'w-9 h-9 flex-center bg-bg-primary border border-border rounded-lg text-text-tertiary hover:bg-bg-secondary hover:text-text-secondary hover:border-border-medium transition-all duration-200 cursor-pointer',
@@ -312,7 +323,7 @@ export default defineConfig({
 
     // ===== 开关组件 =====
     'toggle': 'relative w-11 h-6 bg-border-medium rounded-full cursor-pointer transition-colors duration-300',
-    'toggle-active': 'toggle bg-brand-500',
+    'toggle-active': 'toggle bg-accent-500',
 
     // ===== 统计卡片 =====
     'stat-card': 'bg-bg-primary rounded-xl border border-border p-5',
