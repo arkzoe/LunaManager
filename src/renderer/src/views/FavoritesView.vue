@@ -72,12 +72,13 @@ const loadCollectionGames = async (): Promise<void> => {
   if (unmounted) return
   const gamesMap = await window.api.getAllCollectionGamesMap()
   if (unmounted) return
+  const gameMap = new Map(effectiveGames.value.map((g) => [g.id, g]))
   for (const col of collections.value) {
     const gameIds = gamesMap[col.id] ?? []
     col.gameIds = gameIds
     collectionGames.value.set(
       col.id,
-      gameIds.map((id) => ({ id }) as GameRecord)
+      gameIds.map((id) => gameMap.get(id) || ({ id } as GameRecord))
     )
   }
 }

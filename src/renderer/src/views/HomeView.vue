@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, nextTick } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord } from '../../../shared/types'
 import GameCard from '../shared/GameCard.vue'
@@ -14,23 +14,13 @@ const emit = defineEmits<{
   (e: 'navigateLibrary'): void
 }>()
 
-const recentScrollRef = ref<HTMLElement | null>(null)
-const addedScrollRef = ref<HTMLElement | null>(null)
-const recentScrollable = ref(false)
-const addedScrollable = ref(false)
-
 onMounted(() => {
   if (store.games.length === 0) store.loadGames()
-  nextTick(() => {
-    if (recentScrollRef.value)
-      recentScrollable.value = recentScrollRef.value.scrollWidth > recentScrollRef.value.clientWidth
-    if (addedScrollRef.value)
-      addedScrollable.value = addedScrollRef.value.scrollWidth > addedScrollRef.value.clientWidth
-  })
 })
 
 function onWheelScroll(e: WheelEvent): void {
   const el = e.currentTarget as HTMLElement
+  if (el.scrollWidth <= el.clientWidth) return
   el.scrollBy({ left: e.deltaY, behavior: 'smooth' })
   e.preventDefault()
 }
@@ -132,12 +122,7 @@ const homeData = computed(() => ({
           <h2>最近游玩</h2>
           <button class="section-link" @click="emit('navigateLibrary')">查看全部</button>
         </div>
-        <div
-          ref="recentScrollRef"
-          class="h-scroll"
-          :class="{ 'is-scrollable': recentScrollable }"
-          @wheel="recentScrollable && onWheelScroll($event)"
-        >
+        <div class="h-scroll" @wheel="onWheelScroll">
           <div
             v-for="game in homeData.recentGames"
             :key="game.id"
@@ -159,12 +144,7 @@ const homeData = computed(() => ({
           <h2>最近添加</h2>
           <button class="section-link" @click="emit('navigateLibrary')">查看全部</button>
         </div>
-        <div
-          ref="addedScrollRef"
-          class="h-scroll"
-          :class="{ 'is-scrollable': addedScrollable }"
-          @wheel="addedScrollable && onWheelScroll($event)"
-        >
+        <div class="h-scroll" @wheel="onWheelScroll">
           <div
             v-for="game in homeData.recentAdded"
             :key="game.id"
@@ -290,21 +270,17 @@ const homeData = computed(() => ({
 .h-scroll {
   display: flex;
   gap: 12px;
-  overflow-x: hidden;
+  overflow-x: auto;
   padding: 6px 0 8px;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
 }
 
-.h-scroll.is-scrollable {
-  overflow-x: auto;
-}
-
-.h-scroll.is-scrollable::-webkit-scrollbar {
+.h-scroll::-webkit-scrollbar {
   height: 4px;
 }
 
-.h-scroll.is-scrollable::-webkit-scrollbar-thumb {
+.h-scroll::-webkit-scrollbar-thumb {
   background: var(--border-color-medium);
   border-radius: 2px;
 }

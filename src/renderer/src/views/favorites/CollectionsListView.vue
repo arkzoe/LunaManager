@@ -120,7 +120,7 @@ const handleSortSelect = (field: string): void => {
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-4 overflow-y-auto overflow-x-hidden pr-2 flex-1 content-start">
+    <div class="collection-grid">
       <CollectionCard
         v-for="collection in collections"
         :key="collection.id"
@@ -305,6 +305,24 @@ const handleSortSelect = (field: string): void => {
   font-size: 14px;
   color: var(--text-muted);
   opacity: 0.4;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  align-content: start;
+  padding-right: 8px;
+  transition: grid-template-columns 0.3s ease;
+}
+
+@media (max-width: 700px) {
+  .collection-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .add-btn {
