@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { GameRecord } from '../../../../shared/types'
+import SelectDropdown from '../../shared/SelectDropdown.vue'
 
 const props = defineProps<{
   game: GameRecord
@@ -206,15 +207,16 @@ const onSourceChange = (val: string): void => {
       <div class="form-row">
         <div class="form-field">
           <label>数据源</label>
-          <select
-            :value="dataSourceCurrent"
-            class="form-input form-select"
-            @change="onSourceChange(($event.target as HTMLSelectElement).value)"
-          >
-            <option value="">无</option>
-            <option value="vndb">VNDB</option>
-            <option value="bangumi">Bangumi</option>
-          </select>
+          <SelectDropdown
+            :model-value="dataSourceCurrent"
+            :options="[
+              {value:'',label:'无'},
+              {value:'vndb',label:'VNDB'},
+              {value:'bangumi',label:'Bangumi'}
+            ]"
+            class="form-select"
+            @update:model-value="onSourceChange($event as string)"
+          />
         </div>
         <div class="form-field">
           <label>{{ dataSourceCurrent === 'bangumi' ? 'Bangumi ID' : 'VNDB ID' }}</label>
@@ -302,12 +304,11 @@ const onSourceChange = (val: string): void => {
 }
 
 .form-select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='%236b7280'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px;
+  height: 36px;
+}
+
+.form-select .sd-trigger {
+  height: 36px;
 }
 
 .form-textarea {

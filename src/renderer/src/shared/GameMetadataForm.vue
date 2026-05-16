@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ScanResult, GameRecord } from '../../../shared/types'
+import SelectDropdown from './SelectDropdown.vue'
 
 export interface MetadataForm {
   selectedExe: string
@@ -162,20 +163,18 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
 
     <div class="form-group">
       <label class="form-label" for="input-status">游戏状态</label>
-      <select
-        id="input-status"
-        :value="form.status"
+      <SelectDropdown
+        :model-value="form.status"
+        :options="[
+          {value:'want',label:'想玩'},
+          {value:'playing',label:'在玩'},
+          {value:'played',label:'玩过'},
+          {value:'shelved',label:'搁置'},
+          {value:'abandoned',label:'弃坑'}
+        ]"
         class="form-select"
-        @change="
-          update('status', ($event.target as HTMLSelectElement).value as GameRecord['status'])
-        "
-      >
-        <option value="want">想玩</option>
-        <option value="playing">在玩</option>
-        <option value="played">玩过</option>
-        <option value="shelved">搁置</option>
-        <option value="abandoned">弃坑</option>
-      </select>
+        @update:model-value="update('status', $event as GameRecord['status'])"
+      />
     </div>
 
     <div class="form-group">
@@ -226,7 +225,7 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
     </div>
 
     <div class="form-actions">
-      <button class="btn-cancel" :disabled="isLoading" @click="emit('cancel')">取消</button>
+      <button class="btn-ghost" :disabled="isLoading" @click="emit('cancel')">取消</button>
       <button class="btn-primary" :disabled="isLoading" @click="emit('confirm')">
         {{ isLoading ? '导入中...' : '确认导入' }}
       </button>
@@ -316,8 +315,7 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
   color: var(--text-primary);
 }
 
-.form-input,
-.form-select {
+.form-input {
   width: 100%;
   height: 36px;
   padding: 0 10px;
@@ -332,13 +330,18 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
     border-color 0.15s,
     box-shadow 0.15s;
 }
-.form-input:focus,
-.form-select:focus {
+.form-input:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 .form-select {
-  cursor: pointer;
+  width: 100%;
+  height: 36px;
+  font-size: 13px;
+}
+
+.form-select .sd-trigger {
+  height: 36px;
 }
 
 .form-textarea {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { SearchResult } from '../../../shared/types'
+import SelectDropdown from './SelectDropdown.vue'
 
 const emit = defineEmits<{
   (e: 'select', result: SearchResult): void
@@ -83,10 +84,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
             <div class="search-form">
               <div class="sf-row">
                 <label class="sf-label">数据源</label>
-                <select v-model="source" class="sf-select" :disabled="searching">
-                  <option value="vndb">VNDB</option>
-                  <option value="bangumi">Bangumi</option>
-                </select>
+                <SelectDropdown v-model="source" :options="[{value:'vndb',label:'VNDB'},{value:'bangumi',label:'Bangumi'}]" :disabled="searching" class="sf-select" />
               </div>
               <div class="sf-row">
                 <label class="sf-label">关键词</label>
@@ -147,7 +145,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
           </div>
 
           <div class="dialog-footer">
-            <button class="btn-cancel" @click="emit('close')">取消</button>
+            <button class="btn-ghost" @click="emit('close')">取消</button>
             <button class="btn-primary" :disabled="!selectedId || searching" @click="handleSelect">
               确认选择
             </button>
@@ -281,7 +279,6 @@ const handleOverlayClick = (e: MouseEvent): void => {
   flex-shrink: 0;
 }
 
-.sf-select,
 .sf-input {
   flex: 1;
   height: 34px;
@@ -296,7 +293,16 @@ const handleOverlayClick = (e: MouseEvent): void => {
   transition: border-color 0.15s;
 }
 
-.sf-select:focus,
+.sf-select {
+  flex: 1;
+  height: 34px;
+  font-size: 13px;
+}
+
+.sf-select .sd-trigger {
+  height: 34px;
+}
+
 .sf-input:focus {
   border-color: var(--accent-primary);
 }

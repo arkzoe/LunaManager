@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SelectDropdown from '../../shared/SelectDropdown.vue'
+
 defineProps<{
   autoStart: boolean
   autoUpdate: boolean
@@ -107,14 +109,12 @@ const emit = defineEmits<{
           <span class="setting-label">语言</span>
           <span class="setting-desc">选择界面显示语言</span>
         </div>
-        <select
-          :value="language"
+        <SelectDropdown
+          :model-value="language"
+          :options="[{value:'zh-CN',label:'简体中文'},{value:'en-US',label:'English'}]"
           class="sselect"
-          @change="emit('update:language', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="zh-CN">简体中文</option>
-          <option value="en-US">English</option>
-        </select>
+          @update:model-value="emit('update:language', $event as string)"
+        />
       </div>
     </div>
   </section>

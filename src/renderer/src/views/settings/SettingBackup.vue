@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SelectDropdown from '../../shared/SelectDropdown.vue'
+
 defineProps<{
   autoBackup: boolean
   backupDir: string
@@ -46,30 +48,24 @@ const emit = defineEmits<{
           <span class="setting-label">备份频率</span>
           <span class="setting-desc">自动备份的执行频率</span>
         </div>
-        <select
-          :value="backupFrequency"
+        <SelectDropdown
+          :model-value="backupFrequency"
+          :options="[{value:'daily',label:'每天'},{value:'weekly',label:'每周'},{value:'monthly',label:'每月'}]"
           class="sselect"
-          @change="emit('update:backupFrequency', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="daily">每天</option>
-          <option value="weekly">每周</option>
-          <option value="monthly">每月</option>
-        </select>
+          @update:model-value="emit('update:backupFrequency', $event as string)"
+        />
       </div>
       <div class="setting-row">
         <div class="setting-info">
           <span class="setting-label">最大保留份数</span>
           <span class="setting-desc">保留的最大备份份数，超出自动删除旧备份</span>
         </div>
-        <select
-          :value="backupMaxCopies"
+        <SelectDropdown
+          :model-value="backupMaxCopies"
+          :options="[3,5,10,20,50].map(n => ({ value: n, label: String(n) }))"
           class="sselect"
-          @change="
-            emit('update:backupMaxCopies', Number(($event.target as HTMLSelectElement).value))
-          "
-        >
-          <option v-for="n in [3, 5, 10, 20, 50]" :key="n" :value="n">{{ n }}</option>
-        </select>
+          @update:model-value="emit('update:backupMaxCopies', $event as number)"
+        />
       </div>
     </div>
   </section>

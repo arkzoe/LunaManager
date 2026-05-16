@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ImportRowState } from '../../../shared/types'
+import SelectDropdown from '../shared/SelectDropdown.vue'
 
 const props = defineProps<{
   row: ImportRowState
@@ -114,16 +115,14 @@ const matchStatusClass = (status?: string): string => {
     </div>
 
     <div class="br-exe">
-      <select
-        :value="row.selectedExe"
-        class="br-select"
+      <SelectDropdown
+        :model-value="row.selectedExe"
+        :options="row.executables.map(exe => ({ value: exe.fullPath, label: exe.name }))"
         :disabled="row.executables.length === 0 || importing"
-        @change="emit('update:selectedExe', ($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="exe in row.executables" :key="exe.fullPath" :value="exe.fullPath">
-          {{ exe.name }}
-        </option>
-      </select>
+        placeholder="无可执行文件"
+        class="br-select"
+        @update:model-value="emit('update:selectedExe', $event as string)"
+      />
       <span v-if="row.executables.length === 0" class="br-warning">未检测到可执行文件</span>
       <span v-if="row.isDuplicate" class="br-duplicate">已存在</span>
     </div>
@@ -273,23 +272,13 @@ const matchStatusClass = (status?: string): string => {
 .br-select {
   width: 100%;
   height: 30px;
-  padding: 0 24px 0 8px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  font-size: 12px;
+}
+
+.br-select .sd-trigger {
+  height: 30px;
   border-radius: 6px;
   font-size: 12px;
-  font-family: inherit;
-  color: var(--text-primary);
-  outline: none;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
 }
 
 .br-select:hover {

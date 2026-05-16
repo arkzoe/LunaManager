@@ -141,25 +141,15 @@
 /* select */
 .sselect {
   height: 32px;
-  padding: 0 28px 0 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 7px;
   font-size: 12px;
-  font-family: inherit;
-  color: var(--text-primary);
-  outline: none;
-  cursor: pointer;
   flex-shrink: 0;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%236b7280'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  transition: border-color 0.15s;
 }
 
-.sselect:focus {
-  border-color: var(--accent-primary);
+.sselect .sd-trigger {
+  height: 32px;
+  border-radius: 7px;
+  font-size: 12px;
+  background: var(--bg-secondary);
 }
 
 /* button */

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import type { GameRecord, GameStatus } from '../../../../shared/types'
 import { formatDate } from '../../utils/format'
+import SelectDropdown from '../../shared/SelectDropdown.vue'
 
 const isCoverWide = ref(false)
 
@@ -90,15 +91,12 @@ const hasMetadata = computed(() => {
 
       <div class="hi-status">
         <span class="hi-label">状态</span>
-        <select
-          :value="tempStatus"
+        <SelectDropdown
+          :model-value="tempStatus"
+          :options="statuses.map(s => ({ value: s.id, label: s.label }))"
           class="status-select"
-          @change="
-            $emit('update:tempStatus', ($event.target as HTMLSelectElement).value as GameStatus)
-          "
-        >
-          <option v-for="s in statuses" :key="s.id" :value="s.id">{{ s.label }}</option>
-        </select>
+          @update:model-value="$emit('update:tempStatus', $event as GameStatus)"
+        />
       </div>
 
       <div class="hi-meta">

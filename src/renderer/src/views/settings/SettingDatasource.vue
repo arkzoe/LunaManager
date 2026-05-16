@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SelectDropdown from '../../shared/SelectDropdown.vue'
+
 interface TestResult {
   source: 'vndb' | 'bangumi'
   loading: boolean
@@ -34,14 +36,12 @@ const emit = defineEmits<{
           <span class="setting-label">默认数据源</span>
           <span class="setting-desc">元数据刮削的首选数据源</span>
         </div>
-        <select
-          :value="metadataSource"
+        <SelectDropdown
+          :model-value="metadataSource"
+          :options="[{value:'vndb',label:'VNDB'},{value:'bangumi',label:'Bangumi'}]"
           class="sselect"
-          @change="emit('update:metadataSource', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="vndb">VNDB</option>
-          <option value="bangumi">Bangumi</option>
-        </select>
+          @update:model-value="emit('update:metadataSource', $event as string)"
+        />
       </div>
       <div class="setting-row">
         <div class="setting-info">

@@ -80,7 +80,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
           </div>
 
           <div class="dialog-footer">
-            <button class="btn-cancel" @click="emit('close')">取消</button>
+            <button class="btn-ghost" @click="emit('close')">取消</button>
             <button class="btn-primary" :disabled="!selectedId || loading" @click="handleSelect">
               确认选择
             </button>
@@ -263,21 +263,5 @@ const handleOverlayClick = (e: MouseEvent): void => {
   animation: spin 0.8s linear infinite;
 }
 
-.btn-cancel {
-  height: 34px;
-  padding: 0 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-}
 
-.btn-cancel:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
 </style>
