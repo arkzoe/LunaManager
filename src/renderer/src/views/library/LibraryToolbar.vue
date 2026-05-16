@@ -66,11 +66,15 @@ void importBtnRef.value /* TODO: 用于后续下拉菜单定位 */
         </button>
       </div>
 
-      <button class="bb-btn" :class="{ active: batchMode }" @click="emit('toggleBatchMode')">
+      <button
+        class="bb-btn"
+        :class="{ active: batchMode }"
+        title="批量操作"
+        @click="emit('toggleBatchMode')"
+      >
         <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
           <path d="M4 6h4v2H4zm0 5h4v2H4zm0 5h4v2H4zm6-10h10v2H10zm0 5h10v2H10zm0 5h10v2H10z" />
         </svg>
-        批量操作
       </button>
 
       <div class="import-dropdown">

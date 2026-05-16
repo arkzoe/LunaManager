@@ -2,11 +2,11 @@
 import { ref, watch } from 'vue'
 import type { ScanResult, GameRecord, SearchResult } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import GameMetadataForm from '../shared/GameMetadataForm.vue'
+import type { MetadataForm } from '../shared/GameMetadataForm.vue'
 import SearchResultPicker from '../shared/SearchResultPicker.vue'
 
-defineProps<{
-  show: boolean
-}>()
+defineProps<{ show: boolean }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -16,9 +16,6 @@ const emit = defineEmits<{
 const store = useGameStore()
 const isLoading = ref(false)
 const scanResult = ref<ScanResult | null>(null)
-const selectedExe = ref('')
-const title = ref('')
-const titleCn = ref('')
 const error = ref('')
 const searching = ref(false)
 const searchResults = ref<SearchResult[]>([])
@@ -31,41 +28,47 @@ const searchNoResults = ref(false)
 let cachedSource: 'vndb' | 'bangumi' | null = null
 let cachedToken: string | null = null
 
+// Form fields (driven by GameMetadataForm via v-model)
+const form = ref<MetadataForm>({
+  selectedExe: '',
+  title: '',
+  titleCn: '',
+  developer: '',
+  publisher: '',
+  releaseDate: '',
+  description: '',
+  notes: '',
+  customTags: '[]',
+  savePath: '',
+  status: 'want'
+})
+
 const coverUrl = ref('')
-const developer = ref('')
-const releaseDate = ref('')
-const description = ref('')
-const rating = ref(0)
-const customTags = ref('[]')
 const vndbId = ref('')
 const bangumiId = ref('')
-const publisher = ref('')
-const notes = ref('')
-const savePath = ref('')
-const status = ref<GameRecord['status']>('want')
 
 const invalidateTokenCache = (): void => {
   cachedSource = null
   cachedToken = null
 }
 
-watch(title, () => {
-  searchNoResults.value = false
-})
+watch(
+  () => form.value.title,
+  () => {
+    searchNoResults.value = false
+  }
+)
 
 const ensureTokenCache = async (): Promise<{
   source: 'vndb' | 'bangumi'
   token: string | null
 }> => {
-  if (cachedSource === null) {
-    cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
-  }
-  if (cachedToken === null) {
+  if (cachedSource === null) cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
+  if (cachedToken === null)
     cachedToken =
       cachedSource === 'bangumi'
         ? await window.api.getConfig('bangumiToken')
         : await window.api.getConfig('vndbApiKey')
-  }
   return { source: cachedSource, token: cachedToken }
 }
 
@@ -85,12 +88,16 @@ const handlePickFolder = async (): Promise<void> => {
     )
     result.executables = filteredExe
     scanResult.value = result
-    title.value = result.folderName
-    titleCn.value = ''
-    if (filteredExe.length === 1) {
-      selectedExe.value = filteredExe[0].fullPath
-    } else {
-      selectedExe.value = filteredExe.length > 0 ? filteredExe[0].fullPath : ''
+    form.value = {
+      ...form.value,
+      title: result.folderName,
+      titleCn: '',
+      selectedExe:
+        filteredExe.length === 1
+          ? filteredExe[0].fullPath
+          : filteredExe.length > 0
+            ? filteredExe[0].fullPath
+            : ''
     }
     isLoading.value = false
   } catch (e: unknown) {
@@ -100,9 +107,8 @@ const handlePickFolder = async (): Promise<void> => {
 }
 
 const handleSearch = async (): Promise<void> => {
-  const query = title.value.trim() || scanResult.value?.folderName
+  const query = form.value.title.trim() || scanResult.value?.folderName
   if (!query) return
-
   searching.value = true
   metadataFilled.value = false
   searchNoResults.value = false
@@ -110,20 +116,14 @@ const handleSearch = async (): Promise<void> => {
   try {
     const { source, token } = await ensureTokenCache()
     searchSource.value = source
-
     if (source === 'bangumi' && !token) {
       error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
       return
     }
-
     searchResults.value = await window.api.searchMetadata(query, source, token || undefined)
-    if (searchResults.value.length === 1) {
-      applySearchResult(searchResults.value[0])
-    } else if (searchResults.value.length > 1) {
-      showSearchPicker.value = true
-    } else {
-      searchNoResults.value = true
-    }
+    if (searchResults.value.length === 1) applySearchResult(searchResults.value[0])
+    else if (searchResults.value.length > 1) showSearchPicker.value = true
+    else searchNoResults.value = true
   } catch (err: unknown) {
     error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
   } finally {
@@ -132,9 +132,8 @@ const handleSearch = async (): Promise<void> => {
 }
 
 const applySearchResult = async (result: SearchResult): Promise<void> => {
-  title.value = result.titleCn || result.title || title.value
-  titleCn.value = result.titleCn || ''
-
+  form.value.title = result.titleCn || result.title || form.value.title
+  form.value.titleCn = result.titleCn || ''
   if (result.id) {
     try {
       const { token } = await ensureTokenCache()
@@ -144,23 +143,22 @@ const applySearchResult = async (result: SearchResult): Promise<void> => {
         token || undefined,
         undefined
       )
-      if (detail.title) title.value = detail.title_cn || detail.title || title.value
-      if (detail.title_cn) titleCn.value = detail.title_cn
-      if (detail.cover) {
-        coverUrl.value = detail.cover
+      if (detail.title) form.value.title = detail.title_cn || detail.title || form.value.title
+      if (detail.title_cn) form.value.titleCn = detail.title_cn
+      if (detail.cover) coverUrl.value = detail.cover
+      if (detail.developer) form.value.developer = detail.developer
+      if (detail.publisher) form.value.publisher = detail.publisher
+      if (detail.release_date) form.value.releaseDate = detail.release_date
+      if (detail.description) form.value.description = detail.description
+      if (detail.rating) {
+        /* rating is stored in ImportDialog for game creation */
       }
-      if (detail.developer) developer.value = detail.developer
-      if (detail.publisher) publisher.value = detail.publisher
-      if (detail.release_date) releaseDate.value = detail.release_date
-      if (detail.description) description.value = detail.description
-      if (detail.rating) rating.value = detail.rating
-      if (detail.custom_tags) customTags.value = detail.custom_tags
+      if (detail.custom_tags) form.value.customTags = detail.custom_tags
       if (detail.vndb_id) vndbId.value = detail.vndb_id
       if (detail.bangumi_id) bangumiId.value = detail.bangumi_id
       metadataFilled.value = true
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('获取元数据详情失败:', msg)
+      console.error('获取元数据详情失败:', err instanceof Error ? err.message : String(err))
     }
   }
 }
@@ -172,18 +170,17 @@ const handlePickerSelect = (result: SearchResult): void => {
 
 const handleConfirm = async (): Promise<void> => {
   if (!scanResult.value) return
-  if (!title.value.trim()) {
+  if (!form.value.title.trim()) {
     error.value = '请输入游戏名称'
     return
   }
-  if (!selectedExe.value) {
+  if (!form.value.selectedExe) {
     error.value = '请选择主程序文件'
     return
   }
-
   const existing = store.games.find(
     (g) =>
-      g.executable_path === selectedExe.value ||
+      g.executable_path === form.value.selectedExe ||
       (vndbId.value && g.vndb_id === vndbId.value) ||
       (bangumiId.value && g.bangumi_id === bangumiId.value)
   )
@@ -197,36 +194,34 @@ const handleConfirm = async (): Promise<void> => {
   try {
     const now = Date.now()
     const gameId = `id-${now}-${Math.random().toString(36).slice(2, 6)}`
-
     let cover = ''
     if (coverUrl.value && !coverUrl.value.startsWith('cover://')) {
       const localPath = await window.api.downloadCover(gameId, coverUrl.value)
       if (localPath) cover = localPath
     }
-
     const gameData: Omit<GameRecord, 'created_at' | 'updated_at'> = {
       id: gameId,
-      title: title.value.trim(),
-      title_cn: titleCn.value.trim(),
+      title: form.value.title.trim(),
+      title_cn: form.value.titleCn.trim(),
       cover,
-      rating: rating.value,
+      rating: 0,
       size: scanResult.value.totalSize,
       installed: 1,
       favorite: 0,
-      status: status.value,
+      status: form.value.status,
       personal_rating: 0,
       last_played: '',
-      description: description.value,
-      developer: developer.value,
-      publisher: publisher.value,
-      release_date: releaseDate.value,
+      description: form.value.description,
+      developer: form.value.developer,
+      publisher: form.value.publisher,
+      release_date: form.value.releaseDate,
       playtime: '',
-      executable_path: selectedExe.value,
-      save_path: savePath.value,
+      executable_path: form.value.selectedExe,
+      save_path: form.value.savePath,
       vndb_id: vndbId.value,
       bangumi_id: bangumiId.value,
-      notes: notes.value,
-      custom_tags: customTags.value,
+      notes: form.value.notes,
+      custom_tags: form.value.customTags,
       last_launch_method: 'normal'
     }
     const game = await window.api.createGame(gameData)
@@ -242,12 +237,10 @@ const handleConfirm = async (): Promise<void> => {
 const handleClose = (): void => {
   if (!isLoading.value) emit('close')
 }
-
 const handlePickSavePath = async (): Promise<void> => {
   const dir = await window.api.pickDirectory()
-  if (dir) savePath.value = dir
+  if (dir) form.value = { ...form.value, savePath: dir }
 }
-
 const handleOverlayClick = (e: MouseEvent): void => {
   if ((e.target as HTMLElement).classList.contains('dialog-overlay')) handleClose()
 }
@@ -267,10 +260,7 @@ const handleOverlayClick = (e: MouseEvent): void => {
             <h2 class="dialog-title">导入游戏</h2>
             <button class="dialog-close" @click="handleClose">&times;</button>
           </div>
-
           <div class="dialog-body">
-            <div v-if="error" class="form-error">{{ error }}</div>
-
             <!-- Step 1: Select Folder -->
             <div v-if="!scanResult" class="folder-pick-area">
               <button class="btn-brand" :disabled="isLoading" @click="handlePickFolder">
@@ -282,197 +272,24 @@ const handleOverlayClick = (e: MouseEvent): void => {
                 {{ isLoading ? '扫描中...' : '选择游戏文件夹' }}
               </button>
             </div>
-
-            <!-- Step 2: Edit Metadata -->
-            <div v-else class="import-form">
-              <div class="form-group">
-                <label class="form-label">文件夹路径</label>
-                <div class="form-path">{{ scanResult.folderPath }}</div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">游戏大小</label>
-                <div class="form-value">{{ scanResult.totalSize }}</div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">主程序 <span class="text-danger">*</span></label>
-                <div v-if="scanResult.executables.length === 0" class="form-warning">
-                  未检测到可执行文件
-                </div>
-                <div v-else class="exe-list">
-                  <label
-                    v-for="exe in scanResult.executables"
-                    :key="exe.fullPath"
-                    class="exe-item"
-                    :class="{ selected: selectedExe === exe.fullPath }"
-                  >
-                    <input
-                      v-model="selectedExe"
-                      type="radio"
-                      :value="exe.fullPath"
-                      class="exe-radio"
-                    />
-                    <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current exe-icon">
-                      <path
-                        d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"
-                      />
-                    </svg>
-                    <span class="exe-name">{{ exe.name }}</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Cover preview -->
-              <div v-if="coverUrl" class="form-group">
-                <label class="form-label">封面预览</label>
-                <div class="cover-preview-wrap">
-                  <img
-                    :src="coverUrl"
-                    class="cover-preview-img"
-                    @error="($event.target as HTMLImageElement).style.display = 'none'"
-                  />
-                </div>
-              </div>
-
-              <div class="form-group">
-                <div class="form-label-row">
-                  <label class="form-label" for="input-title"
-                    >游戏名称 <span class="text-danger">*</span></label
-                  >
-                  <button
-                    class="search-btn"
-                    :disabled="searching"
-                    title="识别源数据"
-                    @click="handleSearch"
-                  >
-                    <svg v-if="searching" viewBox="0 0 24 24" class="w-3.5 h-3.5 spin">
-                      <path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z" fill="currentColor" />
-                    </svg>
-                    <svg v-else viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-                      <path
-                        d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                      />
-                    </svg>
-                    识别源数据
-                  </button>
-                </div>
-                <input
-                  id="input-title"
-                  v-model="title"
-                  class="form-input"
-                  placeholder="输入游戏名称"
-                />
-                <div v-if="metadataFilled" class="metadata-hint">
-                  已从 {{ searchSource === 'vndb' ? 'VNDB' : 'Bangumi' }} 获取元数据
-                </div>
-                <div v-if="searchNoResults" class="search-no-results">
-                  未找到匹配结果，请尝试调整搜索名称
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="input-title-cn">中文名称</label>
-                <input
-                  id="input-title-cn"
-                  v-model="titleCn"
-                  class="form-input"
-                  placeholder="输入中文名称（可选）"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="input-developer">开发商</label>
-                <input
-                  id="input-developer"
-                  v-model="developer"
-                  class="form-input"
-                  placeholder="开发商（可自动获取）"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="input-publisher">发行商</label>
-                <input
-                  id="input-publisher"
-                  v-model="publisher"
-                  class="form-input"
-                  placeholder="发行商（可自动获取）"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="input-date">发行日期</label>
-                <input
-                  id="input-date"
-                  v-model="releaseDate"
-                  class="form-input"
-                  placeholder="发行日期（可自动获取）"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="input-status">游戏状态</label>
-                <select id="input-status" v-model="status" class="form-select">
-                  <option value="want">想玩</option>
-                  <option value="playing">在玩</option>
-                  <option value="played">玩过</option>
-                  <option value="shelved">搁置</option>
-                  <option value="abandoned">弃坑</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="input-description">游戏描述</label>
-                <textarea
-                  id="input-description"
-                  v-model="description"
-                  class="form-textarea"
-                  placeholder="游戏描述（可自动获取）"
-                  rows="3"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="input-notes">备注</label>
-                <textarea
-                  id="input-notes"
-                  v-model="notes"
-                  class="form-textarea"
-                  placeholder="输入备注信息（可选）"
-                  rows="2"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="input-tags">自定义标签</label>
-                <input
-                  id="input-tags"
-                  v-model="customTags"
-                  class="form-input"
-                  placeholder="标签（JSON 数组，可自动获取）"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">存档路径</label>
-                <div class="save-path-row">
-                  <div class="form-path save-path-text" :class="{ empty: !savePath }">
-                    {{ savePath || '未设置' }}
-                  </div>
-                  <button class="btn-pick-path" :disabled="isLoading" @click="handlePickSavePath">
-                    选择
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-actions">
-                <button class="btn-cancel" :disabled="isLoading" @click="handleClose">取消</button>
-                <button class="btn-brand" :disabled="isLoading" @click="handleConfirm">
-                  {{ isLoading ? '导入中...' : '确认导入' }}
-                </button>
-              </div>
-            </div>
+            <!-- Step 2: Metadata Form -->
+            <GameMetadataForm
+              v-else
+              :scan-result="scanResult"
+              :form="form"
+              :cover-url="coverUrl"
+              :searching="searching"
+              :search-no-results="searchNoResults"
+              :metadata-filled="metadataFilled"
+              :search-source="searchSource"
+              :is-loading="isLoading"
+              :error="error"
+              @update:form="form = $event"
+              @search="handleSearch"
+              @pick-save-path="handlePickSavePath"
+              @confirm="handleConfirm"
+              @cancel="handleClose"
+            />
           </div>
         </div>
       </div>
@@ -499,15 +316,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
   align-items: center;
   justify-content: center;
 }
-
 .modal-enter-active {
   animation: overlay-in 0.2s ease;
 }
-
 .modal-leave-active {
   animation: overlay-out 0.15s ease forwards;
 }
-
 .dialog-card {
   width: 520px;
   max-width: 90vw;
@@ -518,15 +332,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
   border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
 }
-
 .modal-enter-active .dialog-card {
   animation: modal-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .modal-leave-active .dialog-card {
   animation: modal-out 0.15s ease forwards;
 }
-
 .dialog-header {
   display: flex;
   align-items: center;
@@ -534,14 +345,12 @@ const handleOverlayClick = (e: MouseEvent): void => {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color-light);
 }
-
 .dialog-title {
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
-
 .dialog-close {
   width: 28px;
   height: 28px;
@@ -556,285 +365,17 @@ const handleOverlayClick = (e: MouseEvent): void => {
   border-radius: 6px;
   transition: all 0.1s;
 }
-
 .dialog-close:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
-
 .dialog-body {
   padding: 20px;
 }
-
 .folder-pick-area {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 40px 0;
-}
-
-.form-error {
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 8px;
-  color: var(--danger);
-  font-size: 12px;
-}
-
-.search-no-results {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--warning);
-}
-
-.form-group {
-  margin-bottom: 14px;
-}
-
-.form-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
-.form-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.form-label-row .form-label {
-  margin-bottom: 0;
-}
-
-.search-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.search-btn:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.search-btn:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.metadata-hint {
-  margin-top: 4px;
-  font-size: 11px;
-  color: #22c55e;
-}
-
-.form-path {
-  padding: 8px 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  word-break: break-all;
-}
-
-.form-value {
-  font-size: 13px;
-  color: var(--text-primary);
-}
-
-.form-input,
-.form-select {
-  width: 100%;
-  height: 36px;
-  padding: 0 10px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--text-primary);
-  outline: none;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-.form-input:focus,
-.form-select:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.form-select {
-  cursor: pointer;
-}
-
-.form-textarea {
-  width: 100%;
-  padding: 8px 10px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--text-primary);
-  outline: none;
-  resize: vertical;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-.form-textarea:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.form-warning {
-  font-size: 12px;
-  color: var(--warning);
-}
-
-.exe-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.exe-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-.exe-item:hover {
-  border-color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.04);
-}
-
-.exe-item.selected {
-  border-color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.08);
-}
-
-.exe-radio {
-  accent-color: var(--accent-primary);
-}
-
-.exe-icon {
-  color: var(--text-tertiary);
-  flex-shrink: 0;
-}
-
-.exe-name {
-  font-size: 13px;
-  color: var(--text-primary);
-  word-break: break-all;
-}
-
-.cover-preview-wrap {
-  width: 120px;
-  height: 160px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-}
-
-.cover-preview-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.save-path-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.save-path-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.save-path-text.empty {
-  color: var(--text-tertiary);
-  font-style: italic;
-}
-
-.btn-pick-path {
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-
-.btn-pick-path:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color-light);
-}
-
-.btn-cancel {
-  height: 34px;
-  padding: 0 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-cancel:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.text-danger {
-  color: var(--danger);
-}
-
-.spin {
-  animation: spin 0.8s linear infinite;
 }
 </style>
