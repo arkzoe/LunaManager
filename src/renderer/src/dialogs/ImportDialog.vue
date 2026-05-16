@@ -2,6 +2,8 @@
 import { ref, watch } from 'vue'
 import type { ScanResult, GameRecord, SearchResult } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import { useTokenCache } from '../composables/useTokenCache'
+import { fillGameFromDetail } from '../composables/useMetadata'
 import GameMetadataForm from '../shared/GameMetadataForm.vue'
 import type { MetadataForm } from '../shared/GameMetadataForm.vue'
 import SearchResultPicker from '../shared/SearchResultPicker.vue'
@@ -24,9 +26,7 @@ const searchSource = ref<'vndb' | 'bangumi'>('vndb')
 const metadataFilled = ref(false)
 const searchNoResults = ref(false)
 
-// Token cache
-let cachedSource: 'vndb' | 'bangumi' | null = null
-let cachedToken: string | null = null
+const { ensureTokenCache, invalidateTokenCache } = useTokenCache()
 
 // Form fields (driven by GameMetadataForm via v-model)
 const form = ref<MetadataForm>({
@@ -47,30 +47,12 @@ const coverUrl = ref('')
 const vndbId = ref('')
 const bangumiId = ref('')
 
-const invalidateTokenCache = (): void => {
-  cachedSource = null
-  cachedToken = null
-}
-
 watch(
   () => form.value.title,
   () => {
     searchNoResults.value = false
   }
 )
-
-const ensureTokenCache = async (): Promise<{
-  source: 'vndb' | 'bangumi'
-  token: string | null
-}> => {
-  if (cachedSource === null) cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
-  if (cachedToken === null)
-    cachedToken =
-      cachedSource === 'bangumi'
-        ? await window.api.getConfig('bangumiToken')
-        : await window.api.getConfig('vndbApiKey')
-  return { source: cachedSource, token: cachedToken }
-}
 
 const handlePickFolder = async (): Promise<void> => {
   invalidateTokenCache()
@@ -143,17 +125,8 @@ const applySearchResult = async (result: SearchResult): Promise<void> => {
         token || undefined,
         undefined
       )
-      if (detail.title) form.value.title = detail.title_cn || detail.title || form.value.title
-      if (detail.title_cn) form.value.titleCn = detail.title_cn
+      fillGameFromDetail(detail, form.value)
       if (detail.cover) coverUrl.value = detail.cover
-      if (detail.developer) form.value.developer = detail.developer
-      if (detail.publisher) form.value.publisher = detail.publisher
-      if (detail.release_date) form.value.releaseDate = detail.release_date
-      if (detail.description) form.value.description = detail.description
-      if (detail.rating) {
-        /* rating is stored in ImportDialog for game creation */
-      }
-      if (detail.custom_tags) form.value.customTags = detail.custom_tags
       if (detail.vndb_id) vndbId.value = detail.vndb_id
       if (detail.bangumi_id) bangumiId.value = detail.bangumi_id
       metadataFilled.value = true

@@ -2,9 +2,15 @@ import { computed, type Ref } from 'vue'
 import type { PlaySession } from '../../../shared/types'
 import type { TooltipItem } from 'chart.js'
 
+function hexToRgba(hex: string, alpha: number): string {
+  const v = parseInt(hex.replace('#', ''), 16)
+  return `rgba(${(v >> 16) & 255}, ${(v >> 8) & 255}, ${v & 255}, ${alpha})`
+}
+
 export function useStatsChart(
   allSessions: Ref<PlaySession[]>,
-  timeRange: Ref<'week' | 'month' | 'year' | 'all'>
+  timeRange: Ref<'week' | 'month' | 'year' | 'all'>,
+  accentColor?: Ref<string>
 ) {
   const CUTOFFS: Record<string, number> = {
     week: 7 * 24 * 60 * 60 * 1000,
@@ -54,17 +60,19 @@ export function useStatsChart(
       values.push(Math.round(((grouped.get(keys[i]) || 0) / 3600000) * 10) / 10)
     }
 
+    const ac = accentColor?.value ?? '#3b82f6'
+
     return {
       labels,
       datasets: [{
         label: '游玩时长 (小时)',
         data: values,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+        borderColor: ac,
+        backgroundColor: hexToRgba(ac, 0.08),
         fill: true,
         tension: 0.3,
         pointRadius: 4,
-        pointBackgroundColor: '#3b82f6'
+        pointBackgroundColor: ac
       }]
     }
   })

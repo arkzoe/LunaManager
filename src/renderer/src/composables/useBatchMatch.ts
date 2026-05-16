@@ -1,5 +1,7 @@
 import { ref, computed, type Ref } from 'vue'
 import type { SearchResult, ImportRowState } from '../../../shared/types'
+import { useTokenCache } from './useTokenCache'
+import { fillGameFromDetail } from './useMetadata'
 
 export interface UseBatchMatchReturn {
   searchingRow: Ref<string>
@@ -22,29 +24,7 @@ export function useBatchMatch(
   rows: Ref<ImportRowState[]>,
   error: Ref<string>
 ): UseBatchMatchReturn {
-  let cachedSource: 'vndb' | 'bangumi' | null = null
-  let cachedToken: string | null = null
-
-  const invalidateTokenCache = (): void => {
-    cachedSource = null
-    cachedToken = null
-  }
-
-  const ensureTokenCache = async (): Promise<{
-    source: 'vndb' | 'bangumi'
-    token: string | null
-  }> => {
-    if (cachedSource === null) {
-      cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
-    }
-    if (cachedToken === null) {
-      cachedToken =
-        cachedSource === 'bangumi'
-          ? await window.api.getConfig('bangumiToken')
-          : await window.api.getConfig('vndbApiKey')
-    }
-    return { source: cachedSource, token: cachedToken }
-  }
+  const { ensureTokenCache, invalidateTokenCache } = useTokenCache()
 
   const searchingRow = ref('')
   const searchSource = ref<'vndb' | 'bangumi'>('vndb')
@@ -84,7 +64,7 @@ export function useBatchMatch(
     searchSource.value = result.source
 
     if (result.id) {
-      const token =
+      const fetchToken =
         result.source === 'bangumi'
           ? await window.api.getConfig('bangumiToken')
           : await window.api.getConfig('vndbApiKey')
@@ -92,18 +72,10 @@ export function useBatchMatch(
         const detail = await window.api.fetchMetadataDetail(
           result.id,
           result.source,
-          token || undefined,
+          fetchToken || undefined,
           undefined
         )
-        if (detail.developer) row.developer = detail.developer
-        if (detail.publisher) row.publisher = detail.publisher
-        if (detail.release_date) row.releaseDate = detail.release_date
-        if (detail.rating) row.rating = detail.rating
-        if (detail.title) row.title = detail.title_cn || detail.title || row.title
-        if (detail.title_cn) row.title = detail.title_cn || row.title
-        if (detail.description) row.description = detail.description
-        if (detail.custom_tags) row.customTags = detail.custom_tags
-        if (detail.cover) row.cover = detail.cover
+        fillGameFromDetail(detail, row)
       } catch (err) {
         console.error('获取元数据详情失败:', err)
       }
@@ -163,15 +135,7 @@ export function useBatchMatch(
                   token || undefined,
                   undefined
                 )
-                if (detail.developer) row.developer = detail.developer
-                if (detail.publisher) row.publisher = detail.publisher
-                if (detail.release_date) row.releaseDate = detail.release_date
-                if (detail.rating) row.rating = detail.rating
-                if (detail.title) row.title = detail.title_cn || detail.title || row.title
-                if (detail.title_cn) row.title = detail.title_cn || row.title
-                if (detail.description) row.description = detail.description
-                if (detail.custom_tags) row.customTags = detail.custom_tags
-                if (detail.cover) row.cover = detail.cover
+                fillGameFromDetail(detail, row)
               } catch {
                 matchFailedCount++
               }

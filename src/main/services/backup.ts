@@ -1,20 +1,9 @@
 import archiver from 'archiver'
 import fs from 'fs'
 import path from 'path'
-import { app } from 'electron'
 import { snapshotOps, gameOps } from '../database'
 import { getDatabase } from '../database/init'
-
-function getDataDir(): string {
-  const basePath = app.isPackaged
-    ? path.join(app.getAppPath(), '..', '..')
-    : process.cwd()
-  return path.join(basePath, 'data')
-}
-
-function getSnapshotDir(gameId: string): string {
-  return path.join(getDataDir(), 'snapshots', gameId)
-}
+import { getSnapshotDir } from '../config/paths'
 
 export async function backupSave(gameId: string, savePath: string): Promise<string> {
   if (!savePath || !fs.existsSync(savePath)) {
@@ -111,12 +100,6 @@ export async function restoreSave(snapshotId: string): Promise<void> {
       reject(new Error('解压失败'))
     })
   })
-}
-
-export function deleteSnapshotFiles(snapshotPath: string): void {
-  if (snapshotPath && fs.existsSync(snapshotPath)) {
-    fs.unlinkSync(snapshotPath)
-  }
 }
 
 export function getSnapshotDirPath(gameId: string): string {

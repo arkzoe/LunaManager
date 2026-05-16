@@ -1,21 +1,12 @@
 import StoreModule from 'electron-store'
 import type { Options, default as ElectronStoreType } from 'electron-store'
-import { app } from 'electron'
-import { join } from 'path'
+import { getDataDir } from './paths'
 
 // electron-store 在 ESM/CJS 混合环境下的兼容处理
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Store = ((StoreModule as any).default || StoreModule) as typeof ElectronStoreType
 
-// 获取配置文件的存储路径（项目目录下的 data 文件夹）
-const getConfigPath = (): string => {
-  // 在生产环境中使用应用程序所在目录
-  // 在开发环境中使用项目根目录
-  const basePath = app.isPackaged
-    ? join(app.getAppPath(), '..', '..')
-    : join(process.cwd())
-  return join(basePath, 'data')
-}
+const getConfigPath = (): string => getDataDir()
 
 export interface AppConfig {
   // 窗口设置
@@ -127,7 +118,3 @@ export const setAllConfig = (config: Partial<AppConfig>): void => {
   }
 }
 
-export const resetConfig = (): void => {
-  configStore.clear()
-  configStore.set(defaultConfig)
-}

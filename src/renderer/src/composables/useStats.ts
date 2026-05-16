@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { shallowRef, ref, computed, onUnmounted } from 'vue'
 import type { PlaySession } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import { formatPlaytime } from '../utils/format'
@@ -27,9 +27,9 @@ export interface LibraryStats {
 export function useStats() {
   const store = useGameStore()
 
-  const allStats = ref<AggregatedStat[]>([])
+  const allStats = shallowRef<AggregatedStat[]>([])
   const totalSessionCount = ref(0)
-  const allSessions = ref<PlaySession[]>([])
+  const allSessions = shallowRef<PlaySession[]>([])
 
   const libraryStats = computed<LibraryStats>(() => {
     const totalGames = store.allGames.length
@@ -70,16 +70,18 @@ export function useStats() {
 
   const topGame = computed(() => rankings.value[0])
 
+  let unmounted = false
+  onUnmounted(() => { unmounted = true })
   const loadStats = async (): Promise<void> => {
     if (store.games.length === 0) await store.loadGames()
-    const [stats, count, sessions] = await Promise.all([
-      window.api.getAllAggregatedStats(),
-      window.api.getTotalSessionCount(),
-      window.api.getAllSessions()
-    ])
-    allStats.value = stats
-    totalSessionCount.value = count
+    if (unmounted) return
+    const sessions = await window.api.getAllSessions()
+    if (unmounted) return
     allSessions.value = sessions
+    totalSessionCount.value = sessions.length
+    const stats = await window.api.getAllAggregatedStats()
+    if (unmounted) return
+    allStats.value = stats
   }
 
   return { allStats, totalSessionCount, allSessions, libraryStats, rankings, topGame, loadStats }

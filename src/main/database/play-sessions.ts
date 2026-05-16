@@ -32,10 +32,10 @@ export const sessionOps = {
       .all(gameId) as PlaySession[]
   },
 
-  getAll: (): PlaySession[] => {
+  getAll: (limit = 5000): PlaySession[] => {
     return getDatabase()
-      .prepare('SELECT * FROM play_sessions ORDER BY start_time ASC')
-      .all() as PlaySession[]
+      .prepare('SELECT * FROM play_sessions ORDER BY start_time ASC LIMIT ?')
+      .all(limit) as PlaySession[]
   },
 
   getRecent: (limit = 10): PlaySession[] => {

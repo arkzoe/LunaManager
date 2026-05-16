@@ -1,11 +1,9 @@
-import { writeFileSync, mkdirSync, unlinkSync, existsSync } from 'fs'
+import { writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join, basename } from 'path'
-import { app } from 'electron'
+import { getCoverDir as getSharedCoverDir } from '../config/paths'
 
 export function getCoverDir(): string {
-  const dir = app.isPackaged
-    ? join(app.getPath('userData'), 'covers')
-    : join(process.cwd(), 'data', 'covers')
+  const dir = getSharedCoverDir()
   if (!existsSync(dir)) {
     try { mkdirSync(dir, { recursive: true }) } catch { /* ok */ }
   }
@@ -29,16 +27,6 @@ export async function downloadCover(
   } catch {
     return null
   }
-}
-
-export function deleteCover(coverUrl: string): void {
-  try {
-    const filename = basename(coverUrl.replace('cover://', ''))
-    const path = join(getCoverDir(), filename)
-    if (existsSync(path)) {
-      unlinkSync(path)
-    }
-  } catch { /* ok */ }
 }
 
 /** 根据 cover:// URL 获取本地文件绝对路径 */

@@ -1,5 +1,10 @@
 import { ref, watch } from 'vue'
 
+type SettingKey = 'autoStart' | 'autoUpdate' | 'downloadPath' | 'language' |
+  'vndbApiKey' | 'bangumiToken' | 'lePath' | 'magpiePath' | 'magpieScale' |
+  'autoBackup' | 'backupDir' | 'backupFrequency' | 'backupMaxCopies' |
+  'showGameCover' | 'trackPlaytime' | 'recordHistory' | 'autoSyncMetadata' | 'metadataSource'
+
 export function useSettings() {
   const autoStart = ref(false)
   const autoUpdate = ref(true)
@@ -45,37 +50,35 @@ export function useSettings() {
   }
 
   const setupPersistence = (): void => {
-    let saving = false
-    watch(
-      [autoStart, autoUpdate, downloadPath, language,
-        vndbApiKey, bangumiToken, lePath, magpiePath, magpieScale,
-        autoBackup, backupDir, backupFrequency, backupMaxCopies,
-        showGameCover, trackPlaytime, recordHistory, autoSyncMetadata, metadataSource],
-      () => {
-        if (saving) return
-        saving = true
-        Promise.all([
-          window.api.setConfig('autoStart' as const, autoStart.value),
-          window.api.setConfig('autoUpdate' as const, autoUpdate.value),
-          window.api.setConfig('downloadPath' as const, downloadPath.value),
-          window.api.setConfig('language' as const, language.value),
-          window.api.setConfig('vndbApiKey' as const, vndbApiKey.value),
-          window.api.setConfig('bangumiToken' as const, bangumiToken.value),
-          window.api.setConfig('lePath' as const, lePath.value),
-          window.api.setConfig('magpiePath' as const, magpiePath.value),
-          window.api.setConfig('magpieScale' as const, magpieScale.value),
-          window.api.setConfig('autoBackup' as const, autoBackup.value),
-          window.api.setConfig('backupDir' as const, backupDir.value),
-          window.api.setConfig('backupFrequency' as const, backupFrequency.value),
-          window.api.setConfig('backupMaxCopies' as const, backupMaxCopies.value),
-          window.api.setConfig('showGameCover' as const, showGameCover.value),
-          window.api.setConfig('trackPlaytime' as const, trackPlaytime.value),
-          window.api.setConfig('recordHistory' as const, recordHistory.value),
-          window.api.setConfig('autoSyncMetadata' as const, autoSyncMetadata.value),
-          window.api.setConfig('metadataSource' as const, metadataSource.value)
-        ]).finally(() => { saving = false })
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const dirty = new Set<SettingKey>()
+    const allRefs = [
+      autoStart, autoUpdate, downloadPath, language,
+      vndbApiKey, bangumiToken, lePath, magpiePath, magpieScale,
+      autoBackup, backupDir, backupFrequency, backupMaxCopies,
+      showGameCover, trackPlaytime, recordHistory, autoSyncMetadata, metadataSource
+    ] as const
+    const keyList: SettingKey[] = [
+      'autoStart', 'autoUpdate', 'downloadPath', 'language',
+      'vndbApiKey', 'bangumiToken', 'lePath', 'magpiePath', 'magpieScale',
+      'autoBackup', 'backupDir', 'backupFrequency', 'backupMaxCopies',
+      'showGameCover', 'trackPlaytime', 'recordHistory', 'autoSyncMetadata', 'metadataSource'
+    ]
+    watch(allRefs, (newVals, oldVals) => {
+      for (let i = 0; i < newVals.length; i++) {
+        if (newVals[i] !== oldVals[i]) dirty.add(keyList[i])
       }
-    )
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        const tasks: Promise<void>[] = []
+        for (const key of dirty) {
+          const idx = keyList.indexOf(key)
+          tasks.push(window.api.setConfig(key, allRefs[idx].value as never))
+        }
+        dirty.clear()
+        Promise.all(tasks)
+      }, 500)
+    })
   }
 
   const handleSelectLEPath = async (): Promise<void> => {

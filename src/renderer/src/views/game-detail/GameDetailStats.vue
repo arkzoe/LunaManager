@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import type { GameRecord, PlaySession } from '../../../../shared/types'
 import { formatPlaytime, formatRelativeTime } from '../../utils/format'
 import { useThemeStore } from '../../stores/useThemeStore'
+import { useStatsChart } from '../../composables/useStatsChart'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,8 +11,7 @@ import {
   PointElement,
   LineElement,
   Tooltip,
-  Filler,
-  type TooltipItem
+  Filler
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
 
@@ -45,104 +45,9 @@ const timeRangeOptions = [
   { id: 'all' as const, label: '总计' }
 ]
 
-function hexToRgba(hex: string, alpha: number): string {
-  const v = parseInt(hex.replace('#', ''), 16)
-  return `rgba(${(v >> 16) & 255}, ${(v >> 8) & 255}, ${v & 255}, ${alpha})`
-}
-
 const accentColor = computed(() => (theme.isDark ? '#60a5fa' : '#3b82f6'))
 
-const chartData = computed(() => {
-  if (sessions.value.length === 0) return null
-
-  const now = Date.now()
-  const cutoff =
-    timeRange.value === 'all'
-      ? 0
-      : timeRange.value === 'week'
-        ? now - 7 * 24 * 60 * 60 * 1000
-        : now - 30 * 24 * 60 * 60 * 1000
-
-  const filtered =
-    timeRange.value === 'all'
-      ? sessions.value
-      : sessions.value.filter((s) => s.start_time >= cutoff)
-
-  if (filtered.length === 0) return null
-
-  type GroupEntry = { total: number; sortKey: number }
-  const grouped = new Map<string, GroupEntry>()
-
-  for (const s of filtered) {
-    if (s.duration <= 0) continue
-    const d = new Date(s.start_time)
-    let key: string
-    let sortKey: number
-    if (timeRange.value === 'all') {
-      key = `${d.getFullYear()}/${d.getMonth() + 1}`
-      sortKey = d.getFullYear() * 12 + d.getMonth()
-    } else {
-      key = `${d.getMonth() + 1}/${d.getDate()}`
-      sortKey = d.getTime()
-    }
-    const prev = grouped.get(key)
-    if (prev) {
-      prev.total += s.duration
-    } else {
-      grouped.set(key, { total: s.duration, sortKey })
-    }
-  }
-
-  const entries = [...grouped.entries()].sort((a, b) => a[1].sortKey - b[1].sortKey)
-  const labels = entries.map(([k]) => k)
-  const values = entries.map(([, v]) => Math.round((v.total / 3600000) * 10) / 10)
-
-  const ac = accentColor.value
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: '游玩时长 (小时)',
-        data: values,
-        borderColor: ac,
-        backgroundColor: hexToRgba(ac, 0.08),
-        fill: true,
-        tension: 0.3,
-        pointRadius: 4,
-        pointBackgroundColor: ac
-      }
-    ]
-  }
-})
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx: TooltipItem<'line'>) => `${ctx.parsed.y ?? 0} 小时`
-      }
-    }
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { font: { size: 11 }, color: '#9ca3af' }
-    },
-    y: {
-      beginAtZero: true,
-      grid: { color: 'rgba(156, 163, 175, 0.1)' },
-      ticks: {
-        font: { size: 11 },
-        color: '#9ca3af',
-        callback: (v: number | string) => `${v}h`
-      }
-    }
-  }
-}
+const { chartData, chartOptions } = useStatsChart(sessions, timeRange, accentColor)
 
 onMounted(async () => {
   try {

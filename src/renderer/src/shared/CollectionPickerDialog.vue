@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-
-interface CollectionItem {
-  id: string
-  name: string
-  gameIds: string[]
-}
+import type { UICollection } from '../composables/useCollections'
 
 const props = withDefaults(
   defineProps<{
@@ -22,19 +17,25 @@ const emit = defineEmits<{
   (e: 'select', collectionId: string): void
 }>()
 
-const collections = ref<CollectionItem[]>([])
+const collections = ref<UICollection[]>([])
 const loading = ref(false)
 
 const loadCollections = async (): Promise<void> => {
   loading.value = true
   try {
-    const dbCols = await window.api.getCollections()
-    const items: CollectionItem[] = []
-    for (const c of dbCols) {
-      const games = await window.api.getCollectionGames(c.id)
-      items.push({ id: c.id, name: c.name, gameIds: games.map((g) => g.id) })
-    }
-    collections.value = items
+    const [dbCols, gamesMap] = await Promise.all([
+      window.api.getCollections(),
+      window.api.getAllCollectionGamesMap()
+    ])
+    collections.value = dbCols.map((c) => ({
+      id: c.id,
+      name: c.name,
+      gameIds: gamesMap[c.id] ?? [],
+      icon: 'folder',
+      iconColor: '#4f46e5',
+      createdAt: c.created_at,
+      updatedAt: c.updated_at
+    }))
   } catch {
     collections.value = []
   } finally {

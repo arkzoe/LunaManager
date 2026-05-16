@@ -83,10 +83,12 @@ export async function safeFetchWithRetry<T>(
   maxRetries = 2,
   delayMs = 1000
 ): Promise<T> {
+  let lastErr: unknown
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await safeFetch(fn)
     } catch (err: unknown) {
+      lastErr = err
       const code =
         err && typeof err === 'object' && 'code' in err
           ? (err as any).code
@@ -98,5 +100,5 @@ export async function safeFetchWithRetry<T>(
       throw err
     }
   }
-  throw new Error('unreachable')
+  throw lastErr
 }

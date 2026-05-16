@@ -56,21 +56,26 @@ export const collectionOps = {
     ).run({ g: gameId, c: collectionId })
   },
 
-  getCollectionGames: (collectionId: string): GameRecord[] => {
+  getCollectionGames: (collectionId: string): Pick<GameRecord, 'id'>[] => {
     return getDatabase().prepare(`
-      SELECT g.* FROM games g
+      SELECT g.id FROM games g
       INNER JOIN game_collections gc ON g.id = gc.game_id
       WHERE gc.collection_id = ?
       ORDER BY g.title ASC
-    `).all(collectionId) as GameRecord[]
+    `).all(collectionId) as Pick<GameRecord, 'id'>[]
   },
 
-  getAllSorted: (sortBy: string, sortDir: 'asc' | 'desc'): Collection[] => {
-    const allowed = new Set(['name', 'created_at', 'updated_at', 'sort_order'])
-    const col = allowed.has(sortBy) ? sortBy : 'sort_order'
-    const dir = sortDir === 'desc' ? 'DESC' : 'ASC'
-    return getDatabase().prepare(
-      `SELECT * FROM collections ORDER BY ${col} ${dir}`
-    ).all() as Collection[]
-  }
+  getAllCollectionGamesMap: (): Record<string, string[]> => {
+    const rows = getDatabase().prepare(`
+      SELECT gc.collection_id, g.id AS game_id FROM game_collections gc
+      INNER JOIN games g ON g.id = gc.game_id
+      ORDER BY g.title ASC
+    `).all() as { collection_id: string; game_id: string }[]
+    const map: Record<string, string[]> = {}
+    for (const r of rows) {
+      if (!map[r.collection_id]) map[r.collection_id] = []
+      map[r.collection_id].push(r.game_id)
+    }
+    return map
+  },
 }

@@ -68,9 +68,9 @@ export const gameOps = {
     ).all() as GameRecord[]
   },
 
-  getByExecutablePath: (path: string): GameRecord | undefined => {
+  getByExecutablePath: (path: string): Pick<GameRecord, 'id' | 'executable_path'> | undefined => {
     return getDatabase().prepare(
-      'SELECT * FROM games WHERE executable_path = ?'
-    ).get(path) as GameRecord | undefined
+      'SELECT id, executable_path FROM games WHERE executable_path = ?'
+    ).get(path) as Pick<GameRecord, 'id' | 'executable_path'> | undefined
   }
 }

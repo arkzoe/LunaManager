@@ -129,6 +129,7 @@ function setupIpcHandlers(): void {
     collectionOps.getCollectionGames(colId)
   )
   ipcMain.handle('col:reorder', (_, ids: string[]) => collectionOps.reorder(ids))
+  ipcMain.handle('col:getAllCollectionGamesMap', () => collectionOps.getAllCollectionGamesMap())
 
   // ===== Save Snapshots =====
   ipcMain.handle('snap:getByGame', (_, gameId: string) => snapshotOps.getByGameId(gameId))

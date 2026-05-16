@@ -36,6 +36,7 @@ const api: IElectronAPI = {
   removeGameFromCollection: (gameId, colId) => ipcRenderer.invoke('col:removeGame', gameId, colId),
   getCollectionGames: (colId) => ipcRenderer.invoke('col:getCollectionGames', colId),
   reorderCollections: (ids) => ipcRenderer.invoke('col:reorder', ids),
+  getAllCollectionGamesMap: () => ipcRenderer.invoke('col:getAllCollectionGamesMap'),
 
   getSnapshots: (gameId) => ipcRenderer.invoke('snap:getByGame', gameId),
   createSnapshot: (gameId, notes) => ipcRenderer.invoke('snap:create', gameId, notes),

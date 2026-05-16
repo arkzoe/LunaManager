@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import type { GameRecord } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import { useToast } from '../composables/useToast'
 import { useCollections } from '../composables/useCollections'
 import type { UICollection } from '../composables/useCollections'
 import CollectionsListView from './favorites/CollectionsListView.vue'
@@ -55,20 +56,34 @@ const gameSelectedIds = ref<string[]>([])
 const showGameBatchRemoveConfirm = ref(false)
 
 // Toast
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error'>('success')
-const showToast = ref(false)
+const {
+  show: showToast,
+  message: toastMessage,
+  type: toastType,
+  showToast: showToastMsg
+} = useToast()
 
 // Data loading
+let unmounted = false
+onUnmounted(() => {
+  unmounted = true
+})
 const loadCollectionGames = async (): Promise<void> => {
+  if (unmounted) return
+  const gamesMap = await window.api.getAllCollectionGamesMap()
+  if (unmounted) return
   for (const col of collections.value) {
-    const games = await window.api.getCollectionGames(col.id)
-    collectionGames.value.set(col.id, games)
-    col.gameIds = games.map((g) => g.id)
+    const gameIds = gamesMap[col.id] ?? []
+    col.gameIds = gameIds
+    collectionGames.value.set(
+      col.id,
+      gameIds.map((id) => ({ id }) as GameRecord)
+    )
   }
 }
 onMounted(async () => {
   await loadCollections()
+  if (unmounted) return
   await loadCollectionGames()
 })
 
@@ -343,11 +358,6 @@ const handleCloseModal = (): void => {
   modalMode.value = null
   editingCollection.value = null
   selectedGameForMove.value = null
-}
-const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): void => {
-  toastMessage.value = message
-  toastType.value = type
-  showToast.value = true
 }
 </script>
 

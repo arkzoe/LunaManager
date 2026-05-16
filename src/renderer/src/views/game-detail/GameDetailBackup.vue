@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { GameRecord, SaveSnapshot } from '../../../../shared/types'
 import { formatDate, formatFileSize } from '../../utils/format'
 import { useGameStore } from '../../stores/useGameStore'
@@ -12,8 +12,13 @@ const backingUp = ref(false)
 const restoring = ref<string | null>(null)
 const error = ref('')
 
+let _unmounted = false
+onUnmounted(() => {
+  _unmounted = true
+})
 async function loadSnapshots(): Promise<void> {
-  snapshots.value = await window.api.getSnapshots(props.game.id)
+  const data = await window.api.getSnapshots(props.game.id)
+  if (!_unmounted) snapshots.value = data
 }
 
 async function handleSelectFolder(): Promise<void> {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import type { GameRecord } from '../../../shared/types'
 
 const props = defineProps<{ game: GameRecord; selected?: boolean }>()
@@ -19,12 +19,17 @@ const checkCached = (): void => {
   }
 }
 
+let rafId: number | null = null
+
 onMounted(checkCached)
+onUnmounted(() => {
+  if (rafId) cancelAnimationFrame(rafId)
+})
 watch(
   () => props.game.cover,
   () => {
     imageLoaded.value = false
-    requestAnimationFrame(checkCached)
+    rafId = requestAnimationFrame(checkCached)
   }
 )
 </script>

@@ -64,29 +64,30 @@ const overview = computed(() => {
   return { totalGames: total, totalHours, monthlyHours: 0, avgPerDay }
 })
 
-const homeData = computed(() => {
-  const all = store.allGames
-  const withPlayed = all.filter((g) => g.last_played)
-  const sortedByPlayed = [...withPlayed].sort((a, b) =>
-    (b.last_played || '').localeCompare(a.last_played || '')
-  )
-  const sortedByAdded = [...all].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+const withPlayed = computed(() => store.allGames.filter((g) => g.last_played))
 
-  return {
-    recentGames: sortedByPlayed.slice(0, 10),
-    recentAdded: sortedByAdded.slice(0, 10),
-    playedActs: sortedByPlayed.slice(0, 5).map((g) => ({
-      type: 'played' as const,
-      game: g,
-      time: formatRelativeTime(g.last_played || '')
-    })),
-    addedActs: sortedByAdded.slice(0, 5).map((g) => ({
-      type: 'added' as const,
-      game: g,
-      time: formatRelativeTime(g.created_at)
-    }))
-  }
-})
+const sortedByPlayed = computed(() =>
+  [...withPlayed.value].sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
+)
+
+const sortedByAdded = computed(() =>
+  [...store.allGames].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+)
+
+const homeData = computed(() => ({
+  recentGames: sortedByPlayed.value.slice(0, 10),
+  recentAdded: sortedByAdded.value.slice(0, 10),
+  playedActs: sortedByPlayed.value.slice(0, 5).map((g) => ({
+    type: 'played' as const,
+    game: g,
+    time: formatRelativeTime(g.last_played || '')
+  })),
+  addedActs: sortedByAdded.value.slice(0, 5).map((g) => ({
+    type: 'added' as const,
+    game: g,
+    time: formatRelativeTime(g.created_at)
+  }))
+}))
 </script>
 
 <template>

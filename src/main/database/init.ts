@@ -1,14 +1,6 @@
 import Database from 'better-sqlite3'
-import { app } from 'electron'
-import { join } from 'path'
+import { getDbPath } from '../config/paths'
 import { getConfig } from '../config/store'
-
-const getDbPath = (): string => {
-  const base = app.isPackaged
-    ? join(app.getAppPath(), '..', '..')
-    : join(process.cwd())
-  return join(base, 'data', 'lunamanager.db')
-}
 
 let db: Database.Database | null = null
 

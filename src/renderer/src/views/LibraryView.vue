@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
+import { useToast } from '../composables/useToast'
+import type { UICollection } from '../composables/useCollections'
 import ImportDialog from '../dialogs/ImportDialog.vue'
 import BatchImportDialog from '../dialogs/BatchImportDialog.vue'
 import ToastNotification from '../shared/ToastNotification.vue'
@@ -64,33 +66,30 @@ const showBatchStatusMenu = ref(false)
 const showCollectionPicker = ref(false)
 const showDeleteConfirm = ref(false)
 
-// Toast 通知
-const showToast = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error'>('success')
-const showToastMsg = (msg: string, type: 'success' | 'error'): void => {
-  toastMessage.value = msg
-  toastType.value = type
-  showToast.value = true
-}
+const {
+  show: showToast,
+  message: toastMessage,
+  type: toastType,
+  showToast: showToastMsg
+} = useToast()
 
-interface CollectionItem {
-  id: string
-  name: string
-  gameIds: string[]
-}
-
-const collections = ref<CollectionItem[]>([])
+const collections = ref<UICollection[]>([])
 
 const loadCollections = async (): Promise<void> => {
   try {
-    const dbCols = await window.api.getCollections()
-    const items: CollectionItem[] = []
-    for (const c of dbCols) {
-      const games = await window.api.getCollectionGames(c.id)
-      items.push({ id: c.id, name: c.name, gameIds: games.map((g) => g.id) })
-    }
-    collections.value = items
+    const [dbCols, gamesMap] = await Promise.all([
+      window.api.getCollections(),
+      window.api.getAllCollectionGamesMap()
+    ])
+    collections.value = dbCols.map((c) => ({
+      id: c.id,
+      name: c.name,
+      icon: 'folder',
+      iconColor: '#4f46e5',
+      gameIds: gamesMap[c.id] ?? [],
+      createdAt: c.created_at,
+      updatedAt: c.updated_at
+    }))
   } catch {
     collections.value = []
   }
@@ -506,6 +505,7 @@ const handleBatchImported = (result: ImportResult): void => {
       :type="toastType"
       @close="showToast = false"
     />
+    <!-- useToast hideToast unused by design: ToastNotification handles close via @close -->
   </div>
 </template>
 

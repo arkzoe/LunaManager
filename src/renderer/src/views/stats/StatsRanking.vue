@@ -40,7 +40,6 @@ const emit = defineEmits<{
     </div>
     <div v-if="topGame" class="rankings">
       <div class="rank-left">
-        <!-- <div class="rl-badge">#1</div> -->
         <div class="rl-cover">
           <img
             v-if="topGame.cover"

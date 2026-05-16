@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import type { GameRecord } from '../../../../shared/types'
 import SelectDropdown from '../../shared/SelectDropdown.vue'
+import TagEditor from '../../shared/TagEditor.vue'
 
 const props = defineProps<{
   game: GameRecord
@@ -37,17 +38,6 @@ const emit = defineEmits<{
   (e: 'deleteGame'): void
 }>()
 
-const tagInput = ref('')
-
-const parsedTags = computed<string[]>(() => {
-  try {
-    const arr = JSON.parse(props.tempTags || '[]')
-    return Array.isArray(arr) ? arr : []
-  } catch {
-    return []
-  }
-})
-
 const hasChanges = computed(() => {
   return (
     props.tempTitle !== (props.game.title || '') ||
@@ -66,29 +56,6 @@ const hasChanges = computed(() => {
     })()
   )
 })
-
-const addTag = (): void => {
-  const val = tagInput.value.trim()
-  if (!val) return
-  const tags = [...parsedTags.value]
-  if (!tags.includes(val)) {
-    tags.push(val)
-    emit('update:tempTags', JSON.stringify(tags))
-  }
-  tagInput.value = ''
-}
-
-const removeTag = (tag: string): void => {
-  const tags = parsedTags.value.filter((t) => t !== tag)
-  emit('update:tempTags', JSON.stringify(tags))
-}
-
-const handleTagKeydown = (e: KeyboardEvent): void => {
-  if (e.key === 'Enter') {
-    e.preventDefault()
-    addTag()
-  }
-}
 
 const pickExecutable = async (): Promise<void> => {
   const path = await window.api.pickFile([{ name: 'Executable', extensions: ['exe'] }])
@@ -176,31 +143,7 @@ const onSourceChange = (val: string): void => {
         />
       </div>
 
-      <!-- 标签 -->
-      <div class="form-section-label">标签</div>
-      <div class="tag-area">
-        <div class="tag-chips">
-          <span v-for="tag in parsedTags" :key="tag" class="tag-chip">
-            {{ tag }}
-            <button class="tag-x" @click="removeTag(tag)">
-              <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current">
-                <path
-                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                />
-              </svg>
-            </button>
-          </span>
-        </div>
-        <div class="tag-input-row">
-          <input
-            v-model="tagInput"
-            type="text"
-            class="form-input"
-            placeholder="输入标签后回车添加..."
-            @keydown="handleTagKeydown"
-          />
-        </div>
-      </div>
+      <TagEditor :model-value="tempTags" @update:model-value="emit('update:tempTags', $event)" />
 
       <!-- 数据源 -->
       <div class="form-section-label">元数据</div>
@@ -360,55 +303,6 @@ const onSourceChange = (val: string): void => {
 }
 
 /* Tag chips */
-.tag-area {
-  margin-bottom: 16px;
-}
-
-.tag-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px 4px 12px;
-  font-size: 12px;
-  color: var(--accent-primary);
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  border-radius: 20px;
-  line-height: 1.5;
-}
-
-.tag-x {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border: none;
-  background: transparent;
-  color: var(--accent-primary);
-  cursor: pointer;
-  border-radius: 50%;
-  padding: 0;
-  transition: all 0.15s;
-}
-
-.tag-x:hover {
-  background: #ef4444;
-  color: white;
-}
-
-.tag-input-row {
-  display: flex;
-  gap: 8px;
-}
-
 /* Actions */
 .form-actions {
   display: flex;

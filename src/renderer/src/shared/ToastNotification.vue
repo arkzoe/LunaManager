@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 defineProps<{
   message: string
@@ -9,14 +9,20 @@ defineProps<{
 const emit = defineEmits<{ (e: 'close'): void }>()
 const closing = ref(false)
 
+let timer: ReturnType<typeof setTimeout> | null = null
+
 const onAnimationEnd = (): void => {
   if (closing.value) emit('close')
 }
 
 onMounted(() => {
-  setTimeout(() => {
+  timer = setTimeout(() => {
     closing.value = true
   }, 1500)
+})
+
+onUnmounted(() => {
+  if (timer) clearTimeout(timer)
 })
 </script>
 

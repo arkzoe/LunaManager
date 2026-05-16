@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { GameRecord, GameStatus, LaunchMode } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import { useToast } from '../composables/useToast'
 import ToastNotification from '../shared/ToastNotification.vue'
 import ConfirmDialog from '../shared/ConfirmDialog.vue'
 import GameDetailHero from './game-detail/GameDetailHero.vue'
@@ -37,15 +38,12 @@ const fetching = ref(false)
 const showDeleteConfirm = ref(false)
 
 // Toast
-const showToast = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error'>('success')
-
-const showToastMsg = (msg: string, type: 'success' | 'error'): void => {
-  toastMessage.value = msg
-  toastType.value = type
-  showToast.value = true
-}
+const {
+  show: showToast,
+  message: toastMessage,
+  type: toastType,
+  showToast: showToastMsg
+} = useToast()
 
 const tabs = [
   { id: 'stats' as const, label: '游玩统计', icon: 'chart' },
@@ -191,9 +189,15 @@ const handleDeleteGame = async (): Promise<void> => {
   }
 }
 
+let unmounted = false
+onUnmounted(() => {
+  unmounted = true
+})
 onMounted(async () => {
   try {
-    isRunning.value = await window.api.isGameRunning(props.game.id)
+    const running = await window.api.isGameRunning(props.game.id)
+    if (unmounted) return
+    isRunning.value = running
   } catch {
     /* ignore */
   }
@@ -250,6 +254,7 @@ const iconPaths: Record<string, string> = {
       :type="toastType"
       @close="showToast = false"
     />
+    <!-- hideToast unused by design -->
 
     <div key="tab-body" class="tab-body">
       <GameDetailStats v-if="activeTab === 'stats'" :game="game" />

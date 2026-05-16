@@ -208,6 +208,7 @@ export interface IElectronAPI {
   removeGameFromCollection: (gameId: string, collectionId: string) => Promise<void>
   getCollectionGames: (collectionId: string) => Promise<GameRecord[]>
   reorderCollections: (ids: string[]) => Promise<void>
+  getAllCollectionGamesMap: () => Promise<Record<string, string[]>>
 
   getSnapshots: (gameId: string) => Promise<SaveSnapshot[]>
   createSnapshot: (gameId: string, notes?: string) => Promise<SaveSnapshot>

@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const importBtnRef = ref<HTMLElement | null>(null)
-void importBtnRef.value /* TODO: 用于后续下拉菜单定位 */
+void importBtnRef.value
 </script>
 
 <template>
