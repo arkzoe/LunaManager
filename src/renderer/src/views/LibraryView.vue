@@ -373,9 +373,8 @@ const handleBatchImported = (result: ImportResult): void => {
     />
 
     <!-- 批量操作栏 -->
-    <Transition name="batch">
+    <div class="batch-bar-stage" :class="{ 'batch-open': batchMode }">
       <LibraryBatchBar
-        v-if="batchMode"
         :batch-count="batchCount"
         :all-filtered-selected="allFilteredSelected"
         :status-filters="statusFilters"
@@ -387,7 +386,7 @@ const handleBatchImported = (result: ImportResult): void => {
         @open-delete-confirm="openDeleteConfirm"
         @close-batch-status-menu="closeBatchStatusMenu"
       />
-    </Transition>
+    </div>
 
     <!-- 排序栏 -->
     <div class="sort-bar">
@@ -592,5 +591,19 @@ const handleBatchImported = (result: ImportResult): void => {
   font-size: 13px;
   color: var(--text-tertiary);
   margin: 0;
+}
+
+/* 批量操作栏容器 — 过渡高度避免下方内容弹跳 */
+.batch-bar-stage {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+  pointer-events: none;
+}
+.batch-bar-stage.batch-open {
+  max-height: 500px;
+  opacity: 1;
+  pointer-events: auto;
 }
 </style>

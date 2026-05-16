@@ -62,8 +62,8 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <Transition name="batch">
-      <div v-if="gameBatchMode" class="batch-bar">
+    <div class="batch-bar-stage" :class="{ 'batch-open': gameBatchMode }">
+      <div class="batch-bar">
         <span class="bb-count">已选 {{ gameSelectedIds.length }} 项</span>
         <button class="bb-btn" @click="emit('toggleSelectAllGames')">
           {{ allGamesSelected ? '取消全选' : '全选' }}
@@ -83,7 +83,7 @@ const emit = defineEmits<{
           移动到...
         </button>
       </div>
-    </Transition>
+    </div>
 
     <CollectionGameGrid
       :games="games"
@@ -135,6 +135,19 @@ const emit = defineEmits<{
   border-color: var(--border-color-medium);
 }
 
+.batch-bar-stage {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+  pointer-events: none;
+}
+.batch-bar-stage.batch-open {
+  max-height: 500px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .batch-bar {
   display: flex;
   align-items: center;
@@ -144,12 +157,7 @@ const emit = defineEmits<{
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 10px;
-}
-.batch-enter-active {
-  animation: batch-bar-in 0.3s ease;
-}
-.batch-leave-active {
-  animation: batch-bar-out 0.2s ease forwards;
+  will-change: transform, opacity;
 }
 
 .bb-count {

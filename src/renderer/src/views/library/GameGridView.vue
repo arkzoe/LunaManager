@@ -26,7 +26,7 @@ const emit = defineEmits<{
       @click="emit('selectGame', game)"
       @contextmenu="emit('contextMenu', $event, game)"
     >
-      <label v-if="batchMode" class="grid-check">
+      <label class="grid-check" :class="{ 'cb-hidden': !batchMode }">
         <input
           type="checkbox"
           :checked="selectedIds.has(game.id)"
@@ -85,6 +85,13 @@ const emit = defineEmits<{
   background: rgba(255, 255, 255, 0.9);
   border-radius: 4px;
   cursor: pointer;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.grid-check.cb-hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .grid-cb {

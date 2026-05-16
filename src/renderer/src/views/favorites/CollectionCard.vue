@@ -23,7 +23,7 @@ const emit = defineEmits<{
     :class="{ 'ring-2 ring-brand-500/50': selected }"
     @click="batchMode ? !isDefault && emit('toggleSelect', collection.id) : emit('open')"
   >
-    <div v-if="batchMode" class="flex-shrink-0">
+    <div class="flex-shrink-0 batch-check-wrap" :class="{ 'cb-hidden': !batchMode }">
       <div
         class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer"
         :class="
@@ -59,8 +59,8 @@ const emit = defineEmits<{
       </p>
     </div>
     <div
-      v-if="!batchMode"
-      class="collection-actions flex items-center gap-1 opacity-0 transition-opacity duration-200"
+      class="collection-actions flex items-center gap-1"
+      :class="{ 'cb-hidden': batchMode }"
       @click.stop
     >
       <button v-if="!isDefault" class="action-menu-btn" title="重命名" @click="emit('rename')">
@@ -80,7 +80,19 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.collection-card:hover .collection-actions {
+.batch-check-wrap,
+.collection-actions {
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.batch-check-wrap.cb-hidden,
+.collection-actions.cb-hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.collection-card:hover .collection-actions:not(.cb-hidden) {
   opacity: 1;
 }
 

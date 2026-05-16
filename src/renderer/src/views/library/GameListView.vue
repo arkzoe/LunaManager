@@ -20,8 +20,8 @@ const emit = defineEmits<{
 
 <template>
   <div class="game-list">
-    <div class="list-header" :class="{ 'has-check': batchMode }">
-      <span v-if="batchMode" class="lh-check">
+    <div class="list-header">
+      <span class="lh-check" :class="{ 'cb-hidden': !batchMode }">
         <input
           type="checkbox"
           :checked="allFilteredSelected"
@@ -40,12 +40,12 @@ const emit = defineEmits<{
       v-for="(game, idx) in filteredGames"
       :key="game.id"
       class="list-row"
-      :class="{ 'has-check': batchMode, selected: batchMode && selectedIds.has(game.id) }"
+      :class="{ selected: batchMode && selectedIds.has(game.id) }"
       :style="{ animationDelay: Math.min(idx * 0.03, 0.45) + 's' }"
       @click="emit('selectGame', game)"
       @contextmenu="emit('contextMenu', $event, game)"
     >
-      <div v-if="batchMode" class="lr-check">
+      <div class="lr-check" :class="{ 'cb-hidden': !batchMode }">
         <input
           type="checkbox"
           :checked="selectedIds.has(game.id)"
@@ -84,7 +84,7 @@ const emit = defineEmits<{
 
 .list-header {
   display: grid;
-  grid-template-columns: 44px 2fr 80px 60px 70px 100px;
+  grid-template-columns: 36px 40px 2fr 80px 60px 70px 100px;
   align-items: center;
   padding: 10px 14px;
   font-size: 11px;
@@ -98,7 +98,7 @@ const emit = defineEmits<{
 
 .list-row {
   display: grid;
-  grid-template-columns: 44px 2fr 80px 60px 70px 100px;
+  grid-template-columns: 36px 40px 2fr 80px 60px 70px 100px;
   align-items: center;
   padding: 10px 14px;
   cursor: pointer;
@@ -199,15 +199,19 @@ const emit = defineEmits<{
   align-items: center;
 }
 
+.lh-check,
+.lr-check {
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.lh-check.cb-hidden,
+.lr-check.cb-hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .list-cb {
   accent-color: var(--accent-primary);
-}
-
-.list-header.has-check {
-  grid-template-columns: 36px 40px 2fr 80px 60px 70px 100px;
-}
-
-.list-row.has-check {
-  grid-template-columns: 36px 40px 2fr 80px 60px 70px 100px;
 }
 </style>

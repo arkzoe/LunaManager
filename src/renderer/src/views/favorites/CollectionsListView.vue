@@ -62,7 +62,6 @@ const handleSortSelect = (field: string): void => {
       </div>
       <div class="toolbar-actions">
         <button
-          v-if="batchMode || hasBatchable"
           class="icon-btn"
           :class="{ 'bg-brand-500/10 border-brand-500 text-brand-500': batchMode }"
           title="批量管理"
@@ -110,8 +109,8 @@ const handleSortSelect = (field: string): void => {
       </div>
     </div>
 
-    <Transition name="batch">
-      <div v-if="batchMode" class="batch-bar">
+    <div class="batch-bar-stage" :class="{ 'batch-open': batchMode }">
+      <div class="batch-bar">
         <span class="bb-count">已选 {{ colSelectedIds.size }} 项</span>
         <button class="bb-btn" @click="emit('toggleSelectAllCols')">
           {{ allColsSelected ? '取消全选' : '全选' }}
@@ -124,11 +123,10 @@ const handleSortSelect = (field: string): void => {
           删除选中
         </button>
       </div>
-    </Transition>
+    </div>
 
     <div
       class="flex flex-wrap gap-4 overflow-y-auto overflow-x-hidden pr-2 flex-1 content-start"
-      :class="{ 'mt-3': batchMode }"
     >
       <CollectionCard
         v-for="collection in collections"
@@ -344,12 +342,20 @@ const handleSortSelect = (field: string): void => {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 10px;
+  will-change: transform, opacity;
 }
-.batch-enter-active {
-  animation: batch-bar-in 0.3s ease;
+
+.batch-bar-stage {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+  pointer-events: none;
 }
-.batch-leave-active {
-  animation: batch-bar-out 0.2s ease forwards;
+.batch-bar-stage.batch-open {
+  max-height: 500px;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .bb-count {

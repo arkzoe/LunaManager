@@ -353,46 +353,50 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
 
 <template>
   <div class="h-full flex flex-col">
-    <CollectionsListView
-      v-if="viewMode === 'collections'"
-      :collections="sortedFilteredCollections"
-      :search-query="searchQuery"
-      :batch-mode="batchMode"
-      :col-selected-ids="colSelectedIds"
-      :has-batchable="hasBatchable"
-      :all-cols-selected="allColsSelected"
-      :show-sort-menu="showSortMenu"
-      :sort-field="sortField"
-      :sort-options="sortOptions"
-      @update:search-query="searchQuery = $event"
-      @toggle-batch-mode="toggleBatchMode"
-      @toggle-sort-menu="showSortMenu = !showSortMenu"
-      @sort="handleSort"
-      @toggle-select-all-cols="toggleSelectAllCols"
-      @toggle-col-select="toggleColSelect"
-      @open-col-batch-delete-confirm="showColBatchDeleteConfirm = true"
-      @open-collection="openCollection"
-      @rename-collection="openRenameModal"
-      @delete-collection="openDeleteModal"
-      @create-collection="modalMode = 'create'"
-    />
-    <CollectionGamesView
-      v-else
-      :collection="selectedCollection || null"
-      :games="currentCollectionGames"
-      :collections="collections"
-      :game-batch-mode="gameBatchMode"
-      :game-selected-ids="gameSelectedIds"
-      :all-games-selected="allGamesSelected"
-      @back="backToCollections"
-      @select-game="handleGameCardClick"
-      @toggle-game-batch-mode="toggleGameBatchMode"
-      @toggle-select-all-games="toggleSelectAllGames"
-      @toggle-game-select="toggleGameSelect"
-      @open-game-batch-remove-confirm="showGameBatchRemoveConfirm = true"
-      @open-batch-move-modal="modalMode = 'move'"
-      @move-game="requestMoveGame"
-    />
+    <Transition name="view-fade" mode="out-in">
+      <CollectionsListView
+        v-if="viewMode === 'collections'"
+        key="collections"
+        :collections="sortedFilteredCollections"
+        :search-query="searchQuery"
+        :batch-mode="batchMode"
+        :col-selected-ids="colSelectedIds"
+        :has-batchable="hasBatchable"
+        :all-cols-selected="allColsSelected"
+        :show-sort-menu="showSortMenu"
+        :sort-field="sortField"
+        :sort-options="sortOptions"
+        @update:search-query="searchQuery = $event"
+        @toggle-batch-mode="toggleBatchMode"
+        @toggle-sort-menu="showSortMenu = !showSortMenu"
+        @sort="handleSort"
+        @toggle-select-all-cols="toggleSelectAllCols"
+        @toggle-col-select="toggleColSelect"
+        @open-col-batch-delete-confirm="showColBatchDeleteConfirm = true"
+        @open-collection="openCollection"
+        @rename-collection="openRenameModal"
+        @delete-collection="openDeleteModal"
+        @create-collection="modalMode = 'create'"
+      />
+      <CollectionGamesView
+        v-else
+        key="games"
+        :collection="selectedCollection || null"
+        :games="currentCollectionGames"
+        :collections="collections"
+        :game-batch-mode="gameBatchMode"
+        :game-selected-ids="gameSelectedIds"
+        :all-games-selected="allGamesSelected"
+        @back="backToCollections"
+        @select-game="handleGameCardClick"
+        @toggle-game-batch-mode="toggleGameBatchMode"
+        @toggle-select-all-games="toggleSelectAllGames"
+        @toggle-game-select="toggleGameSelect"
+        @open-game-batch-remove-confirm="showGameBatchRemoveConfirm = true"
+        @open-batch-move-modal="modalMode = 'move'"
+        @move-game="requestMoveGame"
+      />
+    </Transition>
 
     <CollectionFormModal
       :show="modalMode !== null"
@@ -436,5 +440,20 @@ const showToastMsg = (message: string, type: 'success' | 'error' = 'success'): v
 <style scoped>
 .h-full {
   animation: fade-in-up 0.4s ease;
+}
+
+.view-fade-enter-active,
+.view-fade-leave-active {
+  transition: all 0.25s ease;
+}
+
+.view-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.view-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

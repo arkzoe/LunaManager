@@ -72,14 +72,7 @@ const emit = defineEmits<{
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 10px;
-}
-
-.batch-enter-active {
-  animation: batch-bar-in 0.3s ease;
-}
-
-.batch-leave-active {
-  animation: batch-bar-out 0.2s ease forwards;
+  will-change: transform, opacity;
 }
 
 .bb-count {
