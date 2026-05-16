@@ -6,6 +6,7 @@ defineProps<{
 
 const emit = defineEmits<{
   checkUpdate: []
+  openGithub: []
 }>()
 </script>
 
@@ -31,13 +32,7 @@ const emit = defineEmits<{
           <span class="setting-label">LunaManager</span>
           <span class="setting-desc">Built with ❤️</span>
         </div>
-        <a
-          href="https://github.com"
-          target="_blank"
-          class="sbtn sbtn-secondary"
-          style="text-decoration: none"
-          >GitHub</a
-        >
+        <button class="sbtn sbtn-secondary" @click="emit('openGithub')">GitHub</button>
       </div>
     </div>
   </section>
@@ -45,4 +40,10 @@ const emit = defineEmits<{
 
 <style>
 @import './shared.css';
+</style>
+
+<style scoped>
+.setting-row:last-child .sbtn {
+  min-width: 76px;
+}
 </style>

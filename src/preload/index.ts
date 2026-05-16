@@ -62,7 +62,16 @@ const api: IElectronAPI = {
     ipcRenderer.invoke('metadata:search', { query, source, apiKey }),
   fetchMetadataDetail: (sourceId, source, apiKey?, gameId?) =>
     ipcRenderer.invoke('metadata:fetch-detail', { sourceId, source, apiKey, gameId }),
-  downloadCover: (gameId, url) => ipcRenderer.invoke('cover:download', { gameId, url })
+  downloadCover: (gameId, url) => ipcRenderer.invoke('cover:download', { gameId, url }),
+  openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
+  checkForUpdates: () => ipcRenderer.invoke('update:check'),
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  quitAndInstall: () => ipcRenderer.invoke('update:install'),
+  onUpdateStatus: (callback) => {
+    const handler = (_e, status, data) => callback(status, data)
+    ipcRenderer.on('update:status', handler)
+    return () => ipcRenderer.removeListener('update:status', handler)
+  }
 }
 
 if (process.contextIsolated) {

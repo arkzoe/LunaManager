@@ -6,7 +6,6 @@ export interface AppSettings {
   // 基础配置
   autoStart: boolean
   autoUpdate: boolean
-  downloadPath: string
 
   // 元数据设置
   metadataSource: 'vndb' | 'bangumi'
@@ -15,7 +14,6 @@ export interface AppSettings {
   // 外观设置
   language: 'zh-CN' | 'en-US'
   sidebarCollapsed: boolean
-  showGameCover: boolean
 
   // 游玩配置
   trackPlaytime: boolean
@@ -25,12 +23,10 @@ export interface AppSettings {
 const defaultSettings: AppSettings = {
   autoStart: false,
   autoUpdate: true,
-  downloadPath: '',
   metadataSource: 'vndb',
   autoSyncMetadata: true,
   language: 'zh-CN',
   sidebarCollapsed: false,
-  showGameCover: true,
   trackPlaytime: true,
   recordHistory: true
 }
@@ -39,12 +35,10 @@ const defaultSettings: AppSettings = {
 const configKeyMap: Record<keyof AppSettings, keyof AppConfig> = {
   autoStart: 'autoStart',
   autoUpdate: 'autoUpdate',
-  downloadPath: 'downloadPath',
   metadataSource: 'metadataSource',
   autoSyncMetadata: 'autoSyncMetadata',
   language: 'language',
   sidebarCollapsed: 'sidebarCollapsed',
-  showGameCover: 'showGameCover',
   trackPlaytime: 'trackPlaytime',
   recordHistory: 'recordHistory'
 }
@@ -69,12 +63,10 @@ export const useSettingsStore = defineStore('settings', () => {
       settings.value = {
         autoStart: config.autoStart ?? defaultSettings.autoStart,
         autoUpdate: config.autoUpdate ?? defaultSettings.autoUpdate,
-        downloadPath: config.downloadPath ?? defaultSettings.downloadPath,
         metadataSource: config.metadataSource ?? defaultSettings.metadataSource,
         autoSyncMetadata: config.autoSyncMetadata ?? defaultSettings.autoSyncMetadata,
         language: config.language ?? defaultSettings.language,
         sidebarCollapsed: config.sidebarCollapsed ?? defaultSettings.sidebarCollapsed,
-        showGameCover: config.showGameCover ?? defaultSettings.showGameCover,
         trackPlaytime: config.trackPlaytime ?? defaultSettings.trackPlaytime,
         recordHistory: config.recordHistory ?? defaultSettings.recordHistory
       }

@@ -4,8 +4,6 @@ import SelectDropdown from '../../shared/SelectDropdown.vue'
 defineProps<{
   autoStart: boolean
   autoUpdate: boolean
-  downloadPath: string
-  showGameCover: boolean
   trackPlaytime: boolean
   recordHistory: boolean
   language: string
@@ -15,11 +13,9 @@ defineProps<{
 const emit = defineEmits<{
   'update:autoStart': [value: boolean]
   'update:autoUpdate': [value: boolean]
-  'update:showGameCover': [value: boolean]
   'update:trackPlaytime': [value: boolean]
   'update:recordHistory': [value: boolean]
   'update:language': [value: string]
-  selectDownloadPath: []
 }>()
 </script>
 
@@ -57,27 +53,6 @@ const emit = defineEmits<{
       </div>
       <div class="setting-row">
         <div class="setting-info">
-          <span class="setting-label">下载路径</span>
-          <span class="setting-desc">{{ downloadPath || '未设置' }}</span>
-        </div>
-        <button class="sbtn sbtn-secondary" @click="emit('selectDownloadPath')">更改</button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-info">
-          <span class="setting-label">显示游戏封面</span>
-          <span class="setting-desc">在游戏库中显示封面图片</span>
-        </div>
-        <label class="toggle">
-          <input
-            type="checkbox"
-            :checked="showGameCover"
-            @change="emit('update:showGameCover', ($event.target as HTMLInputElement).checked)"
-          />
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row">
-        <div class="setting-info">
           <span class="setting-label">追踪游玩时长</span>
           <span class="setting-desc">记录每次游玩的时长数据</span>
         </div>
@@ -104,20 +79,24 @@ const emit = defineEmits<{
           <span class="toggle-slider"></span>
         </label>
       </div>
-      <div class="setting-row">
+      <div class="setting-row setting-disabled">
         <div class="setting-info">
           <span class="setting-label">语言</span>
           <span class="setting-desc">选择界面显示语言</span>
         </div>
-        <SelectDropdown
-          :model-value="language"
-          :options="[
-            { value: 'zh-CN', label: '简体中文' },
-            { value: 'en-US', label: 'English' }
-          ]"
-          class="sselect"
-          @update:model-value="emit('update:language', $event as string)"
-        />
+        <div class="setting-disabled-wrap">
+          <SelectDropdown
+            :model-value="language"
+            :options="[
+              { value: 'zh-CN', label: '简体中文' },
+              { value: 'en-US', label: 'English' }
+            ]"
+            class="sselect"
+            disabled
+            @update:model-value="emit('update:language', $event as string)"
+          />
+          <span class="coming-soon-badge">即将支持</span>
+        </div>
       </div>
     </div>
   </section>

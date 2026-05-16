@@ -72,9 +72,15 @@ export function useStats() {
 
   let unmounted = false
   onUnmounted(() => { unmounted = true })
-  const loadStats = async (): Promise<void> => {
+  const loadStats = async (recordHistory = true): Promise<void> => {
     if (store.games.length === 0) await store.loadGames()
     if (unmounted) return
+    if (!recordHistory) {
+      allSessions.value = []
+      allStats.value = []
+      totalSessionCount.value = 0
+      return
+    }
     const sessions = await window.api.getAllSessions()
     if (unmounted) return
     allSessions.value = sessions

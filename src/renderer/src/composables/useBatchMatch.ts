@@ -18,6 +18,7 @@ export interface UseBatchMatchReturn {
   handleSearchInputClose: () => void
   handleMatchAll: () => Promise<void>
   handleCancelMatchAll: () => void
+  reset: () => void
 }
 
 export function useBatchMatch(
@@ -169,6 +170,16 @@ export function useBatchMatch(
     error.value = ''
   }
 
+  const reset = (): void => {
+    searchingRow.value = ''
+    showSearchInput.value = false
+    searchInputFolder.value = ''
+    searchInputQuery.value = ''
+    isMatchingAll.value = false
+    matchAllAbortController?.abort()
+    matchAllAbortController = null
+  }
+
   return {
     searchingRow,
     searchSource,
@@ -183,6 +194,7 @@ export function useBatchMatch(
     handleSearchInputSelect,
     handleSearchInputClose,
     handleMatchAll,
-    handleCancelMatchAll
+    handleCancelMatchAll,
+    reset
   }
 }

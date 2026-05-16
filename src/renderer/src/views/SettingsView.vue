@@ -11,18 +11,13 @@ import SettingAbout from './settings/SettingAbout.vue'
 const {
   autoStart,
   autoUpdate,
-  downloadPath,
   language,
   vndbApiKey,
   bangumiToken,
   lePath,
   magpiePath,
   magpieScale,
-  autoBackup,
   backupDir,
-  backupFrequency,
-  backupMaxCopies,
-  showGameCover,
   trackPlaytime,
   recordHistory,
   autoSyncMetadata,
@@ -31,7 +26,6 @@ const {
   setupPersistence,
   handleSelectLEPath,
   handleSelectMagpiePath,
-  handleChangeDownloadPath,
   handleSelectBackupDir
 } = useSettings()
 
@@ -47,6 +41,10 @@ interface TestResult {
 const testResult = ref<TestResult | null>(null)
 
 const handleTestBangumi = async (): Promise<void> => {
+  if (!bangumiToken.value) {
+    await window.api.openExternal('https://next.bgm.tv/demo/access-token/create')
+    return
+  }
   testResult.value = { source: 'bangumi', loading: true }
   try {
     const res = await window.api.testApiConnection('bangumi', bangumiToken.value || undefined)
@@ -62,6 +60,10 @@ const handleTestBangumi = async (): Promise<void> => {
 }
 
 const handleTestVNDB = async (): Promise<void> => {
+  if (!vndbApiKey.value) {
+    await window.api.openExternal('https://vndb.org/u/tokens')
+    return
+  }
   testResult.value = { source: 'vndb', loading: true }
   try {
     const res = await window.api.testApiConnection('vndb', vndbApiKey.value || undefined)
@@ -76,8 +78,21 @@ const handleTestVNDB = async (): Promise<void> => {
   }
 }
 
-const handleCheckUpdate = (): void => {
-  console.log('检查更新')
+const handleOpenGithub = (): void => {
+  window.api.openExternal('https://github.com/arkzoe/lunamanager')
+}
+
+const handleCheckUpdate = async (): Promise<void> => {
+  try {
+    const result = await window.api.checkForUpdates()
+    if (result?.updateAvailable) {
+      window.alert(`发现新版本 ${result.version}，请在下载页面获取`)
+    } else {
+      window.alert('已是最新版本')
+    }
+  } catch {
+    window.alert('检查更新失败')
+  }
 }
 
 interface SettingSection {
@@ -194,18 +209,14 @@ const scrollToSection = (id: string): void => {
         :section-ref="setSectionRef('basic')"
         :auto-start="autoStart"
         :auto-update="autoUpdate"
-        :download-path="downloadPath"
-        :show-game-cover="showGameCover"
         :track-playtime="trackPlaytime"
         :record-history="recordHistory"
         :language="language"
         @update:auto-start="autoStart = $event"
         @update:auto-update="autoUpdate = $event"
-        @update:show-game-cover="showGameCover = $event"
         @update:track-playtime="trackPlaytime = $event"
         @update:record-history="recordHistory = $event"
         @update:language="language = $event as 'zh-CN' | 'en-US'"
-        @select-download-path="handleChangeDownloadPath"
       />
 
       <SettingAppearance :section-ref="setSectionRef('appearance')" />
@@ -239,14 +250,8 @@ const scrollToSection = (id: string): void => {
 
       <SettingBackup
         :section-ref="setSectionRef('backup')"
-        :auto-backup="autoBackup"
         :backup-dir="backupDir"
-        :backup-frequency="backupFrequency"
-        :backup-max-copies="backupMaxCopies"
-        @update:auto-backup="autoBackup = $event"
         @update:backup-dir="backupDir = $event"
-        @update:backup-frequency="backupFrequency = $event as 'daily' | 'weekly' | 'monthly'"
-        @update:backup-max-copies="backupMaxCopies = $event"
         @select-backup-dir="handleSelectBackupDir"
       />
 
@@ -254,6 +259,7 @@ const scrollToSection = (id: string): void => {
         :section-ref="setSectionRef('about')"
         :current-version="currentVersion"
         @check-update="handleCheckUpdate"
+        @open-github="handleOpenGithub"
       />
 
       <div class="settings-bottom-spacer"></div>

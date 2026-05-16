@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import type { GameRecord, PlaySession } from '../../../../shared/types'
 import { formatPlaytime, formatRelativeTime } from '../../utils/format'
 import { useThemeStore } from '../../stores/useThemeStore'
+import { useSettingsStore } from '../../stores/useSettingsStore'
 import { useStatsChart } from '../../composables/useStatsChart'
 import {
   Chart as ChartJS,
@@ -19,6 +20,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 
 const props = defineProps<{ game: GameRecord }>()
 const theme = useThemeStore()
+const settingsStore = useSettingsStore()
 
 const sessions = ref<PlaySession[]>([])
 const totalSessions = ref(0)
@@ -50,6 +52,10 @@ const accentColor = computed(() => (theme.isDark ? '#60a5fa' : '#3b82f6'))
 const { chartData, chartOptions } = useStatsChart(sessions, timeRange, accentColor)
 
 onMounted(async () => {
+  if (!settingsStore.settings.recordHistory) {
+    loading.value = false
+    return
+  }
   try {
     const [stats, allSessions] = await Promise.all([
       window.api.getAggregatedStats(props.game.id),
@@ -107,6 +113,12 @@ onUnmounted(() => {
       <div class="chart-container">
         <Line :data="chartData" :options="chartOptions" />
       </div>
+    </div>
+    <div v-else-if="!loading && !settingsStore.settings.recordHistory" class="chart-placeholder">
+      <svg viewBox="0 0 24 24" class="w-10 h-10 fill-text-muted opacity-20 mb-3">
+        <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" />
+      </svg>
+      <p>游玩历史记录已关闭</p>
     </div>
     <div v-else-if="!loading" class="chart-placeholder">
       <svg viewBox="0 0 24 24" class="w-10 h-10 fill-text-muted opacity-20 mb-3">

@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import type { GameRecord, ImportResult, ImportResultItem } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import { useSettingsStore } from '../stores/useSettingsStore'
 import { useBatchScan } from '../composables/useBatchScan'
 import { useBatchMatch } from '../composables/useBatchMatch'
 import BatchImportRow from './BatchImportRow.vue'
 import BatchImportResult from './BatchImportResult.vue'
 import SearchInputDialog from '../shared/SearchInputDialog.vue'
 
-defineProps<{
+const props = defineProps<{
   show: boolean
 }>()
 
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const store = useGameStore()
+const settingsStore = useSettingsStore()
 const isImporting = ref(false)
 
 const scan = useBatchScan()
@@ -27,7 +29,12 @@ const match = useBatchMatch(scan.rows, scan.error)
 const showResult = ref(false)
 const importResult = ref<ImportResult | null>(null)
 
-const handlePickFolder = (): Promise<void> => scan.handlePickFolder(match.invalidateTokenCache)
+const handlePickFolder = async (): Promise<void> => {
+  await scan.handlePickFolder(match.invalidateTokenCache)
+  if (settingsStore.settings.autoSyncMetadata && match.unmatchedCount.value > 0) {
+    await match.handleMatchAll()
+  }
+}
 
 const handleImportAll = async (): Promise<void> => {
   const toImport = scan.rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate)
@@ -150,6 +157,16 @@ const handleClose = (): void => {
 const handleOverlayClick = (e: MouseEvent): void => {
   if ((e.target as HTMLElement).classList.contains('dialog-overlay')) handleClose()
 }
+
+watch(
+  () => props.show,
+  (val) => {
+    if (val) {
+      scan.reset()
+      match.reset()
+    }
+  }
+)
 </script>
 
 <template>

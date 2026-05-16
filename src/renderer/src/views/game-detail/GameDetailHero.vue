@@ -11,6 +11,13 @@ const onCoverLoad = (e: Event): void => {
   isCoverWide.value = img.naturalWidth >= img.naturalHeight
 }
 
+interface LaunchModeItem {
+  id: string
+  label: string
+  desc: string
+  disabled: boolean
+}
+
 const props = defineProps<{
   game: GameRecord
   isRunning: boolean
@@ -18,7 +25,7 @@ const props = defineProps<{
   tempStatus: GameStatus
   showLaunchMenu: boolean
   statuses: { id: GameStatus; label: string }[]
-  launchModes: { id: string; label: string; desc: string }[]
+  launchModes: LaunchModeItem[]
 }>()
 
 defineEmits<{
@@ -169,6 +176,8 @@ const hasMetadata = computed(() => {
             v-for="mode in launchModes"
             :key="mode.id"
             class="lm-item"
+            :class="{ 'lm-item-disabled': mode.disabled }"
+            :disabled="mode.disabled"
             @click="$emit('launch', mode.id)"
           >
             <div class="lm-label">{{ mode.label }}</div>

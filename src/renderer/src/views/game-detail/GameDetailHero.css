@@ -266,6 +266,15 @@
   background: var(--bg-hover);
 }
 
+.lm-item-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lm-item-disabled:hover {
+  background: transparent;
+}
+
 .lm-label {
   font-size: 13px;
   font-weight: 600;

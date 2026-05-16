@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import type { SearchResult } from '../../../shared/types'
 import SelectDropdown from './SelectDropdown.vue'
 
@@ -21,6 +21,21 @@ const results = ref<SearchResult[]>([])
 const searched = ref(false)
 const selectedId = ref<string | null>(null)
 const error = ref('')
+
+watch(
+  () => props.show,
+  (val) => {
+    if (val) {
+      query.value = props.initialQuery || ''
+      source.value = props.initialSource || 'vndb'
+      searching.value = false
+      results.value = []
+      searched.value = false
+      selectedId.value = null
+      error.value = ''
+    }
+  }
+)
 
 const handleSearch = async (): Promise<void> => {
   const q = query.value.trim()

@@ -82,8 +82,12 @@ function setupIpcHandlers(): void {
   )
   ipcMain.handle(
     'config:set',
-    <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K, value: AppConfig[K]) =>
+    <K extends keyof AppConfig>(_e: Electron.IpcMainInvokeEvent, key: K, value: AppConfig[K]) => {
       setConfig(key, value)
+      if (key === 'autoStart') {
+        app.setLoginItemSettings({ openAtLogin: value as boolean })
+      }
+    }
   )
   ipcMain.handle('config:getAll', () => getAllConfig())
   ipcMain.handle('config:setAll', (_, config) => setAllConfig(config))
@@ -207,6 +211,16 @@ function setupIpcHandlers(): void {
   ipcMain.handle('cover:download', async (_e, { gameId, url }) => {
     return downloadCover(gameId, url)
   })
+
+  // ===== External Links =====
+  ipcMain.handle('shell:openExternal', async (_e, url: string) => {
+    return shell.openExternal(url)
+  })
+
+  // ===== Updates =====
+  ipcMain.handle('update:check', async () => checkForUpdates())
+  ipcMain.handle('update:download', async () => downloadUpdate())
+  ipcMain.handle('update:install', async () => quitAndInstall())
 }
 
 import type { AppConfig } from './config/store'
@@ -216,6 +230,7 @@ import { testApiConnection, searchMetadata, fetchMetadataDetail } from './servic
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 import { launchGame, stopGame, isGameRunning } from './services/game-launcher'
 import { backupSave, restoreSave, getSnapshotDirPath } from './services/backup'
+import { setupUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from './services/updater'
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
@@ -230,6 +245,8 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
   initDatabase()
   setupIpcHandlers()
+  setupUpdater()
+  app.setLoginItemSettings({ openAtLogin: getConfig('autoStart') })
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

@@ -59,10 +59,22 @@ const statuses: { id: GameStatus; label: string }[] = [
   { id: 'abandoned', label: '抛弃' }
 ]
 
-const launchModes = [
-  { id: 'normal' as const, label: '直接启动', desc: '使用默认方式启动游戏' },
-  { id: 'le' as const, label: 'Locale Emulator', desc: '转区启动，解决乱码问题' },
-  { id: 'magpie' as const, label: 'Magpie 超分', desc: '放大窗口并优化画质' }
+interface LaunchModeItem {
+  id: LaunchMode | 'le' | 'magpie'
+  label: string
+  desc: string
+  disabled: boolean
+}
+
+const launchModes: LaunchModeItem[] = [
+  { id: 'normal', label: '直接启动', desc: '使用默认方式启动游戏', disabled: false },
+  {
+    id: 'le',
+    label: 'Locale Emulator',
+    desc: '转区启动，解决乱码问题（即将支持）',
+    disabled: true
+  },
+  { id: 'magpie', label: 'Magpie 超分', desc: '放大窗口并优化画质（即将支持）', disabled: true }
 ]
 
 const toggleLaunchMenu = (): void => {
@@ -71,6 +83,11 @@ const toggleLaunchMenu = (): void => {
 
 const handleLaunch = async (mode: string): Promise<void> => {
   showLaunchMenu.value = false
+  const modeObj = launchModes.find((m) => m.id === mode)
+  if (modeObj?.disabled) {
+    showToastMsg('此启动方式尚未实现', 'error')
+    return
+  }
   try {
     await window.api.launchGame(props.game.id, mode as LaunchMode)
     isRunning.value = true
@@ -171,6 +188,7 @@ const handleFetchMetadata = async (): Promise<void> => {
     }
     if (detail.custom_tags) tempTags.value = detail.custom_tags
     showToastMsg('远端信息已回填', 'success')
+    await handleSave()
   } catch (err: unknown) {
     showToastMsg((err instanceof Error ? err.message : String(err)) || '获取失败', 'error')
   } finally {
@@ -190,9 +208,13 @@ const handleDeleteGame = async (): Promise<void> => {
 }
 
 let unmounted = false
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
 onUnmounted(() => {
   unmounted = true
+  if (pollTimer) clearInterval(pollTimer)
 })
+
 onMounted(async () => {
   try {
     const running = await window.api.isGameRunning(props.game.id)
@@ -201,6 +223,14 @@ onMounted(async () => {
   } catch {
     /* ignore */
   }
+  pollTimer = setInterval(async () => {
+    if (unmounted) return
+    try {
+      isRunning.value = await window.api.isGameRunning(props.game.id)
+    } catch {
+      /* ignore */
+    }
+  }, 5000)
 })
 
 const handleClickOutside = (): void => {

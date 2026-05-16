@@ -20,6 +20,7 @@ export interface UseBatchScanReturn {
   isAllSelected: ComputedRef<boolean>
   handleSelectAll: (checked: boolean) => void
   handlePickFolder: (invalidateCache: () => void) => Promise<void>
+  reset: () => void
 }
 
 const matchStatusOrder: Record<string, number> = {
@@ -140,6 +141,15 @@ export function useBatchScan(): UseBatchScanReturn {
     }
   }
 
+  const reset = (): void => {
+    scanResult.value = null
+    rows.value = []
+    error.value = ''
+    importedCount.value = 0
+    sortKey.value = 'name'
+    sortDir.value = 'asc'
+  }
+
   return {
     isLoading,
     scanResult,
@@ -157,6 +167,7 @@ export function useBatchScan(): UseBatchScanReturn {
     selectedSelectableCount,
     isAllSelected,
     handleSelectAll,
-    handlePickFolder
+    handlePickFolder,
+    reset
   }
 }

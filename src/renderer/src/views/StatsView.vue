@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,10 +12,12 @@ import {
 import { Line } from 'vue-chartjs'
 import { useStats } from '../composables/useStats'
 import { useStatsChart } from '../composables/useStatsChart'
+import { useSettingsStore } from '../stores/useSettingsStore'
 import StatsRanking from './stats/StatsRanking.vue'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
+const settingsStore = useSettingsStore()
 const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
 const rankRange = ref<'week' | 'month'>('week')
 const showLibraryOverview = ref(true)
@@ -23,7 +25,9 @@ const showLibraryOverview = ref(true)
 const { totalSessionCount, libraryStats, rankings, topGame, loadStats, allSessions } = useStats()
 const { chartData, chartOptions } = useStatsChart(allSessions, timeRange)
 
-onMounted(() => loadStats())
+const recordHistory = computed(() => settingsStore.settings.recordHistory)
+
+onMounted(() => loadStats(recordHistory.value))
 
 const timeRanges = [
   { id: 'week' as const, label: '周' },
@@ -118,7 +122,7 @@ const timeRanges = [
     </div>
 
     <!-- 时间范围 + 时长趋势图表 -->
-    <div class="panel">
+    <div v-if="recordHistory" class="panel">
       <div class="panel-header">
         <span>游玩时长趋势</span>
         <div class="time-toggle">
@@ -146,7 +150,23 @@ const timeRanges = [
       </div>
     </div>
 
-    <StatsRanking v-model:rank-range="rankRange" :rankings="rankings" :top-game="topGame" />
+    <div v-else class="panel">
+      <div class="panel-body">
+        <div class="chart-ph">
+          <svg viewBox="0 0 24 24" class="w-12 h-12 fill-text-muted opacity-15 mb-3">
+            <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" />
+          </svg>
+          <p>游玩历史记录已关闭</p>
+        </div>
+      </div>
+    </div>
+
+    <StatsRanking
+      v-if="recordHistory"
+      v-model:rank-range="rankRange"
+      :rankings="rankings"
+      :top-game="topGame"
+    />
   </div>
 </template>
 

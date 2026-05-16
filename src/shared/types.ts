@@ -245,4 +245,9 @@ export interface IElectronAPI {
     gameId?: string
   ) => Promise<Partial<GameRecord>>
   downloadCover: (gameId: string, url: string) => Promise<string | null>
+  openExternal: (url: string) => Promise<void>
+  checkForUpdates: () => Promise<{ updateAvailable: boolean; version?: string; releaseNotes?: string } | null>
+  downloadUpdate: () => Promise<void>
+  quitAndInstall: () => Promise<void>
+  onUpdateStatus: (callback: (status: string, data?: unknown) => void) => () => void
 }

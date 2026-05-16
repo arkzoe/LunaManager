@@ -66,17 +66,28 @@ const emit = defineEmits<{
           <span class="setting-desc">用于访问 VNDB 数据库的 API 密钥</span>
         </div>
         <div class="setting-actions">
-          <input
-            :value="vndbApiKey"
-            type="password"
-            placeholder="输入 API Key"
-            class="sinput token"
-            @input="emit('update:vndbApiKey', ($event.target as HTMLInputElement).value)"
-          />
-          <button class="sbtn sbtn-secondary" @click="emit('testVndb')">测试</button>
+          <div class="input-with-clear">
+            <input
+              :value="vndbApiKey"
+              type="password"
+              placeholder="输入 API Key"
+              class="sinput token"
+              @input="emit('update:vndbApiKey', ($event.target as HTMLInputElement).value)"
+            />
+            <button
+              v-if="vndbApiKey"
+              class="clear-btn"
+              tabindex="-1"
+              @click="emit('update:vndbApiKey', '')"
+            >
+              &times;
+            </button>
+          </div>
+          <button class="sbtn sbtn-secondary" @click="emit('testVndb')">
+            {{ vndbApiKey ? '测试' : '获取令牌' }}
+          </button>
         </div>
       </div>
-      <!-- VNDB 测试结果 -->
       <div
         v-if="testResult?.source === 'vndb'"
         class="test-feedback"
@@ -103,17 +114,28 @@ const emit = defineEmits<{
           <span class="setting-desc">用于访问 Bangumi API 的用户令牌</span>
         </div>
         <div class="setting-actions">
-          <input
-            :value="bangumiToken"
-            type="password"
-            placeholder="输入 Token"
-            class="sinput token"
-            @input="emit('update:bangumiToken', ($event.target as HTMLInputElement).value)"
-          />
-          <button class="sbtn sbtn-secondary" @click="emit('testBangumi')">测试</button>
+          <div class="input-with-clear">
+            <input
+              :value="bangumiToken"
+              type="password"
+              placeholder="输入 Token"
+              class="sinput token"
+              @input="emit('update:bangumiToken', ($event.target as HTMLInputElement).value)"
+            />
+            <button
+              v-if="bangumiToken"
+              class="clear-btn"
+              tabindex="-1"
+              @click="emit('update:bangumiToken', '')"
+            >
+              &times;
+            </button>
+          </div>
+          <button class="sbtn sbtn-secondary" @click="emit('testBangumi')">
+            {{ bangumiToken ? '测试' : '获取令牌' }}
+          </button>
         </div>
       </div>
-      <!-- Bangumi 测试结果 -->
       <div
         v-if="testResult?.source === 'bangumi'"
         class="test-feedback"
@@ -166,5 +188,38 @@ const emit = defineEmits<{
 
 .spin {
   animation: spin 0.8s linear infinite;
+}
+
+.input-with-clear {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-clear .sinput.token {
+  padding-right: 28px;
+}
+
+.clear-btn {
+  position: absolute;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+  line-height: 1;
+}
+
+.clear-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 </style>

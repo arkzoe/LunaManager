@@ -2,13 +2,14 @@
 import { ref, watch } from 'vue'
 import type { ScanResult, GameRecord, SearchResult } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
+import { useSettingsStore } from '../stores/useSettingsStore'
 import { useTokenCache } from '../composables/useTokenCache'
 import { fillGameFromDetail } from '../composables/useMetadata'
 import GameMetadataForm from '../shared/GameMetadataForm.vue'
 import type { MetadataForm } from '../shared/GameMetadataForm.vue'
 import SearchResultPicker from '../shared/SearchResultPicker.vue'
 
-defineProps<{ show: boolean }>()
+const props = defineProps<{ show: boolean }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>()
 
 const store = useGameStore()
+const settingsStore = useSettingsStore()
 const isLoading = ref(false)
 const scanResult = ref<ScanResult | null>(null)
 const error = ref('')
@@ -46,6 +48,43 @@ const form = ref<MetadataForm>({
 const coverUrl = ref('')
 const vndbId = ref('')
 const bangumiId = ref('')
+
+const resetForm = (): void => {
+  form.value = {
+    selectedExe: '',
+    title: '',
+    titleCn: '',
+    developer: '',
+    publisher: '',
+    releaseDate: '',
+    description: '',
+    notes: '',
+    customTags: '[]',
+    savePath: '',
+    status: 'want'
+  }
+}
+
+const resetState = (): void => {
+  scanResult.value = null
+  error.value = ''
+  searching.value = false
+  searchResults.value = []
+  showSearchPicker.value = false
+  metadataFilled.value = false
+  searchNoResults.value = false
+  coverUrl.value = ''
+  vndbId.value = ''
+  bangumiId.value = ''
+  resetForm()
+}
+
+watch(
+  () => props.show,
+  (val) => {
+    if (val) resetState()
+  }
+)
 
 watch(
   () => form.value.title,
@@ -82,6 +121,9 @@ const handlePickFolder = async (): Promise<void> => {
             : ''
     }
     isLoading.value = false
+    if (settingsStore.settings.autoSyncMetadata) {
+      await handleSearch()
+    }
   } catch (e: unknown) {
     error.value = (e instanceof Error ? e.message : String(e)) || '选择文件夹失败'
     isLoading.value = false
