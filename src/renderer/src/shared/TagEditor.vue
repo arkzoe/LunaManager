@@ -48,11 +48,7 @@ const handleKeydown = (e: KeyboardEvent): void => {
   <div>
     <div class="mb-2 text-xs font-semibold text-text-secondary">标签</div>
     <div class="flex flex-wrap gap-2 mb-2">
-      <span
-        v-for="tag in parsedTags"
-        :key="tag"
-        class="tag-chip"
-      >
+      <span v-for="tag in parsedTags" :key="tag" class="tag-chip">
         {{ tag }}
         <button class="tag-remove" @click="removeTag(tag)">&times;</button>
       </span>

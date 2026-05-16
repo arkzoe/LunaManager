@@ -28,7 +28,11 @@ const emit = defineEmits<{
       }"
       @click="emit('cardClick', game)"
     >
-      <div class="flc-check" :class="{ 'cb-hidden': !batchMode }" @click.stop="emit('toggleSelect', game.id)">
+      <div
+        class="flc-check"
+        :class="{ 'cb-hidden': !batchMode }"
+        @click.stop="emit('toggleSelect', game.id)"
+      >
         <div
           class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer"
           :class="
@@ -81,7 +85,9 @@ const emit = defineEmits<{
   top: 6px;
   left: 6px;
   z-index: 2;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .flc-check.cb-hidden {

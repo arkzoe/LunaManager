@@ -27,6 +27,10 @@ export function useCountUp(
 
   const start = () => {
     stop()
+    if (targetRef.value === 0) {
+      display.value = 0
+      return
+    }
     startTime = 0
     animId = requestAnimationFrame(animate)
   }

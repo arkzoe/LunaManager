@@ -93,7 +93,7 @@ const hasMetadata = computed(() => {
         <span class="hi-label">状态</span>
         <SelectDropdown
           :model-value="tempStatus"
-          :options="statuses.map(s => ({ value: s.id, label: s.label }))"
+          :options="statuses.map((s) => ({ value: s.id, label: s.label }))"
           class="status-select"
           @update:model-value="$emit('update:tempStatus', $event as GameStatus)"
         />

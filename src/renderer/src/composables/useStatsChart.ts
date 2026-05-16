@@ -1,4 +1,4 @@
-import { computed, type Ref, type ComputedRef } from 'vue'
+import { computed, type Ref } from 'vue'
 import type { PlaySession } from '../../../shared/types'
 import type { TooltipItem } from 'chart.js'
 
@@ -6,42 +6,53 @@ export function useStatsChart(
   allSessions: Ref<PlaySession[]>,
   timeRange: Ref<'week' | 'month' | 'year' | 'all'>
 ) {
+  const CUTOFFS: Record<string, number> = {
+    week: 7 * 24 * 60 * 60 * 1000,
+    month: 30 * 24 * 60 * 60 * 1000,
+    year: 365 * 24 * 60 * 60 * 1000
+  }
+
   const chartData = computed(() => {
-    if (allSessions.value.length === 0) return null
-
-    const now = Date.now()
-    let cutoff: number
-    if (timeRange.value === 'week') cutoff = now - 7 * 24 * 60 * 60 * 1000
-    else if (timeRange.value === 'month') cutoff = now - 30 * 24 * 60 * 60 * 1000
-    else if (timeRange.value === 'year') cutoff = now - 365 * 24 * 60 * 60 * 1000
-    else cutoff = 0
-
-    const sessions = cutoff ? allSessions.value.filter((s) => s.start_time >= cutoff) : allSessions.value
+    const sessions = allSessions.value
     if (sessions.length === 0) return null
 
-    type GroupEntry = { total: number; sortKey: number }
-    const grouped = new Map<string, GroupEntry>()
+    const range = timeRange.value
+    const rangeMs = CUTOFFS[range]
+    const cutoff = rangeMs ? Date.now() - rangeMs : 0
 
-    for (const s of sessions) {
+    let filtered = sessions
+    if (cutoff) {
+      filtered = cutoff ? sessions.filter((s) => s.start_time >= cutoff) : sessions
+    }
+    if (filtered.length === 0) return null
+
+    const grouped = new Map<string, number>()
+    const keyMap = new Map<string, number>()
+
+    for (let i = 0; i < filtered.length; i++) {
+      const s = filtered[i]
       if (s.duration <= 0) continue
       const d = new Date(s.start_time)
       let key: string
       let sortKey: number
-      if (timeRange.value === 'all') {
+      if (range === 'all') {
         key = `${d.getFullYear()}/${d.getMonth() + 1}`
         sortKey = d.getFullYear() * 12 + d.getMonth()
       } else {
         key = `${d.getMonth() + 1}/${d.getDate()}`
         sortKey = d.getTime()
       }
-      const prev = grouped.get(key)
-      if (prev) prev.total += s.duration
-      else grouped.set(key, { total: s.duration, sortKey })
+      grouped.set(key, (grouped.get(key) || 0) + s.duration)
+      keyMap.set(key, sortKey)
     }
 
-    const entries = [...grouped.entries()].sort((a, b) => a[1].sortKey - b[1].sortKey)
-    const labels = entries.map(([k]) => k)
-    const values = entries.map(([, v]) => Math.round((v.total / 3600000) * 10) / 10)
+    const labels: string[] = []
+    const values: number[] = []
+    const keys = [...grouped.keys()].sort((a, b) => (keyMap.get(a) || 0) - (keyMap.get(b) || 0))
+    for (let i = 0; i < keys.length; i++) {
+      labels.push(keys[i])
+      values.push(Math.round(((grouped.get(keys[i]) || 0) / 3600000) * 10) / 10)
+    }
 
     return {
       labels,

@@ -1,4 +1,4 @@
-import { ref, computed, type Ref, type ComputedRef } from 'vue'
+import { ref, computed } from 'vue'
 import type { PlaySession } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import { formatPlaytime } from '../utils/format'

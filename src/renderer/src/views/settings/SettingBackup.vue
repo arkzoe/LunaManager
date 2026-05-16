@@ -50,7 +50,11 @@ const emit = defineEmits<{
         </div>
         <SelectDropdown
           :model-value="backupFrequency"
-          :options="[{value:'daily',label:'每天'},{value:'weekly',label:'每周'},{value:'monthly',label:'每月'}]"
+          :options="[
+            { value: 'daily', label: '每天' },
+            { value: 'weekly', label: '每周' },
+            { value: 'monthly', label: '每月' }
+          ]"
           class="sselect"
           @update:model-value="emit('update:backupFrequency', $event as string)"
         />
@@ -62,7 +66,7 @@ const emit = defineEmits<{
         </div>
         <SelectDropdown
           :model-value="backupMaxCopies"
-          :options="[3,5,10,20,50].map(n => ({ value: n, label: String(n) }))"
+          :options="[3, 5, 10, 20, 50].map((n) => ({ value: n, label: String(n) }))"
           class="sselect"
           @update:model-value="emit('update:backupMaxCopies', $event as number)"
         />

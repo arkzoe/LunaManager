@@ -65,7 +65,13 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
           class="exe-item"
           :class="{ selected: form.selectedExe === exe.fullPath }"
         >
-          <input v-model="form.selectedExe" type="radio" :value="exe.fullPath" class="exe-radio" />
+          <input
+            :checked="form.selectedExe === exe.fullPath"
+            type="radio"
+            :value="exe.fullPath"
+            class="exe-radio"
+            @change="update('selectedExe', exe.fullPath)"
+          />
           <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current exe-icon">
             <path
               d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"
@@ -166,11 +172,11 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
       <SelectDropdown
         :model-value="form.status"
         :options="[
-          {value:'want',label:'想玩'},
-          {value:'playing',label:'在玩'},
-          {value:'played',label:'玩过'},
-          {value:'shelved',label:'搁置'},
-          {value:'abandoned',label:'弃坑'}
+          { value: 'want', label: '想玩' },
+          { value: 'playing', label: '在玩' },
+          { value: 'played', label: '玩过' },
+          { value: 'shelved', label: '搁置' },
+          { value: 'abandoned', label: '弃坑' }
         ]"
         class="form-select"
         @update:model-value="update('status', $event as GameRecord['status'])"

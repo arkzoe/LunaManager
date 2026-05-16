@@ -27,16 +27,13 @@ export async function backupSave(gameId: string, savePath: string): Promise<stri
   const snapshotId = `snap-${Date.now()}`
   const zipPath = path.join(snapshotDir, `${snapshotId}.zip`)
 
-  // Create DB record first
-  snapshotOps.create(gameId, '')
-
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(zipPath)
-    const archive = archiver('zip', { zlib: { level: 9 } })
+    const archive = archiver('zip', { zlib: { level: 6 } })
 
     output.on('close', () => {
       const fileSize = archive.pointer()
-      snapshotOps.updatePath(snapshotId, zipPath, fileSize)
+      snapshotOps.create(gameId, '', zipPath, fileSize)
       resolve(snapshotId)
     })
 

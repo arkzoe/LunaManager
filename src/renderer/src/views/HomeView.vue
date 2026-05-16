@@ -22,16 +22,34 @@ const addedScrollable = ref(false)
 onMounted(() => {
   if (store.games.length === 0) store.loadGames()
   nextTick(() => {
-    if (recentScrollRef.value) recentScrollable.value = recentScrollRef.value.scrollWidth > recentScrollRef.value.clientWidth
-    if (addedScrollRef.value) addedScrollable.value = addedScrollRef.value.scrollWidth > addedScrollRef.value.clientWidth
+    if (recentScrollRef.value)
+      recentScrollable.value = recentScrollRef.value.scrollWidth > recentScrollRef.value.clientWidth
+    if (addedScrollRef.value)
+      addedScrollable.value = addedScrollRef.value.scrollWidth > addedScrollRef.value.clientWidth
   })
 })
 
-function onWheelScroll(e: WheelEvent) {
+function onWheelScroll(e: WheelEvent): void {
   const el = e.currentTarget as HTMLElement
   el.scrollBy({ left: e.deltaY, behavior: 'smooth' })
   e.preventDefault()
 }
+
+// section 交错动画索引
+const sectionDelays = computed(() => {
+  const d = homeData.value
+  const visible = [
+    d.recentGames.length > 0,
+    d.recentAdded.length > 0,
+    d.playedActs.length > 0 || d.addedActs.length > 0
+  ]
+  let i = 0
+  return {
+    recentGames: visible[0] ? i++ * 0.1 : -1,
+    recentAdded: visible[1] ? i++ * 0.1 : -1,
+    activity: visible[2] ? i++ * 0.1 : -1
+  }
+})
 
 // 全局概览
 const overview = computed(() => {
@@ -46,59 +64,29 @@ const overview = computed(() => {
   return { totalGames: total, totalHours, monthlyHours: 0, avgPerDay }
 })
 
-// 最近游玩 — 按 last_played 排序
-const recentGames = computed(() =>
-  store.allGames
-    .filter((g) => g.last_played)
-    .sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
-    .slice(0, 10)
-)
+const homeData = computed(() => {
+  const all = store.allGames
+  const withPlayed = all.filter((g) => g.last_played)
+  const sortedByPlayed = [...withPlayed].sort((a, b) =>
+    (b.last_played || '').localeCompare(a.last_played || '')
+  )
+  const sortedByAdded = [...all].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
 
-// 最近添加 — 按 created_at 排序
-const recentAdded = computed(() =>
-  [...store.allGames].sort((a, b) => (b.created_at || 0) - (a.created_at || 0)).slice(0, 10)
-)
-
-// 最近动态 — 游玩信息（左侧）
-const playedActs = computed(() =>
-  store.allGames
-    .filter((g) => g.last_played)
-    .sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
-    .slice(0, 5)
-    .map((g) => ({
+  return {
+    recentGames: sortedByPlayed.slice(0, 10),
+    recentAdded: sortedByAdded.slice(0, 10),
+    playedActs: sortedByPlayed.slice(0, 5).map((g) => ({
       type: 'played' as const,
       game: g,
       time: formatRelativeTime(g.last_played || '')
-    }))
-)
-
-// section 交错动画索引 — 先预计算可见性，仅对可见 section 递增 i
-const sectionDelays = computed(() => {
-  const visible: boolean[] = [
-    recentGames.value.length > 0,
-    recentAdded.value.length > 0,
-    playedActs.value.length > 0 || addedActs.value.length > 0
-  ]
-  let i = 0
-  return {
-    recentGames: visible[0] ? i++ * 0.1 : -1,
-    recentAdded: visible[1] ? i++ * 0.1 : -1,
-    activity: visible[2] ? i++ * 0.1 : -1
-  }
-})
-
-// 最近动态 — 新入库（右侧）
-const addedActs = computed(() =>
-  store.allGames
-    .filter((g) => g.created_at)
-    .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
-    .slice(0, 5)
-    .map((g) => ({
+    })),
+    addedActs: sortedByAdded.slice(0, 5).map((g) => ({
       type: 'added' as const,
       game: g,
       time: formatRelativeTime(g.created_at)
     }))
-)
+  }
+})
 </script>
 
 <template>
@@ -135,7 +123,7 @@ const addedActs = computed(() =>
     <template v-else>
       <!-- 最近游玩 — 横滑列表 -->
       <section
-        v-if="recentGames.length > 0"
+        v-if="homeData.recentGames.length > 0"
         class="section-block"
         :style="{ animationDelay: sectionDelays.recentGames + 's' }"
       >
@@ -150,7 +138,7 @@ const addedActs = computed(() =>
           @wheel="recentScrollable && onWheelScroll($event)"
         >
           <div
-            v-for="game in recentGames"
+            v-for="game in homeData.recentGames"
             :key="game.id"
             class="scroll-card"
             @click="emit('selectGame', game)"
@@ -162,7 +150,7 @@ const addedActs = computed(() =>
 
       <!-- 最近添加 — 横滑列表 -->
       <section
-        v-if="recentAdded.length > 0"
+        v-if="homeData.recentAdded.length > 0"
         class="section-block"
         :style="{ animationDelay: sectionDelays.recentAdded + 's' }"
       >
@@ -177,7 +165,7 @@ const addedActs = computed(() =>
           @wheel="addedScrollable && onWheelScroll($event)"
         >
           <div
-            v-for="game in recentAdded"
+            v-for="game in homeData.recentAdded"
             :key="game.id"
             class="scroll-card"
             @click="emit('selectGame', game)"
@@ -189,7 +177,7 @@ const addedActs = computed(() =>
 
       <!-- 最近动态 — 左：游玩信息 / 右：新入库 -->
       <section
-        v-if="playedActs.length > 0 || addedActs.length > 0"
+        v-if="homeData.playedActs.length > 0 || homeData.addedActs.length > 0"
         class="section-block"
         :style="{ animationDelay: sectionDelays.activity + 's' }"
       >
@@ -198,11 +186,11 @@ const addedActs = computed(() =>
         </div>
         <div class="activity-split">
           <HomeActivityTimeline
-            :activities="playedActs"
+            :activities="homeData.playedActs"
             @select-game="(g) => emit('selectGame', g)"
           />
           <HomeActivityTimeline
-            :activities="addedActs"
+            :activities="homeData.addedActs"
             @select-game="(g) => emit('selectGame', g)"
           />
         </div>

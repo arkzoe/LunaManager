@@ -26,12 +26,7 @@ const emit = defineEmits<{
   (e: 'renameCollection', col: UICollection): void
   (e: 'deleteCollection', col: UICollection): void
   (e: 'createCollection'): void
-  (e: 'getSortArrow', field: string): string
 }>()
-
-const getSortArrow = (field: string): string => {
-  return ''
-}
 
 const isDefault = (col: UICollection): boolean => col.name === '最喜欢的游戏'
 
@@ -125,9 +120,7 @@ const handleSortSelect = (field: string): void => {
       </div>
     </div>
 
-    <div
-      class="flex flex-wrap gap-4 overflow-y-auto overflow-x-hidden pr-2 flex-1 content-start"
-    >
+    <div class="flex flex-wrap gap-4 overflow-y-auto overflow-x-hidden pr-2 flex-1 content-start">
       <CollectionCard
         v-for="collection in collections"
         :key="collection.id"
@@ -349,7 +342,9 @@ const handleSortSelect = (field: string): void => {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+  transition:
+    max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.15s ease;
   pointer-events: none;
 }
 .batch-bar-stage.batch-open {

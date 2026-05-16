@@ -210,9 +210,9 @@ const onSourceChange = (val: string): void => {
           <SelectDropdown
             :model-value="dataSourceCurrent"
             :options="[
-              {value:'',label:'无'},
-              {value:'vndb',label:'VNDB'},
-              {value:'bangumi',label:'Bangumi'}
+              { value: '', label: '无' },
+              { value: 'vndb', label: 'VNDB' },
+              { value: 'bangumi', label: 'Bangumi' }
             ]"
             class="form-select"
             @update:model-value="onSourceChange($event as string)"

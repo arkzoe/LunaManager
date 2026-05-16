@@ -262,6 +262,4 @@ const handleOverlayClick = (e: MouseEvent): void => {
 .spin {
   animation: spin 0.8s linear infinite;
 }
-
-
 </style>

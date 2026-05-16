@@ -160,7 +160,9 @@ onUnmounted(() => {
   cursor: pointer;
   outline: none;
   line-height: 1;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .sd-trigger:focus-visible,

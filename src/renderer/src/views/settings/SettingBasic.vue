@@ -111,7 +111,10 @@ const emit = defineEmits<{
         </div>
         <SelectDropdown
           :model-value="language"
-          :options="[{value:'zh-CN',label:'简体中文'},{value:'en-US',label:'English'}]"
+          :options="[
+            { value: 'zh-CN', label: '简体中文' },
+            { value: 'en-US', label: 'English' }
+          ]"
           class="sselect"
           @update:model-value="emit('update:language', $event as string)"
         />

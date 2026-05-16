@@ -2,6 +2,16 @@ import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+function debounceSetBounds(mainWindow: BrowserWindow): void {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    const b = mainWindow.getBounds()
+    setConfig('windowBounds', { width: b.width, height: b.height, x: b.x, y: b.y })
+    debounceTimer = null
+  }, 200)
+}
 import {
   initDatabase,
   closeDatabase,
@@ -34,14 +44,8 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => mainWindow.show())
 
-  mainWindow.on('resize', () => {
-    const b = mainWindow.getBounds()
-    setConfig('windowBounds', { width: b.width, height: b.height, x: b.x, y: b.y })
-  })
-  mainWindow.on('move', () => {
-    const b = mainWindow.getBounds()
-    setConfig('windowBounds', { width: b.width, height: b.height, x: b.x, y: b.y })
-  })
+  mainWindow.on('resize', () => debounceSetBounds(mainWindow))
+  mainWindow.on('move', () => debounceSetBounds(mainWindow))
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)

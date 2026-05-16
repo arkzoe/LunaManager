@@ -201,7 +201,9 @@ const emit = defineEmits<{
 
 .lh-check,
 .lr-check {
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .lh-check.cb-hidden,

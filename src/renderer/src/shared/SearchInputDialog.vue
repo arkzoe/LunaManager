@@ -84,7 +84,15 @@ const handleOverlayClick = (e: MouseEvent): void => {
             <div class="search-form">
               <div class="sf-row">
                 <label class="sf-label">数据源</label>
-                <SelectDropdown v-model="source" :options="[{value:'vndb',label:'VNDB'},{value:'bangumi',label:'Bangumi'}]" :disabled="searching" class="sf-select" />
+                <SelectDropdown
+                  v-model="source"
+                  :options="[
+                    { value: 'vndb', label: 'VNDB' },
+                    { value: 'bangumi', label: 'Bangumi' }
+                  ]"
+                  :disabled="searching"
+                  class="sf-select"
+                />
               </div>
               <div class="sf-row">
                 <label class="sf-label">关键词</label>

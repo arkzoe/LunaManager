@@ -1,14 +1,4 @@
 import { ref, watch } from 'vue'
-import type { AppConfig } from '../../../shared/types'
-
-const persist = <K extends keyof AppConfig>(
-  key: K,
-  r: ReturnType<typeof ref<AppConfig[K]>>
-): void => {
-  watch(r, (v) => {
-    if (v !== undefined) window.api.setConfig(key, v)
-  })
-}
 
 export function useSettings() {
   const autoStart = ref(false)
@@ -55,24 +45,37 @@ export function useSettings() {
   }
 
   const setupPersistence = (): void => {
-    persist('autoStart', autoStart)
-    persist('autoUpdate', autoUpdate)
-    persist('downloadPath', downloadPath)
-    persist('language', language)
-    persist('vndbApiKey', vndbApiKey)
-    persist('bangumiToken', bangumiToken)
-    persist('lePath', lePath)
-    persist('magpiePath', magpiePath)
-    persist('magpieScale', magpieScale)
-    persist('autoBackup', autoBackup)
-    persist('backupDir', backupDir)
-    persist('backupFrequency', backupFrequency)
-    persist('backupMaxCopies', backupMaxCopies)
-    persist('showGameCover', showGameCover)
-    persist('trackPlaytime', trackPlaytime)
-    persist('recordHistory', recordHistory)
-    persist('autoSyncMetadata', autoSyncMetadata)
-    persist('metadataSource', metadataSource)
+    let saving = false
+    watch(
+      [autoStart, autoUpdate, downloadPath, language,
+        vndbApiKey, bangumiToken, lePath, magpiePath, magpieScale,
+        autoBackup, backupDir, backupFrequency, backupMaxCopies,
+        showGameCover, trackPlaytime, recordHistory, autoSyncMetadata, metadataSource],
+      () => {
+        if (saving) return
+        saving = true
+        Promise.all([
+          window.api.setConfig('autoStart' as const, autoStart.value),
+          window.api.setConfig('autoUpdate' as const, autoUpdate.value),
+          window.api.setConfig('downloadPath' as const, downloadPath.value),
+          window.api.setConfig('language' as const, language.value),
+          window.api.setConfig('vndbApiKey' as const, vndbApiKey.value),
+          window.api.setConfig('bangumiToken' as const, bangumiToken.value),
+          window.api.setConfig('lePath' as const, lePath.value),
+          window.api.setConfig('magpiePath' as const, magpiePath.value),
+          window.api.setConfig('magpieScale' as const, magpieScale.value),
+          window.api.setConfig('autoBackup' as const, autoBackup.value),
+          window.api.setConfig('backupDir' as const, backupDir.value),
+          window.api.setConfig('backupFrequency' as const, backupFrequency.value),
+          window.api.setConfig('backupMaxCopies' as const, backupMaxCopies.value),
+          window.api.setConfig('showGameCover' as const, showGameCover.value),
+          window.api.setConfig('trackPlaytime' as const, trackPlaytime.value),
+          window.api.setConfig('recordHistory' as const, recordHistory.value),
+          window.api.setConfig('autoSyncMetadata' as const, autoSyncMetadata.value),
+          window.api.setConfig('metadataSource' as const, metadataSource.value)
+        ]).finally(() => { saving = false })
+      }
+    )
   }
 
   const handleSelectLEPath = async (): Promise<void> => {

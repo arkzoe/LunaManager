@@ -38,7 +38,10 @@ const emit = defineEmits<{
         </div>
         <SelectDropdown
           :model-value="metadataSource"
-          :options="[{value:'vndb',label:'VNDB'},{value:'bangumi',label:'Bangumi'}]"
+          :options="[
+            { value: 'vndb', label: 'VNDB' },
+            { value: 'bangumi', label: 'Bangumi' }
+          ]"
           class="sselect"
           @update:model-value="emit('update:metadataSource', $event as string)"
         />

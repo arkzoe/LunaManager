@@ -51,7 +51,13 @@ body {
     color 0.35s ease;
 }
 
-.app-shell * {
+.app-shell,
+.app-shell .sidebar,
+.app-shell .main-area,
+.app-shell .panel,
+.app-shell .ov-card,
+.app-shell .sort-btn,
+.app-shell .tt-btn {
   transition-property: background-color, border-color, box-shadow;
   transition-duration: 0.25s;
   transition-timing-function: ease;
@@ -144,6 +150,4 @@ html.dark {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
-
-
 </style>

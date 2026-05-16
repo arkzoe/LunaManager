@@ -107,7 +107,7 @@ const handleMoveTarget = (targetId: string): void => {
               :disabled="!canSubmit"
               @click="handleConfirm"
             >
-               创建
+              创建
             </button>
           </div>
         </template>
@@ -140,7 +140,7 @@ const handleMoveTarget = (targetId: string): void => {
               :disabled="!canSubmit"
               @click="handleConfirm"
             >
-               确认
+              确认
             </button>
           </div>
         </template>

@@ -598,7 +598,9 @@ const handleBatchImported = (result: ImportResult): void => {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+  transition:
+    max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.15s ease;
   pointer-events: none;
 }
 .batch-bar-stage.batch-open {

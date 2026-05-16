@@ -85,7 +85,9 @@ const emit = defineEmits<{
   background: rgba(255, 255, 255, 0.9);
   border-radius: 4px;
   cursor: pointer;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .grid-check.cb-hidden {

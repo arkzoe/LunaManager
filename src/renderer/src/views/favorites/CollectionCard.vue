@@ -82,7 +82,9 @@ const emit = defineEmits<{
 <style scoped>
 .batch-check-wrap,
 .collection-actions {
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .batch-check-wrap.cb-hidden,

@@ -25,11 +25,8 @@ export const useGameStore = defineStore('games', () => {
     error.value = null
     try {
       games.value = await window.api.getGames()
-      let total = 0
-      for (const g of games.value) {
-        total += await window.api.getGamePlaytime(g.id)
-      }
-      totalPlaytimeMinutes.value = total
+      const stats = await window.api.getAllAggregatedStats()
+      totalPlaytimeMinutes.value = stats.reduce((s, x) => s + x.total_duration, 0)
     } catch (e: any) {
       error.value = e.message || '加载游戏失败'
     } finally {

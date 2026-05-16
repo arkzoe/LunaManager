@@ -37,12 +37,15 @@ async function getDirSize(dirPath: string): Promise<number> {
   }
 }
 
+const SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB']
+const SIZE_DIVISORS = [1, 1024, 1048576, 1073741824, 1099511627776]
+
 function formatSize(bytes: number): string {
   if (bytes === 0) return '未知'
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  const size = (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)
-  return `${size} ${units[i]}`
+  let i = 0
+  while (i < SIZE_DIVISORS.length - 1 && bytes >= SIZE_DIVISORS[i + 1]) i++
+  const size = (bytes / SIZE_DIVISORS[i]).toFixed(i > 0 ? 1 : 0)
+  return `${size} ${SIZE_UNITS[i]}`
 }
 
 async function scanExeFiles(dirPath: string, depth = 0, maxDepth = 3): Promise<string[]> {
@@ -91,8 +94,8 @@ export async function scanDirectory(folderPath: string, options: ScanOptions = {
     .map((fullPath) => ({ name: basename(fullPath), fullPath }))
     .filter((e) => !isSystemExe(e.name))
     .sort((a, b) => {
-      const aDepth = a.fullPath.split('\\').length
-      const bDepth = b.fullPath.split('\\').length
+      const aDepth = a.fullPath.length - a.fullPath.replace(/\\/g, '').length
+      const bDepth = b.fullPath.length - b.fullPath.replace(/\\/g, '').length
       if (aDepth !== bDepth) return aDepth - bDepth
       return a.name.localeCompare(b.name)
     })

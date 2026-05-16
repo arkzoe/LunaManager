@@ -7,9 +7,12 @@ defineProps<{
 
 const emit = defineEmits<{ (e: 'finish'): void }>()
 
-const successItems = (items: ImportResultItem[]) => items.filter((i) => i.status === 'success')
-const failedItems = (items: ImportResultItem[]) => items.filter((i) => i.status === 'failed')
-const skippedItems = (items: ImportResultItem[]) => items.filter((i) => i.status === 'skipped')
+const successItems = (items: ImportResultItem[]): ImportResultItem[] =>
+  items.filter((i) => i.status === 'success')
+const failedItems = (items: ImportResultItem[]): ImportResultItem[] =>
+  items.filter((i) => i.status === 'failed')
+const skippedItems = (items: ImportResultItem[]): ImportResultItem[] =>
+  items.filter((i) => i.status === 'skipped')
 </script>
 
 <template>

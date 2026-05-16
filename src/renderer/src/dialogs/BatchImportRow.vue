@@ -2,7 +2,7 @@
 import type { ImportRowState } from '../../../shared/types'
 import SelectDropdown from '../shared/SelectDropdown.vue'
 
-const props = defineProps<{
+defineProps<{
   row: ImportRowState
   searching: boolean
   importing: boolean
@@ -117,7 +117,7 @@ const matchStatusClass = (status?: string): string => {
     <div class="br-exe">
       <SelectDropdown
         :model-value="row.selectedExe"
-        :options="row.executables.map(exe => ({ value: exe.fullPath, label: exe.name }))"
+        :options="row.executables.map((exe) => ({ value: exe.fullPath, label: exe.name }))"
         :disabled="row.executables.length === 0 || importing"
         placeholder="无可执行文件"
         class="br-select"
