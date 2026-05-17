@@ -16,7 +16,7 @@ const emit = defineEmits<{
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="modal-overlay" @click.self="emit('cancel')">
+      <div v-if="show" class="modal-overlay">
         <div class="modal-card">
           <h3 class="modal-title">{{ title }}</h3>
           <p class="modal-desc">{{ message }}</p>

@@ -58,7 +58,7 @@ watch(
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="modal-overlay" @click.self="emit('close')">
+      <div v-if="show" class="modal-overlay">
         <div class="modal-card">
           <h3 class="modal-title">添加到收藏夹</h3>
           <div v-if="loading" class="modal-loading">加载中...</div>

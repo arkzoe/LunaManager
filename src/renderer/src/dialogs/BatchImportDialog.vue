@@ -155,10 +155,6 @@ const handleClose = (): void => {
   if (!scan.isLoading.value && !isImporting.value && !match.isMatchingAll.value) emit('close')
 }
 
-const handleOverlayClick = (e: MouseEvent): void => {
-  if ((e.target as HTMLElement).classList.contains('dialog-overlay')) handleClose()
-}
-
 watch(
   () => props.show,
   (val) => {
@@ -173,12 +169,7 @@ watch(
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="show"
-        class="dialog-overlay"
-        @click="handleOverlayClick"
-        @keydown.esc="handleClose"
-      >
+      <div v-if="show" class="dialog-overlay" @keydown.esc="handleClose">
         <div class="dialog-card">
           <div class="dialog-header">
             <h2 class="dialog-title">批量导入游戏</h2>

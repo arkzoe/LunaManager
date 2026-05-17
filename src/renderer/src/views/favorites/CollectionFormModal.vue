@@ -76,7 +76,6 @@ const handleMoveTarget = (targetId: string): void => {
     <div
       v-if="show"
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-1000 backdrop-blur-sm modal-overlay"
-      @click.self="emit('close')"
     >
       <div class="w-90% max-w-100 rounded-2xl p-6 modal-card">
         <template v-if="mode === 'create'">

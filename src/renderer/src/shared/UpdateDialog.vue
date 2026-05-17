@@ -15,12 +15,7 @@ const emit = defineEmits<{
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="show"
-        class="dialog-overlay"
-        @click.self="emit('close')"
-        @keydown.esc="emit('close')"
-      >
+      <div v-if="show" class="dialog-overlay" @keydown.esc="emit('close')">
         <div class="dialog-card">
           <div class="dialog-header">
             <h2 class="dialog-title">检查更新</h2>

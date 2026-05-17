@@ -2,7 +2,6 @@
 import { ref, watch } from 'vue'
 import type { ScanResult, GameRecord, SearchResult } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
-import { useSettingsStore } from '../stores/useSettingsStore'
 import { useTokenCache } from '../composables/useTokenCache'
 import { fillGameFromDetail } from '../composables/useMetadata'
 import GameMetadataForm from '../shared/GameMetadataForm.vue'
@@ -17,7 +16,6 @@ const emit = defineEmits<{
 }>()
 
 const store = useGameStore()
-const settingsStore = useSettingsStore()
 const isLoading = ref(false)
 const scanResult = ref<ScanResult | null>(null)
 const error = ref('')
@@ -36,7 +34,6 @@ const form = ref<MetadataForm>({
   title: '',
   titleCn: '',
   developer: '',
-  publisher: '',
   releaseDate: '',
   description: '',
   notes: '',
@@ -55,7 +52,6 @@ const resetForm = (): void => {
     title: '',
     titleCn: '',
     developer: '',
-    publisher: '',
     releaseDate: '',
     description: '',
     notes: '',
@@ -121,9 +117,6 @@ const handlePickFolder = async (): Promise<void> => {
             : ''
     }
     isLoading.value = false
-    if (settingsStore.settings.autoSyncMetadata) {
-      await handleSearch()
-    }
   } catch (e: unknown) {
     error.value = (e instanceof Error ? e.message : String(e)) || '选择文件夹失败'
     isLoading.value = false
@@ -168,7 +161,11 @@ const applySearchResult = async (result: SearchResult): Promise<void> => {
         undefined
       )
       fillGameFromDetail(detail, form.value)
-      if (detail.cover) coverUrl.value = detail.cover
+      if (detail.cover) {
+        const previewId = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+        const localPath = await window.api.downloadCover(previewId, detail.cover)
+        if (localPath) coverUrl.value = localPath
+      }
       if (detail.vndb_id) vndbId.value = detail.vndb_id
       if (detail.bangumi_id) bangumiId.value = detail.bangumi_id
       metadataFilled.value = true
@@ -210,9 +207,13 @@ const handleConfirm = async (): Promise<void> => {
     const now = Date.now()
     const gameId = `id-${now}-${Math.random().toString(36).slice(2, 6)}`
     let cover = ''
-    if (coverUrl.value && !coverUrl.value.startsWith('cover://')) {
-      const localPath = await window.api.downloadCover(gameId, coverUrl.value)
-      if (localPath) cover = localPath
+    if (coverUrl.value) {
+      if (coverUrl.value.startsWith('cover://')) {
+        cover = coverUrl.value
+      } else {
+        const localPath = await window.api.downloadCover(gameId, coverUrl.value)
+        if (localPath) cover = localPath
+      }
     }
     const gameData: Omit<GameRecord, 'created_at' | 'updated_at'> = {
       id: gameId,
@@ -228,7 +229,7 @@ const handleConfirm = async (): Promise<void> => {
       last_played: '',
       description: form.value.description,
       developer: form.value.developer,
-      publisher: form.value.publisher,
+      publisher: '',
       release_date: form.value.releaseDate,
       playtime: '',
       playtime_seconds: 0,
@@ -257,20 +258,12 @@ const handlePickSavePath = async (): Promise<void> => {
   const dir = await window.api.pickDirectory()
   if (dir) form.value = { ...form.value, savePath: dir }
 }
-const handleOverlayClick = (e: MouseEvent): void => {
-  if ((e.target as HTMLElement).classList.contains('dialog-overlay')) handleClose()
-}
 </script>
 
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="show"
-        class="dialog-overlay"
-        @click="handleOverlayClick"
-        @keydown.esc="handleClose"
-      >
+      <div v-if="show" class="dialog-overlay" @keydown.esc="handleClose">
         <div class="dialog-card">
           <div class="dialog-header">
             <h2 class="dialog-title">导入游戏</h2>

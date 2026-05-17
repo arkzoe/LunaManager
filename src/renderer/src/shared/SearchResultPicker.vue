@@ -22,23 +22,12 @@ const handleSelect = (): void => {
   const found = props.results.find((r) => r.id === selectedId.value)
   if (found) emit('select', found)
 }
-
-const handleOverlayClick = (e: MouseEvent): void => {
-  if ((e.target as HTMLElement).classList.contains('dialog-overlay')) {
-    emit('close')
-  }
-}
 </script>
 
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="show"
-        class="dialog-overlay"
-        @click="handleOverlayClick"
-        @keydown.esc="emit('close')"
-      >
+      <div v-if="show" class="dialog-overlay" @keydown.esc="emit('close')">
         <div class="dialog-card">
           <div class="dialog-header">
             <h2 class="dialog-title">选择 {{ sourceLabel }} 条目</h2>
