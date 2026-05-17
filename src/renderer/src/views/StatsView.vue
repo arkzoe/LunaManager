@@ -10,7 +10,8 @@ import {
   Filler
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import { useStats } from '../composables/useStats'
+import { useGameStore } from '../stores/useGameStore'
+import { useStats, computeRankings } from '../composables/useStats'
 import { useStatsChart } from '../composables/useStatsChart'
 import { useSettingsStore } from '../stores/useSettingsStore'
 import StatsRanking from './stats/StatsRanking.vue'
@@ -18,12 +19,27 @@ import StatsRanking from './stats/StatsRanking.vue'
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
 const settingsStore = useSettingsStore()
+const gameStore = useGameStore()
 const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
-const rankRange = ref<'week' | 'month'>('week')
+const rankRange = ref<'week' | 'month' | 'all'>('all')
 const showLibraryOverview = ref(true)
 
-const { totalSessionCount, libraryStats, rankings, topGame, loadStats, allSessions } = useStats()
+const { totalSessionCount, libraryStats, loadStats, allSessions } = useStats()
 const { chartData, chartOptions } = useStatsChart(allSessions, timeRange)
+
+const cutoffMap: Record<string, number> = {
+  week: 7 * 24 * 60 * 60 * 1000,
+  month: 30 * 24 * 60 * 60 * 1000
+}
+
+const filteredRankings = computed(() => {
+  const cutoff = cutoffMap[rankRange.value]
+    ? Date.now() - cutoffMap[rankRange.value]
+    : 0
+  return computeRankings(allSessions.value, gameStore.allGames, cutoff)
+})
+
+const filteredTopGame = computed(() => filteredRankings.value[0])
 
 const recordHistory = computed(() => settingsStore.settings.recordHistory)
 
@@ -121,6 +137,13 @@ const timeRanges = [
       </div>
     </div>
 
+    <StatsRanking
+      v-if="recordHistory"
+      v-model:rank-range="rankRange"
+      :rankings="filteredRankings"
+      :top-game="filteredTopGame"
+    />
+
     <!-- 时间范围 + 时长趋势图表 -->
     <div v-if="recordHistory" class="panel">
       <div class="panel-header">
@@ -160,13 +183,6 @@ const timeRanges = [
         </div>
       </div>
     </div>
-
-    <StatsRanking
-      v-if="recordHistory"
-      v-model:rank-range="rankRange"
-      :rankings="rankings"
-      :top-game="topGame"
-    />
   </div>
 </template>
 
