@@ -1,22 +1,14 @@
 export const formatPlaytime = (seconds: number): string => {
   if (seconds < 60) return `${seconds}秒`
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}分钟`
-  const hours = Math.floor(minutes / 60)
-  const rem = minutes % 60
-  if (hours < 24) return rem ? `${hours}小时${rem}分钟` : `${hours}小时`
-  const days = Math.floor(hours / 24)
-  const rh = hours % 24
-  return rh ? `${days}天${rh}小时` : `${days}天`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟`
+  const hours = seconds / 3600
+  return `${hours.toFixed(1)}小时`
 }
 
 export const formatPlaytimeShort = (seconds: number): string => {
   if (seconds < 60) return `${seconds}s`
-  const m = Math.floor(seconds / 60)
-  if (m < 60) return `${m}m`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h`
-  return `${Math.floor(h / 24)}d`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
+  return `${(seconds / 3600).toFixed(1)}h`
 }
 
 export const formatDate = (ts: number): string => {
