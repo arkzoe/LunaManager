@@ -72,6 +72,7 @@ export function useStatsChart(
         fill: true,
         tension: 0.3,
         pointRadius: 4,
+        pointHitRadius: 20,
         pointBackgroundColor: ac
       }]
     }
@@ -80,11 +81,15 @@ export function useStatsChart(
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index' as const,
+      intersect: false
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (ctx: TooltipItem<'line'>) => `${ctx.parsed.y ?? 0} 小时`
+          label: (ctx: TooltipItem<'line'>) => `时长: ${(ctx.parsed.y ?? 0).toFixed(1)} 小时`
         }
       }
     },
