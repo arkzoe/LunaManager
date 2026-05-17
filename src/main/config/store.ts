@@ -20,7 +20,6 @@ export interface AppConfig {
   // 基础配置
   autoStart: boolean
   autoUpdate: boolean
-  downloadPath: string
 
   // 元数据设置
   metadataSource: 'vndb' | 'bangumi'
@@ -29,8 +28,6 @@ export interface AppConfig {
   // 外观设置
   theme: 'dark' | 'light'
   language: 'zh-CN' | 'en-US'
-  sidebarCollapsed: boolean
-  showGameCover: boolean
 
   // 游玩配置
   trackPlaytime: boolean
@@ -50,9 +47,6 @@ export interface AppConfig {
 
   // 备份配置
   backupDir: string
-  autoBackup: boolean
-  backupFrequency: 'daily' | 'weekly' | 'monthly'
-  backupMaxCopies: number
 }
 
 const defaultConfig: AppConfig = {
@@ -62,13 +56,10 @@ const defaultConfig: AppConfig = {
   },
   autoStart: false,
   autoUpdate: true,
-  downloadPath: '',
   metadataSource: 'vndb',
   autoSyncMetadata: true,
   theme: 'dark',
   language: 'zh-CN',
-  sidebarCollapsed: false,
-  showGameCover: true,
   trackPlaytime: true,
   recordHistory: true,
   dbPath: '',
@@ -77,10 +68,7 @@ const defaultConfig: AppConfig = {
   magpieScale: '2x',
   bangumiToken: '',
   vndbApiKey: '',
-  backupDir: '',
-  autoBackup: false,
-  backupFrequency: 'weekly',
-  backupMaxCopies: 5
+  backupDir: ''
 }
 
 const storeOptions: Options<AppConfig> = {

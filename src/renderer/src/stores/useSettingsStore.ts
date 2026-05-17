@@ -13,7 +13,6 @@ export interface AppSettings {
 
   // 外观设置
   language: 'zh-CN' | 'en-US'
-  sidebarCollapsed: boolean
 
   // 游玩配置
   trackPlaytime: boolean
@@ -26,7 +25,6 @@ const defaultSettings: AppSettings = {
   metadataSource: 'vndb',
   autoSyncMetadata: true,
   language: 'zh-CN',
-  sidebarCollapsed: false,
   trackPlaytime: true,
   recordHistory: true
 }
@@ -38,7 +36,6 @@ const configKeyMap: Record<keyof AppSettings, keyof AppConfig> = {
   metadataSource: 'metadataSource',
   autoSyncMetadata: 'autoSyncMetadata',
   language: 'language',
-  sidebarCollapsed: 'sidebarCollapsed',
   trackPlaytime: 'trackPlaytime',
   recordHistory: 'recordHistory'
 }
@@ -53,8 +50,6 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const currentLanguage = computed(() => settings.value.language)
 
-  const isSidebarCollapsed = computed(() => settings.value.sidebarCollapsed)
-
   // Actions
   const initSettings = async (): Promise<void> => {
     isLoading.value = true
@@ -66,7 +61,6 @@ export const useSettingsStore = defineStore('settings', () => {
         metadataSource: config.metadataSource ?? defaultSettings.metadataSource,
         autoSyncMetadata: config.autoSyncMetadata ?? defaultSettings.autoSyncMetadata,
         language: config.language ?? defaultSettings.language,
-        sidebarCollapsed: config.sidebarCollapsed ?? defaultSettings.sidebarCollapsed,
         trackPlaytime: config.trackPlaytime ?? defaultSettings.trackPlaytime,
         recordHistory: config.recordHistory ?? defaultSettings.recordHistory
       }
@@ -118,10 +112,6 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  const toggleSidebar = async (): Promise<void> => {
-    await updateSetting('sidebarCollapsed', !settings.value.sidebarCollapsed)
-  }
-
   return {
     // State
     settings,
@@ -129,12 +119,10 @@ export const useSettingsStore = defineStore('settings', () => {
     // Getters
     allSettings,
     currentLanguage,
-    isSidebarCollapsed,
     // Actions
     initSettings,
     updateSetting,
     updateSettings,
-    resetSettings,
-    toggleSidebar
+    resetSettings
   }
 })

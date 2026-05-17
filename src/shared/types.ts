@@ -143,13 +143,10 @@ export interface AppConfig {
   windowBounds: { width: number; height: number; x?: number; y?: number }
   autoStart: boolean
   autoUpdate: boolean
-  downloadPath: string
   metadataSource: 'vndb' | 'bangumi'
   autoSyncMetadata: boolean
   theme: Theme
   language: 'zh-CN' | 'en-US'
-  sidebarCollapsed: boolean
-  showGameCover: boolean
   trackPlaytime: boolean
   recordHistory: boolean
   dbPath: string
@@ -159,9 +156,6 @@ export interface AppConfig {
   bangumiToken: string
   vndbApiKey: string
   backupDir: string
-  autoBackup: boolean
-  backupFrequency: 'daily' | 'weekly' | 'monthly'
-  backupMaxCopies: number
 }
 
 export interface IElectronAPI {

@@ -20,14 +20,28 @@ export const useThemeStore = defineStore('theme', () => {
 
   const initTheme = (): void => {
     const saved = localStorage.getItem('lunamanager-theme') as Theme | null
-    currentTheme.value = saved || 'light'
-    applyTheme(currentTheme.value)
+    if (saved === 'light' || saved === 'dark') {
+      currentTheme.value = saved
+      applyTheme(currentTheme.value)
+    } else {
+      window.api.getConfig('theme').then((t) => {
+        currentTheme.value = t || 'light'
+        applyTheme(currentTheme.value)
+        localStorage.setItem('lunamanager-theme', currentTheme.value)
+      }).catch(() => {
+        currentTheme.value = 'light'
+        applyTheme(currentTheme.value)
+      })
+    }
   }
 
-  const setTheme = (theme: Theme): void => {
+  const setTheme = async (theme: Theme): Promise<void> => {
     currentTheme.value = theme
     applyTheme(theme)
     localStorage.setItem('lunamanager-theme', theme)
+    try {
+      await window.api.setConfig('theme', theme)
+    } catch { /* ignore */ }
   }
 
   const toggleTheme = (): void => {
