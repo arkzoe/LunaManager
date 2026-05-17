@@ -1,5 +1,5 @@
 import { shallowRef, ref, computed, onUnmounted } from 'vue'
-import type { PlaySession } from '../../../shared/types'
+import type { PlaySession, GameRecord } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import { formatPlaytime } from '../utils/format'
 
@@ -22,6 +22,42 @@ export interface LibraryStats {
   totalHours: number
   completedGames: number
   avgPerDay: number
+}
+
+export function computeRankings(
+  sessions: PlaySession[],
+  games: GameRecord[],
+  cutoff?: number
+): RankingItem[] {
+  const gameMap = new Map(games.map((g) => [g.id, g]))
+  const durationMap = new Map<string, number>()
+
+  for (const s of sessions) {
+    if (cutoff && s.start_time < cutoff) continue
+    if (!s.duration || s.duration <= 0) continue
+    durationMap.set(s.game_id, (durationMap.get(s.game_id) || 0) + s.duration)
+  }
+
+  const ranked = [...durationMap.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([gameId, totalMs], idx) => {
+      const game = gameMap.get(gameId)
+      return {
+        rank: idx + 1,
+        title: game ? game.title_cn || game.title : gameId,
+        playtime: formatPlaytime(Math.floor(totalMs / 1000)),
+        cover: game?.cover || ''
+      }
+    })
+
+  if (ranked.length === 0) {
+    return [
+      { rank: 1, title: '-', playtime: '-', cover: '' },
+      { rank: 2, title: '-', playtime: '-', cover: '' }
+    ]
+  }
+  return ranked
 }
 
 export function useStats() {
