@@ -41,7 +41,7 @@ watch(
         v-if="game.cover"
         ref="coverImg"
         :src="game.cover"
-        :alt="game.title"
+        :alt="game.title_cn || game.title"
         class="cover-img"
         :class="{ loaded: imageLoaded }"
         @load="handleImageLoad"
@@ -55,7 +55,7 @@ watch(
       </div>
     </div>
     <div class="info">
-      <div class="title">{{ game.title }}</div>
+      <div class="title">{{ game.title_cn || game.title }}</div>
       <div class="meta">{{ game.size || '-' }}</div>
     </div>
   </div>
