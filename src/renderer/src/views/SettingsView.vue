@@ -7,6 +7,7 @@ import SettingDatasource from './settings/SettingDatasource.vue'
 import SettingLauncher from './settings/SettingLauncher.vue'
 import SettingBackup from './settings/SettingBackup.vue'
 import SettingAbout from './settings/SettingAbout.vue'
+import UpdateDialog from '../shared/UpdateDialog.vue'
 
 const {
   autoStart,
@@ -30,6 +31,14 @@ const {
 } = useSettings()
 
 const currentVersion = ref('1.0.0')
+
+const updateDialog = ref({
+  show: false,
+  type: 'checking' as 'checking' | 'available' | 'not-available' | 'error',
+  version: '',
+  releaseNotes: '',
+  errorMessage: ''
+})
 
 interface TestResult {
   source: 'vndb' | 'bangumi'
@@ -83,15 +92,78 @@ const handleOpenGithub = (): void => {
 }
 
 const handleCheckUpdate = async (): Promise<void> => {
+  updateDialog.value = {
+    show: true,
+    type: 'checking',
+    version: '',
+    releaseNotes: '',
+    errorMessage: ''
+  }
   try {
     const result = await window.api.checkForUpdates()
     if (result?.updateAvailable) {
-      window.alert(`发现新版本 ${result.version}，请在下载页面获取`)
+      updateDialog.value = {
+        show: true,
+        type: 'available',
+        version: result.version || '',
+        releaseNotes: result.releaseNotes || '',
+        errorMessage: ''
+      }
     } else {
-      window.alert('已是最新版本')
+      updateDialog.value = {
+        show: true,
+        type: 'not-available',
+        version: '',
+        releaseNotes: '',
+        errorMessage: ''
+      }
     }
   } catch {
-    window.alert('检查更新失败')
+    updateDialog.value = {
+      show: true,
+      type: 'error',
+      version: '',
+      releaseNotes: '',
+      errorMessage: '网络连接失败，请稍后重试'
+    }
+  }
+}
+
+const handleUpdateDownload = async (): Promise<void> => {
+  updateDialog.value = {
+    show: true,
+    type: 'checking',
+    version: '',
+    releaseNotes: '',
+    errorMessage: ''
+  }
+  try {
+    await window.api.downloadUpdate()
+    updateDialog.value = {
+      show: false,
+      type: 'checking',
+      version: '',
+      releaseNotes: '',
+      errorMessage: ''
+    }
+  } catch {
+    updateDialog.value = {
+      show: true,
+      type: 'error',
+      version: '',
+      releaseNotes: '',
+      errorMessage: '下载失败，请稍后重试'
+    }
+  }
+}
+
+const handleUpdateClose = (): void => {
+  updateDialog.value = {
+    show: false,
+    type: 'checking',
+    version: '',
+    releaseNotes: '',
+    errorMessage: ''
   }
 }
 
@@ -260,6 +332,16 @@ const scrollToSection = (id: string): void => {
         :current-version="currentVersion"
         @check-update="handleCheckUpdate"
         @open-github="handleOpenGithub"
+      />
+
+      <UpdateDialog
+        :show="updateDialog.show"
+        :type="updateDialog.type"
+        :version="updateDialog.version"
+        :release-notes="updateDialog.releaseNotes"
+        :error-message="updateDialog.errorMessage"
+        @close="handleUpdateClose"
+        @download="handleUpdateDownload"
       />
 
       <div class="settings-bottom-spacer"></div>
