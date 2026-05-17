@@ -2,7 +2,6 @@
 import { ref, watch } from 'vue'
 import type { GameRecord, ImportResult, ImportResultItem } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
-import { useSettingsStore } from '../stores/useSettingsStore'
 import { useBatchScan } from '../composables/useBatchScan'
 import { useBatchMatch } from '../composables/useBatchMatch'
 import BatchImportRow from './BatchImportRow.vue'
@@ -17,9 +16,7 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'imported', result: ImportResult): void
 }>()
-
 const store = useGameStore()
-const settingsStore = useSettingsStore()
 const isImporting = ref(false)
 
 const scan = useBatchScan()
@@ -31,9 +28,6 @@ const importResult = ref<ImportResult | null>(null)
 
 const handlePickFolder = async (): Promise<void> => {
   await scan.handlePickFolder(match.invalidateTokenCache)
-  if (settingsStore.settings.autoSyncMetadata && match.unmatchedCount.value > 0) {
-    await match.handleMatchAll()
-  }
 }
 
 const handleImportAll = async (): Promise<void> => {
@@ -152,7 +146,7 @@ const handleFinish = (): void => {
 }
 
 const handleClose = (): void => {
-  if (!scan.isLoading.value && !isImporting.value && !match.isMatchingAll.value) emit('close')
+  emit('close')
 }
 
 watch(
@@ -161,6 +155,9 @@ watch(
     if (val) {
       scan.reset()
       match.reset()
+      showResult.value = false
+      importResult.value = null
+      isImporting.value = false
     }
   }
 )

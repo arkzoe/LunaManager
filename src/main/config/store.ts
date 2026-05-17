@@ -16,7 +16,7 @@ const defaultConfig: AppConfig = {
   },
   autoStart: false,
   autoUpdate: true,
-  metadataSource: 'vndb',
+  metadataSource: 'bangumi',
   autoSyncMetadata: true,
   theme: 'dark',
   language: 'zh-CN',

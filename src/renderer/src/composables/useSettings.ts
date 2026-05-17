@@ -18,7 +18,7 @@ export function useSettings() {
   const trackPlaytime = ref(true)
   const recordHistory = ref(true)
   const autoSyncMetadata = ref(false)
-  const metadataSource = ref<'vndb' | 'bangumi'>('vndb')
+  const metadataSource = ref<'vndb' | 'bangumi'>('bangumi')
 
   const loadConfig = async (): Promise<void> => {
     try {
@@ -35,7 +35,7 @@ export function useSettings() {
       trackPlaytime.value = cfg.trackPlaytime ?? true
       recordHistory.value = cfg.recordHistory ?? true
       autoSyncMetadata.value = cfg.autoSyncMetadata ?? false
-      metadataSource.value = cfg.metadataSource ?? 'vndb'
+      metadataSource.value = cfg.metadataSource ?? 'bangumi'
     } catch { /* use defaults */ }
   }
 
@@ -82,7 +82,7 @@ export function useSettings() {
   }
 
   const handleSelectBackupDir = async (): Promise<void> => {
-    const result = await window.api.pickFile()
+    const result = await window.api.pickDirectory()
     if (result) backupDir.value = result
   }
 

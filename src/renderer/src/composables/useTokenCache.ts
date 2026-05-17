@@ -12,7 +12,7 @@ export function useTokenCache() {
     token: string | null
   }> => {
     if (cachedSource === null) {
-      cachedSource = (await window.api.getConfig('metadataSource')) || 'vndb'
+      cachedSource = (await window.api.getConfig('metadataSource')) || 'bangumi'
     }
     if (cachedToken === null) {
       cachedToken =

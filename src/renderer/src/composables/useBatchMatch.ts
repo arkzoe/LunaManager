@@ -28,7 +28,7 @@ export function useBatchMatch(
   const { ensureTokenCache, invalidateTokenCache } = useTokenCache()
 
   const searchingRow = ref('')
-  const searchSource = ref<'vndb' | 'bangumi'>('vndb')
+  const searchSource = ref<'vndb' | 'bangumi'>('bangumi')
   const showSearchInput = ref(false)
   const searchInputFolder = ref('')
   const searchInputQuery = ref('')

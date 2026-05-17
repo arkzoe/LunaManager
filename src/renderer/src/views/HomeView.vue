@@ -165,16 +165,16 @@ const homeData = computed(() => ({
           <h2>最近动态</h2>
         </div>
         <div class="activity-split">
-    <HomeActivityTimeline
-      :activities="homeData.playedActs"
-      empty-text="还没有游玩记录"
-      @select-game="(g) => emit('selectGame', g)"
-    />
-    <HomeActivityTimeline
-      :activities="homeData.addedActs"
-      empty-text="还没有导入游戏"
-      @select-game="(g) => emit('selectGame', g)"
-    />
+          <HomeActivityTimeline
+            :activities="homeData.playedActs"
+            empty-text="还没有游玩记录"
+            @select-game="(g) => emit('selectGame', g)"
+          />
+          <HomeActivityTimeline
+            :activities="homeData.addedActs"
+            empty-text="还没有导入游戏"
+            @select-game="(g) => emit('selectGame', g)"
+          />
         </div>
       </section>
     </template>

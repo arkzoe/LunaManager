@@ -22,7 +22,7 @@ const error = ref('')
 const searching = ref(false)
 const searchResults = ref<SearchResult[]>([])
 const showSearchPicker = ref(false)
-const searchSource = ref<'vndb' | 'bangumi'>('vndb')
+const searchSource = ref<'vndb' | 'bangumi'>('bangumi')
 const metadataFilled = ref(false)
 const searchNoResults = ref(false)
 

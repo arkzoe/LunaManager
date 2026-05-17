@@ -3,6 +3,7 @@ import type { GameRecord } from '../../../../shared/types'
 
 defineProps<{
   activities: { type: string; game: GameRecord; time: string }[]
+  emptyText?: string
 }>()
 
 const emit = defineEmits<{
@@ -12,6 +13,14 @@ const emit = defineEmits<{
 
 <template>
   <div class="timeline">
+    <div v-if="activities.length === 0" class="tl-empty">
+      <svg viewBox="0 0 24 24" class="w-8 h-8 fill-current tl-empty-icon">
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm1-13h-2v6l5.25 3.15.75-1.23-4-2.37V7z"
+        />
+      </svg>
+      <p class="tl-empty-text">{{ emptyText || '暂无记录' }}</p>
+    </div>
     <div
       v-for="(act, idx) in activities"
       :key="idx"
@@ -105,5 +114,25 @@ const emit = defineEmits<{
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 2px;
+}
+
+.tl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 8px;
+}
+
+.tl-empty-icon {
+  color: var(--text-muted);
+  opacity: 0.3;
+}
+
+.tl-empty-text {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
 }
 </style>

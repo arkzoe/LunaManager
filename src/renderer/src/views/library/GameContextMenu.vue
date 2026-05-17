@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { ref, nextTick, watch } from 'vue'
 import type { GameStatus } from '../../../../shared/types'
 
-defineProps<{
+const props = defineProps<{
   show: boolean
   x: number
   y: number
@@ -16,6 +17,28 @@ const emit = defineEmits<{
   (e: 'delete'): void
   (e: 'close'): void
 }>()
+
+const menuRef = ref<HTMLElement | null>(null)
+const adjustedX = ref(0)
+const adjustedY = ref(0)
+
+watch(
+  () => props.show,
+  async (val) => {
+    if (!val) return
+    adjustedX.value = props.x
+    adjustedY.value = props.y
+    await nextTick()
+    const el = menuRef.value
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const gap = 8
+    if (rect.right > vw) adjustedX.value = vw - rect.width - gap
+    if (rect.bottom > vh) adjustedY.value = vh - rect.height - gap
+  }
+)
 </script>
 
 <template>
@@ -29,7 +52,12 @@ const emit = defineEmits<{
       />
     </Transition>
     <Transition name="dropdown">
-      <div v-if="show" class="context-menu" :style="{ left: x + 'px', top: y + 'px' }">
+      <div
+        v-if="show"
+        ref="menuRef"
+        class="context-menu"
+        :style="{ left: adjustedX + 'px', top: adjustedY + 'px' }"
+      >
         <button class="ctx-item" @click="emit('viewDetail')">
           <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
             <path

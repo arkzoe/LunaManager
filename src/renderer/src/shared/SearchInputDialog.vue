@@ -15,7 +15,7 @@ const props = defineProps<{
 }>()
 
 const query = ref(props.initialQuery || '')
-const source = ref<'vndb' | 'bangumi'>(props.initialSource || 'vndb')
+const source = ref<'vndb' | 'bangumi'>(props.initialSource || 'bangumi')
 const searching = ref(false)
 const results = ref<SearchResult[]>([])
 const searched = ref(false)
@@ -27,7 +27,7 @@ watch(
   (val) => {
     if (val) {
       query.value = props.initialQuery || ''
-      source.value = props.initialSource || 'vndb'
+      source.value = props.initialSource || 'bangumi'
       searching.value = false
       results.value = []
       searched.value = false

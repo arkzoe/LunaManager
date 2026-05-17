@@ -22,7 +22,7 @@ export interface AppSettings {
 const defaultSettings: AppSettings = {
   autoStart: false,
   autoUpdate: true,
-  metadataSource: 'vndb',
+  metadataSource: 'bangumi',
   autoSyncMetadata: true,
   language: 'zh-CN',
   trackPlaytime: true,
