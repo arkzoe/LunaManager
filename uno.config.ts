@@ -3,6 +3,12 @@ import presetUno from '@unocss/preset-uno'
 import presetAttributify from '@unocss/preset-attributify'
 import transformerDirectives from '@unocss/transformer-directives'
 
+function toCSS(vars: Record<string, string>): string {
+  return Object.entries(vars)
+    .map(([k, v]) => `  ${k}: ${v};`)
+    .join('\n')
+}
+
 export default defineConfig({
   presets: [
     presetUno(),
@@ -219,6 +225,58 @@ export default defineConfig({
       'success-lg': '0 4px 8px rgba(16, 185, 129, 0.25), 0 8px 16px rgba(16, 185, 129, 0.15)',
     },
 
+    // ========== CSS 变量 - 亮色模式 ==========
+    themeLight: {
+      '--bg-base': '#f8f9fa',
+      '--bg-sidebar': '#ffffff',
+      '--bg-primary': '#ffffff',
+      '--bg-secondary': '#f9fafb',
+      '--bg-tertiary': '#f3f4f6',
+      '--bg-hover': 'rgba(0, 0, 0, 0.03)',
+      '--bg-active': 'rgba(59, 130, 246, 0.06)',
+      '--text-primary': '#374151',
+      '--text-secondary': '#4b5563',
+      '--text-tertiary': '#6b7280',
+      '--text-muted': '#9ca3af',
+      '--border-color': 'rgba(0, 0, 0, 0.08)',
+      '--border-color-light': 'rgba(0, 0, 0, 0.04)',
+      '--border-color-medium': 'rgba(0, 0, 0, 0.12)',
+      '--bg-overlay': 'rgba(0, 0, 0, 0.35)',
+      '--accent-primary': '#3b82f6',
+      '--accent-primary-dark': '#2563eb',
+      '--success': '#10b981',
+      '--danger': '#ef4444',
+      '--warning': '#f59e0b',
+      '--shadow-sm': '0 1px 2px rgba(0, 0, 0, 0.03)',
+      '--shadow-md': '0 4px 8px rgba(0, 0, 0, 0.04)',
+    },
+
+    // ========== CSS 变量 - 暗色模式 ==========
+    themeDark: {
+      '--bg-base': '#121416',
+      '--bg-sidebar': '#1c1e1f',
+      '--bg-primary': '#1c1e1f',
+      '--bg-secondary': '#303235',
+      '--bg-tertiary': '#27272a',
+      '--bg-hover': 'rgba(255, 255, 255, 0.05)',
+      '--bg-active': 'rgba(59, 130, 246, 0.12)',
+      '--text-primary': '#f3f4f6',
+      '--text-secondary': '#d1d5db',
+      '--text-tertiary': '#9ca3af',
+      '--text-muted': '#6b7280',
+      '--border-color': 'rgba(255, 255, 255, 0.08)',
+      '--border-color-light': 'rgba(255, 255, 255, 0.04)',
+      '--border-color-medium': 'rgba(255, 255, 255, 0.12)',
+      '--bg-overlay': 'rgba(0, 0, 0, 0.6)',
+      '--accent-primary': '#60a5fa',
+      '--accent-primary-dark': '#3b82f6',
+      '--success': '#34d399',
+      '--danger': '#f87171',
+      '--warning': '#fbbf24',
+      '--shadow-sm': '0 1px 3px rgba(0, 0, 0, 0.3)',
+      '--shadow-md': '0 4px 12px rgba(0, 0, 0, 0.35)',
+    },
+
     // ========== 过渡动画 ==========
     transitionDuration: {
       fast: '150ms',
@@ -335,5 +393,16 @@ export default defineConfig({
     'module': 'bg-bg-primary rounded-xl border border-border p-6',
     'module-filled': 'bg-bg-secondary rounded-xl border border-border-light p-6',
     'module-elevated': 'bg-bg-primary rounded-xl border border-border p-6',
-  }
+  },
+  preflights: [
+    {
+      getCSS: ({ theme }: any) =>
+`:root {
+${toCSS(theme.themeLight || {})}
+}
+html.dark {
+${toCSS(theme.themeDark || {})}
+}`,
+    },
+  ],
 })
