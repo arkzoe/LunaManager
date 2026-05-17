@@ -95,6 +95,7 @@ export function launchGame(gameId: string, mode: LaunchMode): void {
       const totalSeconds = Math.floor(totalMs / 1000)
       gameOps.update(gameId, {
         playtime: formatPlaytime(totalSeconds),
+        playtime_seconds: totalSeconds,
         last_played: new Date().toISOString()
       })
     } else {

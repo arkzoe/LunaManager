@@ -32,9 +32,7 @@ function migrateGamesTable(): void {
       db!.exec(`ALTER TABLE games ADD COLUMN ${name} ${def}`)
     }
   }
-  if (!columnExists('games', 'status')) {
-    try { db!.exec('CREATE INDEX IF NOT EXISTS idx_games_status ON games(status)') } catch { /* skip */ }
-  }
+  try { db!.exec('CREATE INDEX IF NOT EXISTS idx_games_status ON games(status)') } catch { /* skip */ }
 }
 
 export const initDatabase = (): Database.Database => {
@@ -112,6 +110,9 @@ export const initDatabase = (): Database.Database => {
 
   migrateGamesTable()
   migrateCollectionsTable()
+  if (!columnExists('games', 'playtime_seconds')) {
+    db!.exec('ALTER TABLE games ADD COLUMN playtime_seconds INTEGER DEFAULT 0')
+  }
 
   console.log('Database initialized at:', dbPath)
   return db

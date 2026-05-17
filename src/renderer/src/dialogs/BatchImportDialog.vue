@@ -104,6 +104,7 @@ const handleImportAll = async (): Promise<void> => {
               publisher: row.publisher,
               release_date: row.releaseDate,
               playtime: '',
+              playtime_seconds: 0,
               executable_path: row.selectedExe,
               save_path: row.savePath,
               vndb_id: row.vndbId,

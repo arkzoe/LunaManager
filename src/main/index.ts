@@ -141,10 +141,9 @@ function setupIpcHandlers(): void {
     snapshotOps.create(gameId, notes)
   )
   ipcMain.handle('snap:delete', (_, id: string) => snapshotOps.delete(id))
-  ipcMain.handle('snap:restore', () => {
-    throw new Error('Not implemented')
+  ipcMain.handle('snap:restore', async (_, snapshotId: string) => {
+    return restoreSave(snapshotId)
   })
-  ipcMain.handle('snap:detectSavePath', () => null)
   ipcMain.handle('snap:backup', async (_e, gameId: string) => {
     const game = gameOps.getById(gameId)
     if (!game || !game.save_path) throw new Error('未设置存档路径')

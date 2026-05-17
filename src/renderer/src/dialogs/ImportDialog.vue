@@ -231,6 +231,7 @@ const handleConfirm = async (): Promise<void> => {
       publisher: form.value.publisher,
       release_date: form.value.releaseDate,
       playtime: '',
+      playtime_seconds: 0,
       executable_path: form.value.selectedExe,
       save_path: form.value.savePath,
       vndb_id: vndbId.value,

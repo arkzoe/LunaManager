@@ -23,6 +23,10 @@ export const snapshotOps = {
     return snap
   },
 
+  getById: (id: string): SaveSnapshot | undefined => {
+    return getDatabase().prepare('SELECT * FROM save_snapshots WHERE id = ?').get(id) as SaveSnapshot | undefined
+  },
+
   delete: (id: string): void => {
     getDatabase().prepare('DELETE FROM save_snapshots WHERE id = ?').run(id)
   }

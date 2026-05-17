@@ -56,13 +56,13 @@ export const collectionOps = {
     ).run({ g: gameId, c: collectionId })
   },
 
-  getCollectionGames: (collectionId: string): Pick<GameRecord, 'id'>[] => {
+  getCollectionGames: (collectionId: string): GameRecord[] => {
     return getDatabase().prepare(`
-      SELECT g.id FROM games g
+      SELECT g.* FROM games g
       INNER JOIN game_collections gc ON g.id = gc.game_id
       WHERE gc.collection_id = ?
       ORDER BY g.title ASC
-    `).all(collectionId) as Pick<GameRecord, 'id'>[]
+    `).all(collectionId) as GameRecord[]
   },
 
   getAllCollectionGamesMap: (): Record<string, string[]> => {

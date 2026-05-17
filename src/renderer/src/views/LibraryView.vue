@@ -257,7 +257,7 @@ const filteredGames = computed(() => {
       const bn = b.title_cn || b.title
       cmp = an.localeCompare(bn, 'zh-CN')
     } else if (key === 'playtime') {
-      cmp = (parseInt(a.playtime) || 0) - (parseInt(b.playtime) || 0)
+      cmp = (a.playtime_seconds || 0) - (b.playtime_seconds || 0)
     } else if (key === 'rating') {
       cmp = (a.personal_rating || 0) - (b.personal_rating || 0)
     } else if (key === 'last_played') {

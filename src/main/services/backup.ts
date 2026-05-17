@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import { snapshotOps, gameOps } from '../database'
-import { getDatabase } from '../database/init'
 import { getSnapshotDir } from '../config/paths'
 
 export async function backupSave(gameId: string, savePath: string): Promise<string> {
@@ -45,9 +44,7 @@ export async function backupSave(gameId: string, savePath: string): Promise<stri
 }
 
 export async function restoreSave(snapshotId: string): Promise<void> {
-  const snap = getDatabase().prepare(
-    'SELECT * FROM save_snapshots WHERE id = ?'
-  ).get(snapshotId) as { id: string; game_id: string; snapshot_path: string } | undefined
+  const snap = snapshotOps.getById(snapshotId)
 
   if (!snap || !snap.snapshot_path || !fs.existsSync(snap.snapshot_path)) {
     throw new Error('快照文件不存在')

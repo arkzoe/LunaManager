@@ -42,7 +42,6 @@ const api: IElectronAPI = {
   createSnapshot: (gameId, notes) => ipcRenderer.invoke('snap:create', gameId, notes),
   deleteSnapshot: (id) => ipcRenderer.invoke('snap:delete', id),
   restoreSnapshot: (id) => ipcRenderer.invoke('snap:restore', id),
-  detectSavePath: (gameId) => ipcRenderer.invoke('snap:detectSavePath', gameId),
   backupSnapshot: (gameId) => ipcRenderer.invoke('snap:backup', gameId),
   restoreSnapshotInPlace: (snapshotId) => ipcRenderer.invoke('snap:restoreInPlace', snapshotId),
   getBackupDir: (gameId) => ipcRenderer.invoke('snap:getBackupDir', gameId),

@@ -9,12 +9,13 @@ export interface GameRecord {
   favorite: number
   status: GameStatus
   personal_rating: number
-  last_played: string
+  last_played: string | null
   description: string
   developer: string
   publisher: string
   release_date: string
   playtime: string
+  playtime_seconds: number
   executable_path: string
   save_path: string
   vndb_id: string
@@ -208,7 +209,6 @@ export interface IElectronAPI {
   createSnapshot: (gameId: string, notes?: string) => Promise<SaveSnapshot>
   deleteSnapshot: (id: string) => Promise<void>
   restoreSnapshot: (id: string) => Promise<void>
-  detectSavePath: (gameId: string) => Promise<string | null>
   backupSnapshot: (gameId: string) => Promise<string>
   restoreSnapshotInPlace: (snapshotId: string) => Promise<void>
   getBackupDir: (gameId: string) => Promise<string>

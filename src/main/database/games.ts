@@ -19,11 +19,11 @@ export const gameOps = {
     db.prepare(`
       INSERT INTO games (id, title, title_cn, cover, rating, size, installed, favorite,
         status, personal_rating, last_played, description, developer, publisher, release_date,
-        playtime, executable_path, save_path, vndb_id, bangumi_id, notes, custom_tags,
+        playtime, playtime_seconds, executable_path, save_path, vndb_id, bangumi_id, notes, custom_tags,
         last_launch_method, created_at, updated_at)
       VALUES (@id, @title, @title_cn, @cover, @rating, @size, @installed, @favorite,
         @status, @personal_rating, @last_played, @description, @developer, @publisher, @release_date,
-        @playtime, @executable_path, @save_path, @vndb_id, @bangumi_id, @notes, @custom_tags,
+        @playtime, @playtime_seconds, @executable_path, @save_path, @vndb_id, @bangumi_id, @notes, @custom_tags,
         @last_launch_method, @created_at, @updated_at)
     `).run(record)
     return record as GameRecord
