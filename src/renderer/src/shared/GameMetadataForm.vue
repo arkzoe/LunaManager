@@ -7,7 +7,6 @@ export interface MetadataForm {
   title: string
   titleCn: string
   developer: string
-  publisher: string
   releaseDate: string
   description: string
   notes: string
@@ -142,17 +141,6 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
         class="form-input"
         placeholder="开发商（可自动获取）"
         @input="update('developer', ($event.target as HTMLInputElement).value)"
-      />
-    </div>
-
-    <div class="form-group">
-      <label class="form-label" for="input-publisher">发行商</label>
-      <input
-        id="input-publisher"
-        :value="form.publisher"
-        class="form-input"
-        placeholder="发行商（可自动获取）"
-        @input="update('publisher', ($event.target as HTMLInputElement).value)"
       />
     </div>
 
