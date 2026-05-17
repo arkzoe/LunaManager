@@ -21,13 +21,18 @@ const emit = defineEmits<{
 const menuRef = ref<HTMLElement | null>(null)
 const adjustedX = ref(0)
 const adjustedY = ref(0)
+const menuVisible = ref(false)
 
 watch(
   () => props.show,
   async (val) => {
-    if (!val) return
-    adjustedX.value = props.x
-    adjustedY.value = props.y
+    if (!val) {
+      menuVisible.value = false
+      return
+    }
+    adjustedX.value = 0
+    adjustedY.value = 0
+    menuVisible.value = false
     await nextTick()
     const el = menuRef.value
     if (!el) return
@@ -35,8 +40,22 @@ watch(
     const vw = window.innerWidth
     const vh = window.innerHeight
     const gap = 8
-    if (rect.right > vw) adjustedX.value = vw - rect.width - gap
-    if (rect.bottom > vh) adjustedY.value = vh - rect.height - gap
+    let x = props.x
+    let y = props.y
+    if (x + rect.width > vw - gap) {
+      const flipX = props.x - rect.width
+      x = flipX >= gap ? flipX : vw - rect.width - gap
+    }
+    if (y + rect.height > vh - gap) {
+      const flipY = props.y - rect.height
+      y = flipY >= gap ? flipY : vh - rect.height - gap
+    }
+    if (x < gap) x = gap
+    if (y < gap) y = gap
+    adjustedX.value = x
+    adjustedY.value = y
+    await nextTick()
+    menuVisible.value = true
   }
 )
 </script>
@@ -51,52 +70,49 @@ watch(
         @contextmenu.prevent="emit('close')"
       />
     </Transition>
-    <Transition name="dropdown">
-      <div
-        v-if="show"
-        ref="menuRef"
-        class="context-menu"
-        :style="{ left: adjustedX + 'px', top: adjustedY + 'px' }"
+    <div
+      v-if="show"
+      ref="menuRef"
+      class="context-menu"
+      :class="{ visible: menuVisible }"
+      :style="{ left: adjustedX + 'px', top: adjustedY + 'px' }"
+    >
+      <button class="ctx-item" @click="emit('viewDetail')">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+          <path
+            d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+          />
+        </svg>
+        查看详情
+      </button>
+      <div class="ctx-divider" />
+      <button class="ctx-item" @click="emit('addToCollection')">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+          <path
+            d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
+          />
+        </svg>
+        添加到收藏夹
+      </button>
+      <div class="ctx-divider" />
+      <div class="ctx-label">更改状态</div>
+      <button
+        v-for="s in statusFilters"
+        :key="s.id"
+        class="ctx-item"
+        :class="{ current: gameStatus === s.id }"
+        @click="emit('statusChange', s.id)"
       >
-        <button class="ctx-item" @click="emit('viewDetail')">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-            <path
-              d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-            />
-          </svg>
-          查看详情
-        </button>
-        <div class="ctx-divider" />
-        <button class="ctx-item" @click="emit('addToCollection')">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-            <path
-              d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
-            />
-          </svg>
-          添加到收藏夹
-        </button>
-        <div class="ctx-divider" />
-        <div class="ctx-label">更改状态</div>
-        <button
-          v-for="s in statusFilters"
-          :key="s.id"
-          class="ctx-item"
-          :class="{ current: gameStatus === s.id }"
-          @click="emit('statusChange', s.id)"
-        >
-          {{ s.label }}
-        </button>
-        <div class="ctx-divider" />
-        <button class="ctx-item danger" @click="emit('delete')">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
-            <path
-              d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-            />
-          </svg>
-          删除
-        </button>
-      </div>
-    </Transition>
+        {{ s.label }}
+      </button>
+      <div class="ctx-divider" />
+      <button class="ctx-item danger" @click="emit('delete')">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+        </svg>
+        删除
+      </button>
+    </div>
   </Teleport>
 </template>
 
@@ -125,14 +141,18 @@ watch(
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   padding: 6px;
   overflow: hidden;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+  pointer-events: none;
 }
 
-.dropdown-enter-active {
-  animation: dropdown-in 0.18s ease;
-}
-
-.dropdown-leave-active {
-  animation: dropdown-out 0.15s ease forwards;
+.context-menu.visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
 }
 
 .ctx-item {
