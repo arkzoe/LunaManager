@@ -202,14 +202,14 @@ onUnmounted(() => {
 .sd-overlay {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 1099;
   background: transparent;
 }
 
 /* dropdown menu */
 .sd-menu {
   position: fixed;
-  z-index: 1000;
+  z-index: 1100;
   max-height: 240px;
   overflow-y: auto;
   background: var(--bg-primary);
