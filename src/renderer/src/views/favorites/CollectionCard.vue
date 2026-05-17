@@ -19,20 +19,14 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="collection-card h-20 flex items-center gap-3 p-4 bg-bg-primary rounded-xl cursor-pointer transition-all duration-250 box-border hover:-translate-y-0.5 border border-border-color-medium"
+    class="collection-card h-20 flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-250 box-border hover:-translate-y-0.5 border"
     :class="{ 'ring-2 ring-accent-500/50': selected }"
     @click="batchMode ? !isDefault && emit('toggleSelect', collection.id) : emit('open')"
   >
     <div class="flex-shrink-0 batch-check-wrap" :class="{ 'cb-hidden': !batchMode }">
       <div
-        class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer"
-        :class="
-          isDefault
-            ? 'border-gray-300 opacity-30 cursor-not-allowed'
-            : selected
-              ? 'bg-accent-500 border-accent-500'
-              : 'border-gray-400 hover:border-accent-400'
-        "
+        class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer cb-box"
+        :class="[isDefault ? 'cb-default' : '', selected ? 'cb-selected' : '']"
         @click.stop="!isDefault && emit('toggleSelect', collection.id)"
       >
         <svg v-if="selected" viewBox="0 0 24 24" class="w-3 h-3 fill-white">
@@ -50,11 +44,11 @@ const emit = defineEmits<{
     </div>
     <div class="flex-1 min-w-0 h-12 flex flex-col justify-center">
       <h3
-        class="w-full h-5.5 text-15px font-semibold text-text-primary m-0 mb-1 whitespace-nowrap overflow-hidden text-ellipsis leading-5.5"
+        class="w-full h-5.5 text-15px font-semibold m-0 mb-1 whitespace-nowrap overflow-hidden text-ellipsis leading-5.5 card-name"
       >
         {{ collection.name }}
       </h3>
-      <p class="w-full h-4.5 text-13px text-text-muted m-0 leading-4.5">
+      <p class="w-full h-4.5 text-13px m-0 leading-4.5 card-count">
         {{ collection.gameIds.length }} 个游戏
       </p>
     </div>
@@ -81,6 +75,8 @@ const emit = defineEmits<{
 
 <style scoped>
 .collection-card {
+  background: var(--bg-primary);
+  border-color: var(--border-color-medium);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .collection-card:hover {
@@ -128,5 +124,31 @@ const emit = defineEmits<{
 .action-menu-btn.delete:hover {
   background: var(--accent-danger-bg);
   color: var(--accent-danger);
+}
+
+.card-name {
+  color: var(--text-primary);
+}
+.card-count {
+  color: var(--text-muted);
+}
+
+.cb-box {
+  border-color: var(--border-color-medium);
+}
+.cb-box:hover {
+  border-color: var(--accent-primary);
+}
+.cb-default {
+  border-color: var(--text-muted);
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.cb-selected {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.card-count {
+  color: var(--text-muted);
 }
 </style>

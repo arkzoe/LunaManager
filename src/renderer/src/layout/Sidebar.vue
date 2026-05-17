@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import logoIcon from '../../../../resources/icon.png'
+
 defineProps<{ activeTab: string }>()
 const emit = defineEmits<{ (e: 'update:activeTab', value: string): void }>()
 
@@ -32,7 +34,7 @@ const iconMap: Record<string, string> = {
 <template>
   <aside class="sidebar">
     <div class="logo">
-      <div class="logo-icon">L</div>
+      <img class="logo-icon" :src="logoIcon" alt="Luna" />
       <span class="logo-text">Luna</span>
     </div>
     <nav class="nav-group">
@@ -141,15 +143,7 @@ const iconMap: Record<string, string> = {
 .logo-icon {
   width: 28px;
   height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent-primary);
-  color: #fff;
   border-radius: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  animation: logo-glow 3s ease-in-out infinite;
 }
 
 .logo-text {

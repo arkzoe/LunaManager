@@ -78,32 +78,28 @@ const handleMoveTarget = (targetId: string): void => {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-1000 backdrop-blur-sm modal-overlay"
       @click.self="emit('close')"
     >
-      <div class="w-90% max-w-100 bg-bg-primary rounded-2xl p-6 modal-card">
+      <div class="w-90% max-w-100 rounded-2xl p-6 modal-card">
         <template v-if="mode === 'create'">
-          <h3 class="text-lg font-semibold text-text-primary m-0 mb-4">新建收藏夹</h3>
+          <h3 class="text-lg font-semibold m-0 mb-4 modal-title">新建收藏夹</h3>
           <input
             v-model="inputValue"
             type="text"
             placeholder="输入收藏夹名称"
-            class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-1 transition-all duration-200 focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
+            class="w-full h-11 px-4 rounded-xl text-15px mb-1 transition-all duration-200 modal-input"
             @keyup.enter="handleConfirm"
           />
-          <p v-if="nameError" class="text-xs text-danger-500 m-0 mb-4 ml-1">{{ nameError }}</p>
+          <p v-if="nameError" class="text-xs m-0 mb-4 ml-1 error-text">{{ nameError }}</p>
           <p v-else class="text-xs m-0 mb-4">&nbsp;</p>
           <div class="flex items-center justify-end gap-3">
             <button
-              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-bg-secondary text-text-secondary hover:bg-bg-tertiary"
+              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 btn-cancel"
               @click="emit('close')"
             >
               取消
             </button>
             <button
               class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200"
-              :class="
-                canSubmit
-                  ? 'bg-neutral-700 text-white hover:bg-neutral-800 shadow-neutral hover:shadow-neutral-lg'
-                  : 'bg-bg-tertiary text-text-muted cursor-not-allowed'
-              "
+              :class="canSubmit ? 'btn-primary' : 'btn-disabled cursor-not-allowed'"
               :disabled="!canSubmit"
               @click="handleConfirm"
             >
@@ -113,30 +109,26 @@ const handleMoveTarget = (targetId: string): void => {
         </template>
 
         <template v-else-if="mode === 'rename'">
-          <h3 class="text-lg font-semibold text-text-primary m-0 mb-4">重命名收藏夹</h3>
+          <h3 class="text-lg font-semibold m-0 mb-4 modal-title">重命名收藏夹</h3>
           <input
             v-model="inputValue"
             type="text"
             placeholder="输入新名称"
-            class="w-full h-11 px-4 bg-bg-secondary rounded-xl text-text-primary text-15px mb-1 transition-all duration-200 focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
+            class="w-full h-11 px-4 rounded-xl text-15px mb-1 transition-all duration-200 modal-input"
             @keyup.enter="handleConfirm"
           />
-          <p v-if="nameError" class="text-xs text-danger-500 m-0 mb-4 ml-1">{{ nameError }}</p>
+          <p v-if="nameError" class="text-xs m-0 mb-4 ml-1 error-text">{{ nameError }}</p>
           <p v-else class="text-xs m-0 mb-4">&nbsp;</p>
           <div class="flex items-center justify-end gap-3">
             <button
-              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-bg-secondary text-text-secondary hover:bg-bg-tertiary"
+              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 btn-cancel"
               @click="emit('close')"
             >
               取消
             </button>
             <button
               class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200"
-              :class="
-                canSubmit
-                  ? 'bg-neutral-700 text-white hover:bg-neutral-800 shadow-neutral hover:shadow-neutral-lg'
-                  : 'bg-bg-tertiary text-text-muted cursor-not-allowed'
-              "
+              :class="canSubmit ? 'btn-primary' : 'btn-disabled cursor-not-allowed'"
               :disabled="!canSubmit"
               @click="handleConfirm"
             >
@@ -146,19 +138,19 @@ const handleMoveTarget = (targetId: string): void => {
         </template>
 
         <template v-else-if="mode === 'delete'">
-          <h3 class="text-lg font-semibold text-text-primary m-0 mb-4">删除收藏夹</h3>
-          <p class="text-sm text-text-secondary m-0 mb-5 leading-relaxed">
+          <h3 class="text-lg font-semibold m-0 mb-4 modal-title">删除收藏夹</h3>
+          <p class="text-sm m-0 mb-5 leading-relaxed delete-desc">
             确定要删除 "{{ collection?.name }}" 吗？收藏夹中的游戏不会被删除。
           </p>
           <div class="flex items-center justify-end gap-3">
             <button
-              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-bg-secondary text-text-secondary hover:bg-bg-tertiary"
+              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 btn-cancel"
               @click="emit('close')"
             >
               取消
             </button>
             <button
-              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-danger-500 text-white hover:bg-danger-600 shadow-danger hover:shadow-danger-lg"
+              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 btn-danger"
               @click="handleConfirm"
             >
               删除
@@ -167,12 +159,12 @@ const handleMoveTarget = (targetId: string): void => {
         </template>
 
         <template v-else-if="mode === 'move'">
-          <h3 class="text-lg font-semibold text-text-primary m-0 mb-4">移动到收藏夹</h3>
+          <h3 class="text-lg font-semibold m-0 mb-4 modal-title">移动到收藏夹</h3>
           <div class="max-h-75 overflow-y-auto mb-5">
             <button
               v-for="col in collections"
               :key="col.id"
-              class="w-full flex items-center gap-3 p-3 bg-transparent border-none rounded-xl cursor-pointer transition-all duration-200 hover:bg-bg-secondary"
+              class="w-full flex items-center gap-3 p-3 border-none rounded-xl cursor-pointer transition-all duration-200 move-option"
               @click="handleMoveTarget(col.id)"
             >
               <div
@@ -183,12 +175,12 @@ const handleMoveTarget = (targetId: string): void => {
                   <path :d="getIconSvg(col.icon)" />
                 </svg>
               </div>
-              <span class="flex-1 text-sm text-text-primary text-left">{{ col.name }}</span>
+              <span class="flex-1 text-sm text-left move-label">{{ col.name }}</span>
             </button>
           </div>
           <div class="flex items-center justify-end gap-3">
             <button
-              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-bg-secondary text-text-secondary hover:bg-bg-tertiary"
+              class="h-10 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 btn-cancel"
               @click="emit('close')"
             >
               取消
@@ -215,5 +207,72 @@ const handleMoveTarget = (targetId: string): void => {
 
 .modal-leave-active .modal-card {
   animation: modal-out 0.15s ease forwards;
+}
+
+.modal-card {
+  background: var(--bg-primary);
+}
+
+.modal-title {
+  color: var(--text-primary);
+}
+
+.modal-input {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  outline: none;
+  border: 1px solid var(--border-color);
+}
+.modal-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
+.error-text {
+  color: var(--danger);
+}
+
+.btn-cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+.btn-cancel:hover {
+  background: var(--bg-tertiary);
+}
+
+.btn-primary {
+  background: var(--accent-primary-dark);
+  color: white;
+}
+.btn-primary:hover {
+  background: var(--accent-primary);
+}
+
+.btn-disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+.delete-desc {
+  color: var(--text-secondary);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+.btn-danger:hover {
+  filter: brightness(0.9);
+}
+
+.move-option {
+  background: transparent;
+}
+.move-option:hover {
+  background: var(--bg-secondary);
+}
+
+.move-label {
+  color: var(--text-primary);
 }
 </style>

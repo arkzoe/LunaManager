@@ -70,6 +70,7 @@ body {
   --bg-secondary: #f9fafb;
   --bg-hover: rgba(0, 0, 0, 0.03);
   --bg-active: rgba(59, 130, 246, 0.06);
+  --bg-tertiary: #f3f4f6;
 
   --text-primary: #374151;
   --text-secondary: #4b5563;
@@ -98,6 +99,7 @@ html.dark {
   --bg-secondary: #303235;
   --bg-hover: rgba(255, 255, 255, 0.05);
   --bg-active: rgba(59, 130, 246, 0.12);
+  --bg-tertiary: #27272a;
 
   --text-primary: #f3f4f6;
   --text-secondary: #d1d5db;

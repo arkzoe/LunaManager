@@ -45,13 +45,13 @@ const emit = defineEmits<{
             </svg>
           </div>
           <div>
-            <h2 class="text-xl font-bold text-text-primary m-0 mb-1">{{ collection?.name }}</h2>
-            <span class="text-sm text-text-muted">{{ collection?.gameIds.length }} 个游戏</span>
+            <h2 class="text-xl font-bold m-0 mb-1 col-title">{{ collection?.name }}</h2>
+            <span class="text-sm col-subtitle">{{ collection?.gameIds.length }} 个游戏</span>
           </div>
         </div>
         <button
           class="icon-btn"
-          :class="{ 'bg-accent-500/10 border-accent-500 text-accent-500': gameBatchMode }"
+          :class="{ 'batch-active': gameBatchMode }"
           title="批量管理"
           @click="emit('toggleGameBatchMode')"
         >
@@ -195,5 +195,21 @@ const emit = defineEmits<{
 .bb-danger:hover:not(:disabled) {
   border-color: var(--danger);
   color: var(--danger);
+}
+
+.col-title {
+  color: var(--text-primary);
+}
+.col-subtitle {
+  color: var(--text-muted);
+}
+
+.icon-btn.batch-active {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+html.dark .icon-btn.batch-active {
+  background: rgba(96, 165, 250, 0.12);
 }
 </style>

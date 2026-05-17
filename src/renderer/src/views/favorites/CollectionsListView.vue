@@ -41,7 +41,7 @@ const handleSortSelect = (field: string): void => {
       <div class="search-box">
         <svg
           viewBox="0 0 24 24"
-          class="absolute left-3 w-4.5 h-4.5 fill-text-muted pointer-events-none"
+          class="absolute left-3 w-4.5 h-4.5 pointer-events-none search-icon"
         >
           <path
             d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
@@ -58,7 +58,7 @@ const handleSortSelect = (field: string): void => {
       <div class="toolbar-actions">
         <button
           class="icon-btn"
-          :class="{ 'bg-accent-500/10 border-accent-500 text-accent-500': batchMode }"
+          :class="{ 'batch-active': batchMode }"
           title="批量管理"
           @click="emit('toggleBatchMode')"
         >
@@ -189,8 +189,8 @@ const handleSortSelect = (field: string): void => {
 }
 .search-input:focus {
   outline: none;
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
 }
 
 .toolbar-actions {
@@ -331,7 +331,7 @@ const handleSortSelect = (field: string): void => {
   align-items: center;
   gap: 6px;
   padding: 0 16px;
-  background: #3b82f6;
+  background: var(--accent-primary);
   border: none;
   border-radius: 8px;
   color: white;
@@ -341,7 +341,7 @@ const handleSortSelect = (field: string): void => {
   transition: all 200ms ease;
 }
 .add-btn:hover {
-  background: #4f46e5;
+  background: var(--accent-primary-dark);
 }
 
 .batch-bar {
@@ -404,5 +404,18 @@ const handleSortSelect = (field: string): void => {
 .bb-danger:hover:not(:disabled) {
   border-color: var(--danger);
   color: var(--danger);
+}
+
+.search-icon {
+  fill: var(--text-muted);
+}
+
+.icon-btn.batch-active {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+html.dark .icon-btn.batch-active {
+  background: rgba(96, 165, 250, 0.12);
 }
 </style>
