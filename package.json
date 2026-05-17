@@ -1,6 +1,6 @@
 {
   "name": "lunamanager",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0",
   "description": "An Electron application with Vue and TypeScript",
   "main": "./out/main/index.js",
   "author": "arkzoe",
@@ -23,7 +23,7 @@
   },
   "build": {
     "appId": "com.arkzoe.lunamanager",
-    "productName": "lunamanager",
+    "productName": "LunaManager",
     "directories": {
       "buildResources": "build"
     },
@@ -39,7 +39,14 @@
       "!**/node_modules/**/*.{ts,tsx}",
       "!**/node_modules/**/*.map",
       "!**/node_modules/**/{CHANGELOG,changelog,CONTRIBUTING,contributing,README,readme,History,history}*",
-      "!**/node_modules/**/{.github,.git,.idea,.vscode,.eslintrc*,eslint.config.*,.prettierrc*,babel.config.*,jest.config.*,tsconfig.*,rollup.config.*,webpack.config.*,vite.config.*}"
+      "!**/node_modules/**/{.github,.git,.idea,.vscode,.eslintrc*,eslint.config.*,.prettierrc*,babel.config.*,jest.config.*,tsconfig.*,rollup.config.*,webpack.config.*,vite.config.*}",
+      "!**/node_modules/**/build/**/*.{iobj,ipdb,pdb,lib,exp,obj}",
+      "!**/node_modules/**/build/**/*.tlog/**",
+      "!**/node_modules/**/build/**/obj/**",
+      "!**/node_modules/**/deps/**",
+      "!**/node_modules/**/src/**/*.{c,cpp,h,hpp}",
+      "!**/node_modules/bare-*/prebuilds/{win32-arm64,darwin-*,ios-*,linux-*,android-*}/**",
+      "!LICENSES.chromium.html"
     ],
     "asar": {
       "smartUnpack": true
@@ -47,10 +54,11 @@
     "asarUnpack": [
       "resources/**"
     ],
+    "afterPack": "build/after-pack.js",
     "win": {
       "icon": "build/icon.ico",
       "signAndEditExecutable": true,
-      "executableName": "lunamanager"
+      "executableName": "LunaManager"
     },
     "nsis": {
       "artifactName": "${name}-${version}-setup.${ext}",
@@ -108,7 +116,6 @@
     "debug": "^4.4.3",
     "ms": "^2.1.3",
     "pinia": "^3.0.4",
-    "rollup-plugin-visualizer": "^7.0.1",
     "vue-chartjs": "^5.3.3"
   },
   "devDependencies": {
@@ -127,6 +134,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-vue": "^10.6.2",
     "prettier": "^3.7.4",
+    "rollup-plugin-visualizer": "^7.0.1",
     "typescript": "^5.9.3",
     "unocss": "^66.6.8",
     "vite": "^7.2.6",
