@@ -65,6 +65,8 @@ const selectedIds = ref<Set<string>>(new Set())
 const showBatchStatusMenu = ref(false)
 const showCollectionPicker = ref(false)
 const showDeleteConfirm = ref(false)
+const showSingleDeleteConfirm = ref(false)
+const singleDeleteGame = ref<GameRecord | null>(null)
 
 const {
   show: showToast,
@@ -219,6 +221,19 @@ const confirmBatchDelete = async (): Promise<void> => {
   }
 }
 
+const confirmSingleDelete = async (): Promise<void> => {
+  if (!singleDeleteGame.value) return
+  showSingleDeleteConfirm.value = false
+  try {
+    await window.api.deleteGame(singleDeleteGame.value.id)
+    store.games = store.games.filter((g) => g.id !== singleDeleteGame.value!.id)
+    showToastMsg(`已删除「${singleDeleteGame.value.title}」`, 'success')
+  } catch {
+    showToastMsg('删除失败', 'error')
+  }
+  singleDeleteGame.value = null
+}
+
 onMounted(() => {
   if (store.games.length === 0) store.loadGames()
 })
@@ -308,6 +323,13 @@ const handleStatusChange = async (game: GameRecord, status: GameStatus): Promise
     // fallback silently
   }
   closeContextMenu()
+}
+
+const handleContextDelete = (): void => {
+  if (!ctxMenu.value) return
+  singleDeleteGame.value = ctxMenu.value.game
+  closeContextMenu()
+  showSingleDeleteConfirm.value = true
 }
 
 const toggleImportMenu = (): void => {
@@ -466,6 +488,7 @@ const handleBatchImported = (result: ImportResult): void => {
       @view-detail="handleViewDetail"
       @add-to-collection="handleContextAddToCollection"
       @status-change="(s) => ctxMenu && handleStatusChange(ctxMenu.game, s)"
+      @delete="handleContextDelete"
       @close="closeContextMenu"
     />
 
@@ -496,6 +519,17 @@ const handleBatchImported = (result: ImportResult): void => {
       danger
       @confirm="confirmBatchDelete"
       @cancel="closeDeleteConfirm"
+    />
+
+    <!-- 右键菜单删除确认弹窗 -->
+    <ConfirmDialog
+      :show="showSingleDeleteConfirm"
+      title="确认删除"
+      :message="`确定要删除「${singleDeleteGame?.title ?? ''}」吗？此操作不可恢复。`"
+      confirm-text="确认删除"
+      danger
+      @confirm="confirmSingleDelete"
+      @cancel="showSingleDeleteConfirm = false"
     />
 
     <!-- Toast 通知 -->
