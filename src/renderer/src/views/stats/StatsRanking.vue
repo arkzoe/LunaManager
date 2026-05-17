@@ -9,11 +9,11 @@ interface RankingItem {
 defineProps<{
   rankings: RankingItem[]
   topGame: RankingItem | undefined
-  rankRange: 'week' | 'month'
+  rankRange: 'week' | 'month' | 'all'
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:rankRange', val: 'week' | 'month'): void
+  (e: 'update:rankRange', val: 'week' | 'month' | 'all'): void
 }>()
 </script>
 
@@ -35,6 +35,13 @@ const emit = defineEmits<{
           @click="emit('update:rankRange', 'month')"
         >
           本月
+        </button>
+        <button
+          class="tt-btn"
+          :class="{ active: rankRange === 'all' }"
+          @click="emit('update:rankRange', 'all')"
+        >
+          总计
         </button>
       </div>
     </div>
