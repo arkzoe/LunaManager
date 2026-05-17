@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { GameRecord, GameStatus } from '../../../../shared/types'
-import { formatDate } from '../../utils/format'
+import { formatDate, formatPlaytime } from '../../utils/format'
 import SelectDropdown from '../../shared/SelectDropdown.vue'
 
 const isCoverWide = ref(false)
@@ -119,9 +119,9 @@ const hasMetadata = computed(() => {
           <span class="meta-k">大小</span>
           <span class="meta-v">{{ game.size }}</span>
         </div>
-        <div v-if="game.playtime" class="meta-item">
+        <div v-if="game.playtime_seconds" class="meta-item">
           <span class="meta-k">时长</span>
-          <span class="meta-v">{{ game.playtime }}</span>
+          <span class="meta-v">{{ formatPlaytime(game.playtime_seconds) }}</span>
         </div>
         <div v-if="hasMetadata" class="meta-item">
           <span class="meta-k">数据源</span>

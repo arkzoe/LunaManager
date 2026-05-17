@@ -18,7 +18,8 @@ export async function downloadCover(
     const resp = await fetch(remoteUrl)
     if (!resp.ok) return null
     const buffer = Buffer.from(await resp.arrayBuffer())
-    const ext = remoteUrl.includes('.png') ? 'png' : 'jpg'
+    const urlPath = new URL(remoteUrl).pathname
+    const ext = urlPath.endsWith('.png') ? 'png' : 'jpg'
     const filename = `${gameId}.${ext}`
     const localPath = join(getCoverDir(), filename)
     writeFileSync(localPath, buffer)

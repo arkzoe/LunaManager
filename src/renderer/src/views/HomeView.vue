@@ -45,8 +45,7 @@ const sectionDelays = computed(() => {
 const overview = computed(() => {
   const total = store.allGames.length
   const totalMinutes = store.allGames.reduce((sum, g) => {
-    const m = g.playtime?.match(/(\d+)/)
-    return sum + (m ? parseInt(m[1]) : 0)
+    return sum + Math.floor((g.playtime_seconds || 0) / 60)
   }, 0)
   const totalHours = Math.floor(totalMinutes / 60) || 0
   const avgPerDay = total > 0 ? Math.round((totalHours / Math.max(total, 1)) * 10) / 10 : 0

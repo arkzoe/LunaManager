@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
 import { join } from 'path'
+import { existsSync, rmSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
@@ -65,7 +66,18 @@ function setupIpcHandlers(): void {
   ipcMain.handle('db:getGameById', (_, id: string) => gameOps.getById(id) || null)
   ipcMain.handle('db:createGame', (_, game) => gameOps.create(game))
   ipcMain.handle('db:updateGame', (_, id: string, updates) => gameOps.update(id, updates))
-  ipcMain.handle('db:deleteGame', (_, id: string) => gameOps.delete(id))
+  ipcMain.handle('db:deleteGame', (_, id: string) => {
+    const game = gameOps.getById(id)
+    if (game) {
+      if (game.cover && game.cover.startsWith('cover://')) {
+        const coverPath = resolveCoverPath(game.cover)
+        if (existsSync(coverPath)) rmSync(coverPath)
+      }
+      const snapDir = getSnapshotDir(id)
+      if (existsSync(snapDir)) rmSync(snapDir, { recursive: true })
+    }
+    return gameOps.delete(id)
+  })
   ipcMain.handle('db:searchGames', (_, q: string) => gameOps.search(q))
   ipcMain.handle('db:getGamesByStatus', (_, status: string) =>
     gameOps.getByStatus(status as GameStatus)
@@ -198,9 +210,9 @@ function setupIpcHandlers(): void {
     }
   })
 
-  ipcMain.handle('metadata:fetch-detail', async (_e, { sourceId, source, apiKey, gameId }) => {
+  ipcMain.handle('metadata:fetch-detail', async (_e, { sourceId, source, apiKey }) => {
     try {
-      return await fetchMetadataDetail(sourceId, source, apiKey, gameId)
+      return await fetchMetadataDetail(sourceId, source, apiKey)
     } catch (err: unknown) {
       throw new Error((err instanceof Error ? err.message : String(err)) || '获取元数据失败')
     }
@@ -222,11 +234,12 @@ function setupIpcHandlers(): void {
   ipcMain.handle('update:install', async () => quitAndInstall())
 }
 
-import type { AppConfig } from './config/store'
+import type { AppConfig } from '../shared/types'
 import type { GameStatus, LaunchMode } from '../shared/types'
 import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
 import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
+import { getSnapshotDir } from './config/paths'
 import { launchGame, stopGame, isGameRunning } from './services/game-launcher'
 import { backupSave, restoreSave, getSnapshotDirPath } from './services/backup'
 import { setupUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from './services/updater'

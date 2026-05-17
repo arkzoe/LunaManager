@@ -1,5 +1,7 @@
 import fs from 'fs'
 import path from 'path'
+import { spawn } from 'child_process'
+import { randomUUID } from 'node:crypto'
 import { snapshotOps, gameOps } from '../database'
 import { getSnapshotDir } from '../config/paths'
 
@@ -11,7 +13,7 @@ export async function backupSave(gameId: string, savePath: string): Promise<stri
   const snapshotDir = getSnapshotDir(gameId)
   fs.mkdirSync(snapshotDir, { recursive: true })
 
-  const snapshotId = `snap-${Date.now()}`
+  const snapshotId = `snap-${randomUUID()}`
   const zipPath = path.join(snapshotDir, `${snapshotId}.zip`)
 
   const { default: archiver } = await import('archiver')
@@ -67,10 +69,13 @@ export async function restoreSave(snapshotId: string): Promise<void> {
 
   const extractPath = savePath
   return new Promise((resolve, reject) => {
-    const { spawn } = require('child_process')
     const unzip = spawn('powershell', [
       '-NoProfile', '-Command',
-      `Expand-Archive -Path '${snap.snapshot_path}' -DestinationPath '${extractPath}' -Force`
+      '& Expand-Archive -LiteralPath',
+      snap.snapshot_path,
+      '-DestinationPath',
+      extractPath,
+      '-Force'
     ])
     unzip.on('close', (code: number) => {
       if (code === 0) {

@@ -22,7 +22,7 @@
     "build:alpha": "npm run build && electron-builder --win"
   },
   "build": {
-    "appId": "com.electron.app",
+    "appId": "com.arkzoe.lunamanager",
     "productName": "lunamanager",
     "directories": {
       "buildResources": "build"

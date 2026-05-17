@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { PlaySession } from '../../shared/types'
 import { getDatabase } from './init'
 
@@ -5,7 +6,7 @@ export const sessionOps = {
   start: (gameId: string): PlaySession => {
     const db = getDatabase()
     const session: PlaySession = {
-      id: `session-${Date.now()}`,
+      id: `session-${randomUUID()}`,
       game_id: gameId,
       start_time: Date.now(),
       end_time: 0,

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { Collection, GameRecord } from '../../shared/types'
 import { getDatabase } from './init'
 
@@ -16,7 +17,7 @@ export const collectionOps = {
     const db = getDatabase()
     const now = Date.now()
     const c: Collection = {
-      id: `col-${now}`,
+      id: `col-${randomUUID()}`,
       name,
       parent_id: null,
       sort_order: (db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM collections').get() as { n: number }).n,

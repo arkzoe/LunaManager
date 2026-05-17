@@ -24,8 +24,11 @@ export const useGameStore = defineStore('games', () => {
     isLoading.value = true
     error.value = null
     try {
-      games.value = await window.api.getGames()
-      const stats = await window.api.getAllAggregatedStats()
+      const [loadedGames, stats] = await Promise.all([
+        window.api.getGames(),
+        window.api.getAllAggregatedStats()
+      ])
+      games.value = loadedGames
       totalPlaytimeMinutes.value = stats.reduce((s, x) => s + x.total_duration, 0)
     } catch (e: any) {
       error.value = e.message || '加载游戏失败'

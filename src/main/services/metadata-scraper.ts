@@ -1,7 +1,6 @@
 import type { GameRecord, SearchResult } from '../../shared/types'
 import { VndbApiClient } from './api/vndb-client'
 import { BangumiApiClient } from './api/bangumi-client'
-import { downloadCover } from './cover-downloader'
 
 function getVndbClient(token?: string): VndbApiClient {
   return new VndbApiClient(token)
@@ -43,24 +42,15 @@ export async function searchMetadata(
   }
 }
 
-/** 获取完整详情（含标签提取 + 评分归一化 + 封面下载） */
+/** 获取完整详情（含标签提取 + 评分归一化） */
 export async function fetchMetadataDetail(
   sourceId: string,
   source: 'vndb' | 'bangumi',
-  apiKey?: string,
-  gameId?: string
+  apiKey?: string
 ): Promise<Partial<GameRecord>> {
   const detail = source === 'vndb'
     ? await getVndbClient(apiKey).getVNDetail(sourceId)
     : await getBangumiClient(apiKey).getSubjectDetail(sourceId)
-
-  // 下载封面到本地（已是本地路径则跳过）
-  if (detail.cover && gameId && !detail.cover.startsWith('cover://')) {
-    const localPath = await downloadCover(gameId, detail.cover)
-    if (localPath) {
-      detail.cover = localPath
-    }
-  }
 
   return detail
 }

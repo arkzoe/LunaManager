@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { SaveSnapshot } from '../../shared/types'
 import { getDatabase } from './init'
 
@@ -10,7 +11,7 @@ export const snapshotOps = {
 
   create: (gameId: string, notes = '', snapshotPath?: string, fileSize = 0): SaveSnapshot => {
     const snap: SaveSnapshot = {
-      id: `snap-${Date.now()}`,
+      id: `snap-${randomUUID()}`,
       game_id: gameId,
       snapshot_path: snapshotPath || '',
       file_size: fileSize,

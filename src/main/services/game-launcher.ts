@@ -6,18 +6,6 @@ import type { LaunchMode } from '../../shared/types'
 
 const activeProcesses = new Map<string, ChildProcess>()
 
-function formatPlaytime(seconds: number): string {
-  if (seconds < 60) return `${seconds}秒`
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}分钟`
-  const hours = Math.floor(minutes / 60)
-  const rem = minutes % 60
-  if (hours < 24) return rem ? `${hours}小时${rem}分钟` : `${hours}小时`
-  const days = Math.floor(hours / 24)
-  const rh = hours % 24
-  return rh ? `${days}天${rh}小时` : `${days}天`
-}
-
 export function isGameRunning(gameId: string): boolean {
   const proc = activeProcesses.get(gameId)
   return proc !== undefined && proc.exitCode === null
@@ -91,10 +79,9 @@ export function launchGame(gameId: string, mode: LaunchMode): void {
 
     if (sessionId && trackPlaytime) {
       sessionOps.end(sessionId)
-      const totalMs = sessionOps.getTotalPlaytime(gameId)
-      const totalSeconds = Math.floor(totalMs / 1000)
+      const totalDurationMs = sessionOps.getTotalPlaytime(gameId)
+      const totalSeconds = Math.floor(totalDurationMs / 1000)
       gameOps.update(gameId, {
-        playtime: formatPlaytime(totalSeconds),
         playtime_seconds: totalSeconds,
         last_played: new Date().toISOString()
       })

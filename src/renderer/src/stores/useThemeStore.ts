@@ -31,6 +31,7 @@ export const useThemeStore = defineStore('theme', () => {
       }).catch(() => {
         currentTheme.value = 'light'
         applyTheme(currentTheme.value)
+        localStorage.setItem('lunamanager-theme', 'light')
       })
     }
   }
