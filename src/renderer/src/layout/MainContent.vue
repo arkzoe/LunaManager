@@ -47,9 +47,15 @@ const tabTitle = computed(() => {
 
 const handleSelectGame = (game: GameRecord): void => {
   selectedGame.value = game
+  nextTick(() => {
+    contentRef.value?.scrollTo(0, 0)
+  })
 }
 const handleBack = (): void => {
   selectedGame.value = null
+  nextTick(() => {
+    contentRef.value?.scrollTo(0, 0)
+  })
 }
 const handleUpdated = (game: GameRecord): void => {
   selectedGame.value = game
