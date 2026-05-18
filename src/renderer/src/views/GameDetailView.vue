@@ -107,7 +107,21 @@ const handleStop = async (): Promise<void> => {
   }
 }
 
-const handleSave = async (): Promise<void> => {
+const handleRatingChange = async (val: number): Promise<void> => {
+  tempRating.value = val
+  try {
+    await window.api.updateGame(props.game.id, { personal_rating: val })
+    const idx = store.games.findIndex((g) => g.id === props.game.id)
+    if (idx !== -1) {
+      store.games[idx] = { ...store.games[idx], personal_rating: val }
+    }
+    emit('updated', { ...props.game, personal_rating: val })
+  } catch {
+    /* ignore */
+  }
+}
+
+const handleSave = async (extraUpdates?: Partial<GameRecord>): Promise<void> => {
   saving.value = true
   try {
     const tagsJson = tempTags.value.trim() || '[]'
@@ -124,7 +138,8 @@ const handleSave = async (): Promise<void> => {
       notes: tempNotes.value,
       custom_tags: tagsJson,
       personal_rating: tempRating.value,
-      status: tempStatus.value
+      status: tempStatus.value,
+      ...extraUpdates
     }
 
     await window.api.updateGame(props.game.id, updates)
@@ -175,20 +190,15 @@ const handleFetchMetadata = async (): Promise<void> => {
     if (detail.developer) tempDeveloper.value = detail.developer
     if (detail.release_date) tempReleaseDate.value = detail.release_date
     if (detail.description) tempDescription.value = detail.description
+    if (detail.custom_tags) tempTags.value = detail.custom_tags
+
+    const extraUpdates: Partial<GameRecord> = {}
     if (detail.cover) {
       const coverPath = await window.api.downloadCover(props.game.id, detail.cover)
-      if (coverPath) {
-        await window.api.updateGame(props.game.id, { cover: coverPath })
-        const idx = store.games.findIndex((g) => g.id === props.game.id)
-        if (idx !== -1) {
-          store.games[idx].cover = coverPath
-        }
-        emit('updated', { ...props.game, cover: coverPath })
-      }
+      if (coverPath) extraUpdates.cover = coverPath
     }
-    if (detail.custom_tags) tempTags.value = detail.custom_tags
     showToastMsg('远端信息已回填', 'success')
-    await handleSave()
+    await handleSave(Object.keys(extraUpdates).length > 0 ? extraUpdates : undefined)
   } catch (err: unknown) {
     showToastMsg((err instanceof Error ? err.message : String(err)) || '获取失败', 'error')
   } finally {
@@ -256,7 +266,7 @@ const iconPaths: Record<string, string> = {
       :show-launch-menu="showLaunchMenu"
       :statuses="statuses"
       :launch-modes="launchModes"
-      @update:temp-rating="tempRating = $event"
+      @update:temp-rating="handleRatingChange($event)"
       @update:temp-status="tempStatus = $event"
       @toggle-launch-menu="toggleLaunchMenu"
       @launch="handleLaunch"

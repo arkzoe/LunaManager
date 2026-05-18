@@ -91,6 +91,11 @@ const emit = defineEmits<{
     visibility 0.2s ease;
 }
 
+.collection-actions {
+  opacity: 0;
+  visibility: hidden;
+}
+
 .batch-check-wrap.cb-hidden,
 .collection-actions.cb-hidden {
   visibility: hidden;

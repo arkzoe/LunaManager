@@ -96,6 +96,8 @@ const sortedFilteredCollections = computed(() => {
     list = list.filter((c) => c.name.toLowerCase().includes(q))
   }
   return [...list].sort((a, b) => {
+    if (isDefault(a)) return -1
+    if (isDefault(b)) return 1
     let cmp = 0
     switch (sortField.value) {
       case 'name':
