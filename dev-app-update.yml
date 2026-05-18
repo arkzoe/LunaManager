@@ -1,4 +1,4 @@
 provider: github
 owner: arkzoe
-repo: lunamanager
+repo: LunaManager
 updaterCacheDirName: lunamanager-updater

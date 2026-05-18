@@ -232,6 +232,9 @@ function setupIpcHandlers(): void {
   ipcMain.handle('update:check', async () => checkForUpdates())
   ipcMain.handle('update:download', async () => downloadUpdate())
   ipcMain.handle('update:install', async () => quitAndInstall())
+
+  // ===== App Info =====
+  ipcMain.handle('app:getVersion', () => app.getVersion())
 }
 
 import type { AppConfig } from '../shared/types'
@@ -260,6 +263,21 @@ app.whenReady().then(() => {
   setupUpdater()
   app.setLoginItemSettings({ openAtLogin: getConfig('autoStart') })
   createWindow()
+  if (getConfig('autoUpdate')) {
+    setTimeout(() => {
+      checkForUpdates().then((result) => {
+        if (result.updateAvailable && !result.error) {
+          const wins = BrowserWindow.getAllWindows()
+          for (const win of wins) {
+            win.webContents.send('update:auto-available', {
+              version: result.version,
+              releaseNotes: result.releaseNotes
+            })
+          }
+        }
+      })
+    }, 5000)
+  }
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })

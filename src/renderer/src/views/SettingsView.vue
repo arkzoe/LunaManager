@@ -30,14 +30,99 @@ const {
   handleSelectBackupDir
 } = useSettings()
 
-const currentVersion = ref('1.0.0')
+const currentVersion = ref('')
+
+let cleanupAutoUpdate: (() => void) | null = null
+
+onMounted(async () => {
+  try {
+    currentVersion.value = await window.api.getAppVersion()
+  } catch {
+    currentVersion.value = '1.0.0'
+  }
+
+  cleanupAutoUpdate = window.api.onAutoUpdateAvailable((data) => {
+    updateDialog.value = {
+      show: true,
+      type: 'available',
+      version: data.version || '',
+      releaseNotes: data.releaseNotes || '',
+      errorMessage: '',
+      progress: 0
+    }
+  })
+})
+
+onMounted(async () => {
+  await loadConfig()
+  setupPersistence()
+
+  await nextTick()
+  if (!contentRef.value) return
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (isScrolling) return
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const id = (entry.target as HTMLElement).dataset.section
+          if (id) activeSection.value = id
+          break
+        }
+      }
+    },
+    {
+      root: contentRef.value,
+      rootMargin: '-10% 0px -70% 0px',
+      threshold: 0
+    }
+  )
+
+  Object.values(sectionRefs.value).forEach((el) => observer!.observe(el))
+})
+
+onUnmounted(() => {
+  observer?.disconnect()
+  cleanupAutoUpdate?.()
+  cleanupUpdateStatus?.()
+})
 
 const updateDialog = ref({
   show: false,
-  type: 'checking' as 'checking' | 'available' | 'not-available' | 'error',
+  type: 'checking' as
+    | 'checking'
+    | 'available'
+    | 'not-available'
+    | 'error'
+    | 'downloading'
+    | 'downloaded',
   version: '',
   releaseNotes: '',
-  errorMessage: ''
+  errorMessage: '',
+  progress: 0
+})
+
+let cleanupUpdateStatus: (() => void) | null = null
+
+onMounted(() => {
+  cleanupUpdateStatus = window.api.onUpdateStatus((status, data) => {
+    if (status === 'downloading') {
+      const progressData = data as { percent: number } | undefined
+      updateDialog.value = {
+        ...updateDialog.value,
+        show: true,
+        type: 'downloading',
+        progress: progressData?.percent ?? 0
+      }
+    } else if (status === 'downloaded') {
+      updateDialog.value = {
+        ...updateDialog.value,
+        show: true,
+        type: 'downloaded',
+        progress: 100
+      }
+    }
+  })
 })
 
 interface TestResult {
@@ -88,7 +173,7 @@ const handleTestVNDB = async (): Promise<void> => {
 }
 
 const handleOpenGithub = (): void => {
-  window.api.openExternal('https://github.com/arkzoe/lunamanager')
+  window.api.openExternal('https://github.com/arkzoe/LunaManager')
 }
 
 const handleCheckUpdate = async (): Promise<void> => {
@@ -97,17 +182,28 @@ const handleCheckUpdate = async (): Promise<void> => {
     type: 'checking',
     version: '',
     releaseNotes: '',
-    errorMessage: ''
+    errorMessage: '',
+    progress: 0
   }
   try {
     const result = await window.api.checkForUpdates()
-    if (result?.updateAvailable) {
+    if (result.error) {
+      updateDialog.value = {
+        show: true,
+        type: 'error',
+        version: '',
+        releaseNotes: '',
+        errorMessage: result.error,
+        progress: 0
+      }
+    } else if (result.updateAvailable) {
       updateDialog.value = {
         show: true,
         type: 'available',
         version: result.version || '',
         releaseNotes: result.releaseNotes || '',
-        errorMessage: ''
+        errorMessage: '',
+        progress: 0
       }
     } else {
       updateDialog.value = {
@@ -115,7 +211,8 @@ const handleCheckUpdate = async (): Promise<void> => {
         type: 'not-available',
         version: '',
         releaseNotes: '',
-        errorMessage: ''
+        errorMessage: '',
+        progress: 0
       }
     }
   } catch {
@@ -124,7 +221,8 @@ const handleCheckUpdate = async (): Promise<void> => {
       type: 'error',
       version: '',
       releaseNotes: '',
-      errorMessage: '网络连接失败，请稍后重试'
+      errorMessage: '网络连接失败，请稍后重试',
+      progress: 0
     }
   }
 }
@@ -132,29 +230,28 @@ const handleCheckUpdate = async (): Promise<void> => {
 const handleUpdateDownload = async (): Promise<void> => {
   updateDialog.value = {
     show: true,
-    type: 'checking',
+    type: 'downloading',
     version: '',
     releaseNotes: '',
-    errorMessage: ''
+    errorMessage: '',
+    progress: 0
   }
   try {
     await window.api.downloadUpdate()
-    updateDialog.value = {
-      show: false,
-      type: 'checking',
-      version: '',
-      releaseNotes: '',
-      errorMessage: ''
-    }
   } catch {
     updateDialog.value = {
       show: true,
       type: 'error',
       version: '',
       releaseNotes: '',
-      errorMessage: '下载失败，请稍后重试'
+      errorMessage: '下载失败，请稍后重试',
+      progress: 0
     }
   }
+}
+
+const handleUpdateInstall = async (): Promise<void> => {
+  await window.api.quitAndInstall()
 }
 
 const handleUpdateClose = (): void => {
@@ -163,7 +260,8 @@ const handleUpdateClose = (): void => {
     type: 'checking',
     version: '',
     releaseNotes: '',
-    errorMessage: ''
+    errorMessage: '',
+    progress: 0
   }
 }
 
@@ -340,8 +438,10 @@ const scrollToSection = (id: string): void => {
         :version="updateDialog.version"
         :release-notes="updateDialog.releaseNotes"
         :error-message="updateDialog.errorMessage"
+        :progress="updateDialog.progress"
         @close="handleUpdateClose"
         @download="handleUpdateDownload"
+        @install="handleUpdateInstall"
       />
 
       <div class="settings-bottom-spacer"></div>

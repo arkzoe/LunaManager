@@ -1,14 +1,16 @@
 <script setup lang="ts">
 defineProps<{
   show: boolean
-  type: 'checking' | 'available' | 'not-available' | 'error'
+  type: 'checking' | 'available' | 'not-available' | 'error' | 'downloading' | 'downloaded'
   version?: string
   releaseNotes?: string
   errorMessage?: string
+  progress?: number
 }>()
 const emit = defineEmits<{
   close: []
   download: []
+  install: []
 }>()
 </script>
 
@@ -57,6 +59,27 @@ const emit = defineEmits<{
               <p class="state-text">已是最新版本</p>
             </div>
 
+            <div v-else-if="type === 'downloading'" class="state-wrapper">
+              <svg viewBox="0 0 24 24" class="state-icon state-available">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor" />
+              </svg>
+              <p class="state-text">正在下载更新...</p>
+              <div class="progress-bar-wrapper">
+                <div class="progress-bar" :style="{ width: (progress || 0) + '%' }"></div>
+                <span class="progress-text">{{ Math.round(progress || 0) }}%</span>
+              </div>
+            </div>
+
+            <div v-else-if="type === 'downloaded'" class="state-wrapper">
+              <svg viewBox="0 0 24 24" class="state-icon state-uptodate">
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                  fill="currentColor"
+                />
+              </svg>
+              <p class="state-text">下载完成，是否立即安装？</p>
+            </div>
+
             <div v-else-if="type === 'error'" class="state-wrapper">
               <svg viewBox="0 0 24 24" class="state-icon state-error">
                 <path
@@ -78,6 +101,15 @@ const emit = defineEmits<{
             <template v-else-if="type === 'available'">
               <button class="btn-ghost" @click="emit('close')">稍后再说</button>
               <button class="btn-primary" @click="emit('download')">下载更新</button>
+            </template>
+
+            <template v-else-if="type === 'downloading'">
+              <button class="btn-ghost" @click="emit('close')">后台下载</button>
+            </template>
+
+            <template v-else-if="type === 'downloaded'">
+              <button class="btn-ghost" @click="emit('close')">稍后安装</button>
+              <button class="btn-primary" @click="emit('install')">立即安装</button>
             </template>
 
             <template v-else>
@@ -284,5 +316,26 @@ const emit = defineEmits<{
 
 .spin {
   animation: spin 0.8s linear infinite;
+}
+
+.progress-bar-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.progress-bar {
+  width: 0%;
+  height: 6px;
+  background: var(--accent-primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 </style>

@@ -49,7 +49,8 @@ export async function checkForUpdates(): Promise<{
   updateAvailable: boolean
   version?: string
   releaseNotes?: string
-} | null> {
+  error?: string
+}> {
   try {
     const result = await autoUpdater.checkForUpdates()
     if (result?.updateInfo) {
@@ -60,8 +61,11 @@ export async function checkForUpdates(): Promise<{
       }
     }
     return { updateAvailable: false }
-  } catch {
-    return null
+  } catch (err) {
+    return {
+      updateAvailable: false,
+      error: err instanceof Error ? err.message : '检查更新失败'
+    }
   }
 }
 

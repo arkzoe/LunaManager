@@ -70,6 +70,12 @@ const api: IElectronAPI = {
     const handler = (_e, status, data) => callback(status, data)
     ipcRenderer.on('update:status', handler)
     return () => ipcRenderer.removeListener('update:status', handler)
+  },
+  getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+  onAutoUpdateAvailable: (callback) => {
+    const handler = (_e, data) => callback(data)
+    ipcRenderer.on('update:auto-available', handler)
+    return () => ipcRenderer.removeListener('update:auto-available', handler)
   }
 }
 
