@@ -105,6 +105,7 @@ const emit = defineEmits<{
 
 .collection-card:hover .collection-actions:not(.cb-hidden) {
   opacity: 1;
+  visibility: visible;
 }
 
 .action-menu-btn {
@@ -136,6 +137,9 @@ const emit = defineEmits<{
 }
 .card-count {
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cb-box {
@@ -152,8 +156,5 @@ const emit = defineEmits<{
 .cb-selected {
   background: var(--accent-primary);
   border-color: var(--accent-primary);
-}
-.card-count {
-  color: var(--text-muted);
 }
 </style>
