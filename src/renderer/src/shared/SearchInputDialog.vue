@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import type { SearchResult } from '../../../shared/types'
 import SelectDropdown from './SelectDropdown.vue'
+import { sortByMatch, pickBestMatch, AUTO_MATCH_THRESHOLD } from '../utils/matcher'
 
 const emit = defineEmits<{
   (e: 'select', result: SearchResult): void
@@ -58,7 +59,10 @@ const handleSearch = async (): Promise<void> => {
       return
     }
 
-    results.value = await window.api.searchMetadata(q, source.value, token || undefined)
+    const raw = await window.api.searchMetadata(q, source.value, token || undefined)
+    results.value = sortByMatch(q, raw)
+    const best = pickBestMatch(q, raw, AUTO_MATCH_THRESHOLD)
+    if (best) selectedId.value = best.id
   } catch (err: unknown) {
     error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
   } finally {

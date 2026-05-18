@@ -4,6 +4,7 @@ import type { ScanResult, GameRecord, SearchResult } from '../../../shared/types
 import { useGameStore } from '../stores/useGameStore'
 import { useTokenCache } from '../composables/useTokenCache'
 import { fillGameFromDetail } from '../composables/useMetadata'
+import { pickBestMatch, AUTO_MATCH_THRESHOLD } from '../utils/matcher'
 import GameMetadataForm from '../shared/GameMetadataForm.vue'
 import type { MetadataForm } from '../shared/GameMetadataForm.vue'
 import SearchResultPicker from '../shared/SearchResultPicker.vue'
@@ -137,10 +138,18 @@ const handleSearch = async (): Promise<void> => {
       error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
       return
     }
-    searchResults.value = await window.api.searchMetadata(query, source, token || undefined)
-    if (searchResults.value.length === 1) applySearchResult(searchResults.value[0])
-    else if (searchResults.value.length > 1) showSearchPicker.value = true
-    else searchNoResults.value = true
+    const results = await window.api.searchMetadata(query, source, token || undefined)
+    searchResults.value = results
+    if (results.length > 0) {
+      const best = pickBestMatch(query, results, AUTO_MATCH_THRESHOLD)
+      if (best) {
+        applySearchResult(best)
+      } else {
+        showSearchPicker.value = true
+      }
+    } else {
+      searchNoResults.value = true
+    }
   } catch (err: unknown) {
     error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
   } finally {

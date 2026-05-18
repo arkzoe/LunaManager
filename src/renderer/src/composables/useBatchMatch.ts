@@ -2,6 +2,7 @@ import { ref, computed, type Ref } from 'vue'
 import type { SearchResult, ImportRowState } from '../../../shared/types'
 import { useTokenCache } from './useTokenCache'
 import { fillGameFromDetail } from './useMetadata'
+import { pickBestMatch, REJECT_THRESHOLD } from '../utils/matcher'
 
 export interface UseBatchMatchReturn {
   searchingRow: Ref<string>
@@ -119,8 +120,8 @@ export function useBatchMatch(
 
         try {
           const results = await window.api.searchMetadata(query, source, token || undefined)
-          if (results.length > 0) {
-            const best = results[0]
+          const best = pickBestMatch(query, results, REJECT_THRESHOLD)
+          if (best) {
             row.title = best.titleCn || best.title || row.title
             if (best.source === 'vndb') row.vndbId = best.id
             if (best.source === 'bangumi') row.bangumiId = best.id
