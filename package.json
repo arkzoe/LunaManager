@@ -1,6 +1,6 @@
 {
   "name": "lunamanager",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "An Electron application with Vue and TypeScript",
   "main": "./out/main/index.js",
   "author": "arkzoe",
@@ -18,8 +18,7 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win --publish always",
     "build:mac": "npm run build && electron-builder --mac --publish always",
-    "build:linux": "npm run build && electron-builder --linux --publish always",
-    "build:alpha": "npm run build && electron-builder --win"
+    "build:linux": "npm run build && electron-builder --linux --publish always"
   },
   "build": {
     "appId": "com.arkzoe.lunamanager",
