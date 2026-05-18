@@ -19,11 +19,11 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="collection-card h-20 flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-250 box-border hover:-translate-y-0.5 border"
+    class="collection-card h-20 flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-250 box-border hover:-translate-y-0.5 border"
     :class="{ 'ring-2 ring-accent-500/50': selected }"
     @click="batchMode ? !isDefault && emit('toggleSelect', collection.id) : emit('open')"
   >
-    <div class="flex-shrink-0 batch-check-wrap" :class="{ 'cb-hidden': !batchMode }">
+    <div class="batch-check-wrap" :class="{ 'cb-hidden': !batchMode }">
       <div
         class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer cb-box"
         :class="[isDefault ? 'cb-default' : '', selected ? 'cb-selected' : '']"
@@ -53,19 +53,19 @@ const emit = defineEmits<{
       </p>
     </div>
     <div
-      class="collection-actions flex items-center gap-1"
+      class="collection-actions flex flex-col items-center"
       :class="{ 'cb-hidden': batchMode }"
       @click.stop
     >
       <button v-if="!isDefault" class="action-menu-btn" title="重命名" @click="emit('rename')">
-        <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 fill-current">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
           <path
             d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
           />
         </svg>
       </button>
       <button v-if="!isDefault" class="action-menu-btn delete" title="删除" @click="emit('delete')">
-        <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 fill-current">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
           <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
         </svg>
       </button>
@@ -84,33 +84,52 @@ const emit = defineEmits<{
   border-color: var(--accent-primary);
 }
 
-.batch-check-wrap,
-.collection-actions {
+.batch-check-wrap {
   transition:
+    width 0.2s ease,
     opacity 0.2s ease,
-    visibility 0.2s ease;
+    margin 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  width: 20px;
 }
 
 .collection-actions {
+  transition:
+    width 0.2s ease,
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  width: 0;
   opacity: 0;
   visibility: hidden;
 }
 
-.batch-check-wrap.cb-hidden,
+.batch-check-wrap.cb-hidden {
+  width: 0;
+  margin: 0;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .collection-actions.cb-hidden {
+  width: 0;
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
 }
 
 .collection-card:hover .collection-actions:not(.cb-hidden) {
+  width: 28px;
   opacity: 1;
   visibility: visible;
 }
 
 .action-menu-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;

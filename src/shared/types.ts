@@ -157,6 +157,7 @@ export interface AppConfig {
   bangumiToken: string
   vndbApiKey: string
   backupDir: string
+  lastUpdateCheckDate: string
 }
 
 export interface IElectronAPI {
@@ -247,4 +248,5 @@ export interface IElectronAPI {
   onUpdateStatus: (callback: (status: string, data?: unknown) => void) => () => void
   getAppVersion: () => Promise<string>
   onAutoUpdateAvailable: (callback: (data: { version?: string; releaseNotes?: string }) => void) => () => void
+  getPendingAutoUpdate: () => Promise<{ version: string; releaseNotes?: string } | null>
 }

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, provide } from 'vue'
 import Sidebar from './layout/Sidebar.vue'
 import MainContent from './layout/MainContent.vue'
+import UpdateDialog from './shared/UpdateDialog.vue'
 import { useThemeStore } from './stores'
 
 const activeTab = ref('home')
@@ -11,8 +12,124 @@ const handleTabChange = (tab: string): void => {
   activeTab.value = tab
 }
 
+// --- Update dialog state (global, survives page switches) ---
+const updateDialog = ref({
+  show: false,
+  type: 'checking' as
+    | 'checking'
+    | 'available'
+    | 'not-available'
+    | 'error'
+    | 'downloading'
+    | 'downloaded',
+  version: '',
+  releaseNotes: '',
+  errorMessage: '',
+  progress: 0
+})
+
+const userDismissedUpdate = ref(false)
+
+function handleUpdateClose(): void {
+  userDismissedUpdate.value = true
+  updateDialog.value = {
+    show: false,
+    type: 'checking',
+    version: '',
+    releaseNotes: '',
+    errorMessage: '',
+    progress: 0
+  }
+}
+
+// Provide actions so child views (e.g. SettingsView) can trigger download/install
+provide('update:show', (type: string, data?: Record<string, unknown>) => {
+  userDismissedUpdate.value = false
+  updateDialog.value = {
+    show: true,
+    type: type as typeof updateDialog.value.type,
+    version: (data?.version as string) || '',
+    releaseNotes: (data?.releaseNotes as string) || '',
+    errorMessage: (data?.errorMessage as string) || '',
+    progress: (data?.progress as number) || 0
+  }
+})
+provide('update:close', handleUpdateClose)
+
+function handleDownload(): void {
+  updateDialog.value = {
+    ...updateDialog.value,
+    show: true,
+    type: 'downloading',
+    progress: 0
+  }
+  window.api.downloadUpdate()
+}
+
+function handleInstall(): void {
+  window.api.quitAndInstall()
+}
+
+// --- Persistent update listeners ---
+let cleanupAutoUpdate: (() => void) | null = null
+let cleanupUpdateStatus: (() => void) | null = null
+
 onMounted(() => {
   themeStore.initTheme()
+  themeStore.startWatchingSystemTheme()
+
+  // Check for pending auto-update (missed because view was not mounted)
+  window.api.getPendingAutoUpdate().then((info) => {
+    if (info) {
+      updateDialog.value = {
+        show: true,
+        type: 'available',
+        version: info.version || '',
+        releaseNotes: info.releaseNotes || '',
+        errorMessage: '',
+        progress: 0
+      }
+    }
+  })
+
+  // Listen for auto-update available (real-time)
+  cleanupAutoUpdate = window.api.onAutoUpdateAvailable((data) => {
+    if (userDismissedUpdate.value) return
+    updateDialog.value = {
+      show: true,
+      type: 'available',
+      version: data.version || '',
+      releaseNotes: data.releaseNotes || '',
+      errorMessage: '',
+      progress: 0
+    }
+  })
+
+  // Listen for update status events (downloading, downloaded, etc.)
+  cleanupUpdateStatus = window.api.onUpdateStatus((status, data) => {
+    if (status === 'downloading') {
+      const progressData = data as { percent: number } | undefined
+      updateDialog.value = {
+        ...updateDialog.value,
+        show: true,
+        type: 'downloading',
+        progress: progressData?.percent ?? 0
+      }
+    } else if (status === 'downloaded') {
+      updateDialog.value = {
+        ...updateDialog.value,
+        show: true,
+        type: 'downloaded',
+        progress: 100
+      }
+    }
+  })
+})
+
+onUnmounted(() => {
+  themeStore.stopWatchingSystemTheme()
+  cleanupAutoUpdate?.()
+  cleanupUpdateStatus?.()
 })
 </script>
 
@@ -20,6 +137,18 @@ onMounted(() => {
   <div class="app-shell">
     <Sidebar :active-tab="activeTab" @update:active-tab="handleTabChange" />
     <MainContent :active-tab="activeTab" @update:active-tab="handleTabChange" />
+
+    <UpdateDialog
+      :show="updateDialog.show"
+      :type="updateDialog.type"
+      :version="updateDialog.version"
+      :release-notes="updateDialog.releaseNotes"
+      :error-message="updateDialog.errorMessage"
+      :progress="updateDialog.progress"
+      @close="handleUpdateClose"
+      @download="handleDownload"
+      @install="handleInstall"
+    />
   </div>
 </template>
 

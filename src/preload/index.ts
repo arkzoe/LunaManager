@@ -77,7 +77,8 @@ const api: IElectronAPI = {
     const handler = (_e, data) => callback(data)
     ipcRenderer.on('update:auto-available', handler)
     return () => ipcRenderer.removeListener('update:auto-available', handler)
-  }
+  },
+  getPendingAutoUpdate: () => ipcRenderer.invoke('update:getPendingAutoUpdate')
 }
 
 if (process.contextIsolated) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, inject } from 'vue'
 import { useSettings } from '../composables/useSettings'
 import SettingBasic from './settings/SettingBasic.vue'
 import SettingAppearance from './settings/SettingAppearance.vue'
@@ -7,7 +7,6 @@ import SettingDatasource from './settings/SettingDatasource.vue'
 import SettingLauncher from './settings/SettingLauncher.vue'
 import SettingBackup from './settings/SettingBackup.vue'
 import SettingAbout from './settings/SettingAbout.vue'
-import UpdateDialog from '../shared/UpdateDialog.vue'
 
 const {
   autoStart,
@@ -31,9 +30,12 @@ const {
 } = useSettings()
 
 const currentVersion = ref('')
-const userDismissedUpdate = ref(false)
 
-let cleanupAutoUpdate: (() => void) | null = null
+// Injected update dialog actions from App.vue
+const showUpdateDialog = inject('update:show') as (
+  type: string,
+  data?: Record<string, unknown>
+) => void
 
 onMounted(async () => {
   try {
@@ -41,18 +43,6 @@ onMounted(async () => {
   } catch {
     currentVersion.value = '1.0.0'
   }
-
-  cleanupAutoUpdate = window.api.onAutoUpdateAvailable((data) => {
-    if (userDismissedUpdate.value) return
-    updateDialog.value = {
-      show: true,
-      type: 'available',
-      version: data.version || '',
-      releaseNotes: data.releaseNotes || '',
-      errorMessage: '',
-      progress: 0
-    }
-  })
 })
 
 onMounted(async () => {
@@ -85,47 +75,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   observer?.disconnect()
-  cleanupAutoUpdate?.()
-  cleanupUpdateStatus?.()
-})
-
-const updateDialog = ref({
-  show: false,
-  type: 'checking' as
-    | 'checking'
-    | 'available'
-    | 'not-available'
-    | 'error'
-    | 'downloading'
-    | 'downloaded',
-  version: '',
-  releaseNotes: '',
-  errorMessage: '',
-  progress: 0
-})
-
-let cleanupUpdateStatus: (() => void) | null = null
-
-onMounted(() => {
-  cleanupUpdateStatus = window.api.onUpdateStatus((status, data) => {
-    if (userDismissedUpdate.value) return
-    if (status === 'downloading') {
-      const progressData = data as { percent: number } | undefined
-      updateDialog.value = {
-        ...updateDialog.value,
-        show: true,
-        type: 'downloading',
-        progress: progressData?.percent ?? 0
-      }
-    } else if (status === 'downloaded') {
-      updateDialog.value = {
-        ...updateDialog.value,
-        show: true,
-        type: 'downloaded',
-        progress: 100
-      }
-    }
-  })
 })
 
 interface TestResult {
@@ -180,94 +129,21 @@ const handleOpenGithub = (): void => {
 }
 
 const handleCheckUpdate = async (): Promise<void> => {
-  userDismissedUpdate.value = false
-  updateDialog.value = {
-    show: true,
-    type: 'checking',
-    version: '',
-    releaseNotes: '',
-    errorMessage: '',
-    progress: 0
-  }
+  showUpdateDialog('checking')
   try {
     const result = await window.api.checkForUpdates()
     if (result.error) {
-      updateDialog.value = {
-        show: true,
-        type: 'error',
-        version: '',
-        releaseNotes: '',
-        errorMessage: result.error,
-        progress: 0
-      }
+      showUpdateDialog('error', { errorMessage: result.error })
     } else if (result.updateAvailable) {
-      updateDialog.value = {
-        show: true,
-        type: 'available',
+      showUpdateDialog('available', {
         version: result.version || '',
-        releaseNotes: result.releaseNotes || '',
-        errorMessage: '',
-        progress: 0
-      }
+        releaseNotes: result.releaseNotes || ''
+      })
     } else {
-      updateDialog.value = {
-        show: true,
-        type: 'not-available',
-        version: '',
-        releaseNotes: '',
-        errorMessage: '',
-        progress: 0
-      }
+      showUpdateDialog('not-available')
     }
   } catch {
-    updateDialog.value = {
-      show: true,
-      type: 'error',
-      version: '',
-      releaseNotes: '',
-      errorMessage: '网络连接失败，请稍后重试',
-      progress: 0
-    }
-  }
-}
-
-const handleUpdateDownload = async (): Promise<void> => {
-  userDismissedUpdate.value = false
-  updateDialog.value = {
-    show: true,
-    type: 'downloading',
-    version: '',
-    releaseNotes: '',
-    errorMessage: '',
-    progress: 0
-  }
-  try {
-    await window.api.downloadUpdate()
-  } catch {
-    updateDialog.value = {
-      show: true,
-      type: 'error',
-      version: '',
-      releaseNotes: '',
-      errorMessage: '下载失败，请稍后重试',
-      progress: 0
-    }
-  }
-}
-
-const handleUpdateInstall = async (): Promise<void> => {
-  await window.api.quitAndInstall()
-}
-
-const handleUpdateClose = (): void => {
-  userDismissedUpdate.value = true
-  updateDialog.value = {
-    show: false,
-    type: 'checking',
-    version: '',
-    releaseNotes: '',
-    errorMessage: '',
-    progress: 0
+    showUpdateDialog('error', { errorMessage: '网络连接失败，请稍后重试' })
   }
 }
 
@@ -317,38 +193,6 @@ let scrollTimer: ReturnType<typeof setTimeout> | null = null
 const setSectionRef = (id: string) => (el: unknown) => {
   if (el instanceof HTMLElement) sectionRefs.value[id] = el
 }
-
-onMounted(async () => {
-  await loadConfig()
-  setupPersistence()
-
-  await nextTick()
-  if (!contentRef.value) return
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (isScrolling) return
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          const id = (entry.target as HTMLElement).dataset.section
-          if (id) activeSection.value = id
-          break
-        }
-      }
-    },
-    {
-      root: contentRef.value,
-      rootMargin: '-10% 0px -70% 0px',
-      threshold: 0
-    }
-  )
-
-  Object.values(sectionRefs.value).forEach((el) => observer!.observe(el))
-})
-
-onUnmounted(() => {
-  observer?.disconnect()
-})
 
 const scrollToSection = (id: string): void => {
   isScrolling = true
@@ -436,18 +280,6 @@ const scrollToSection = (id: string): void => {
         :current-version="currentVersion"
         @check-update="handleCheckUpdate"
         @open-github="handleOpenGithub"
-      />
-
-      <UpdateDialog
-        :show="updateDialog.show"
-        :type="updateDialog.type"
-        :version="updateDialog.version"
-        :release-notes="updateDialog.releaseNotes"
-        :error-message="updateDialog.errorMessage"
-        :progress="updateDialog.progress"
-        @close="handleUpdateClose"
-        @download="handleUpdateDownload"
-        @install="handleUpdateInstall"
       />
 
       <div class="settings-bottom-spacer"></div>

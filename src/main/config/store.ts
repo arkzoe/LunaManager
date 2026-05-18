@@ -18,7 +18,7 @@ const defaultConfig: AppConfig = {
   autoUpdate: true,
   metadataSource: 'bangumi',
   autoSyncMetadata: true,
-  theme: 'dark',
+  theme: 'light',
   language: 'zh-CN',
   trackPlaytime: true,
   recordHistory: true,
@@ -28,7 +28,8 @@ const defaultConfig: AppConfig = {
   magpieScale: '2x',
   bangumiToken: '',
   vndbApiKey: '',
-  backupDir: ''
+  backupDir: '',
+  lastUpdateCheckDate: ''
 }
 
 const storeOptions: Options<AppConfig> = {

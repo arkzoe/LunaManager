@@ -232,9 +232,12 @@ function setupIpcHandlers(): void {
   })
 
   // ===== Updates =====
-  ipcMain.handle('update:check', async () => checkForUpdates())
+  ipcMain.handle('update:check', async () => checkForUpdates(true))
   ipcMain.handle('update:download', async () => downloadUpdate())
   ipcMain.handle('update:install', async () => quitAndInstall())
+  ipcMain.handle('update:getPendingAutoUpdate', () => {
+    return getPendingAutoUpdateInfo()
+  })
 
   // ===== App Info =====
   ipcMain.handle('app:getVersion', () => app.getVersion())
@@ -248,7 +251,10 @@ import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 import { getSnapshotDir } from './config/paths'
 import { launchGame, stopGame, isGameRunning } from './services/game-launcher'
 import { backupSave, restoreSave, getSnapshotDirPath, autoMatchSaveDir } from './services/backup'
-import { setupUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from './services/updater'
+import {
+  setupUpdater, checkForUpdates, downloadUpdate, quitAndInstall,
+  getPendingAutoUpdateInfo, setPendingAutoUpdateInfo
+} from './services/updater'
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
@@ -270,6 +276,10 @@ app.whenReady().then(() => {
     setTimeout(() => {
       checkForUpdates().then((result) => {
         if (result.updateAvailable && !result.error) {
+          setPendingAutoUpdateInfo({
+            version: result.version || '',
+            releaseNotes: result.releaseNotes
+          })
           const wins = BrowserWindow.getAllWindows()
           for (const win of wins) {
             win.webContents.send('update:auto-available', {

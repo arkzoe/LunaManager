@@ -9,6 +9,13 @@ export const useThemeStore = defineStore('theme', () => {
   const isDark = computed(() => currentTheme.value === 'dark')
   const isLight = computed(() => currentTheme.value === 'light')
 
+  function getSystemTheme(): Theme {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark'
+    }
+    return 'light'
+  }
+
   const applyTheme = (theme: Theme): void => {
     const root = document.documentElement
     if (theme === 'dark') {
@@ -25,15 +32,42 @@ export const useThemeStore = defineStore('theme', () => {
       applyTheme(currentTheme.value)
     } else {
       window.api.getConfig('theme').then((t) => {
-        currentTheme.value = t || 'light'
+        if (t === 'light' || t === 'dark') {
+          currentTheme.value = t
+        } else {
+          currentTheme.value = getSystemTheme()
+        }
         applyTheme(currentTheme.value)
         localStorage.setItem('lunamanager-theme', currentTheme.value)
       }).catch(() => {
-        currentTheme.value = 'light'
+        currentTheme.value = getSystemTheme()
         applyTheme(currentTheme.value)
-        localStorage.setItem('lunamanager-theme', 'light')
+        localStorage.setItem('lunamanager-theme', getSystemTheme())
       })
     }
+  }
+
+  let mediaQuery: MediaQueryList | null = null
+  let mediaListener: (() => void) | null = null
+
+  function startWatchingSystemTheme(): void {
+    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    mediaListener = () => {
+      const saved = localStorage.getItem('lunamanager-theme') as Theme | null
+      if (!saved) {
+        currentTheme.value = getSystemTheme()
+        applyTheme(currentTheme.value)
+      }
+    }
+    mediaQuery.addEventListener('change', mediaListener)
+  }
+
+  function stopWatchingSystemTheme(): void {
+    if (mediaQuery && mediaListener) {
+      mediaQuery.removeEventListener('change', mediaListener)
+    }
+    mediaQuery = null
+    mediaListener = null
   }
 
   const setTheme = async (theme: Theme): Promise<void> => {
@@ -49,5 +83,9 @@ export const useThemeStore = defineStore('theme', () => {
     setTheme(currentTheme.value === 'light' ? 'dark' : 'light')
   }
 
-  return { currentTheme, isDark, isLight, initTheme, setTheme, toggleTheme }
+  return {
+    currentTheme, isDark, isLight,
+    initTheme, setTheme, toggleTheme,
+    startWatchingSystemTheme, stopWatchingSystemTheme
+  }
 })
