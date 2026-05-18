@@ -31,6 +31,7 @@ const {
 } = useSettings()
 
 const currentVersion = ref('')
+const userDismissedUpdate = ref(false)
 
 let cleanupAutoUpdate: (() => void) | null = null
 
@@ -42,6 +43,7 @@ onMounted(async () => {
   }
 
   cleanupAutoUpdate = window.api.onAutoUpdateAvailable((data) => {
+    if (userDismissedUpdate.value) return
     updateDialog.value = {
       show: true,
       type: 'available',
@@ -106,6 +108,7 @@ let cleanupUpdateStatus: (() => void) | null = null
 
 onMounted(() => {
   cleanupUpdateStatus = window.api.onUpdateStatus((status, data) => {
+    if (userDismissedUpdate.value) return
     if (status === 'downloading') {
       const progressData = data as { percent: number } | undefined
       updateDialog.value = {
@@ -177,6 +180,7 @@ const handleOpenGithub = (): void => {
 }
 
 const handleCheckUpdate = async (): Promise<void> => {
+  userDismissedUpdate.value = false
   updateDialog.value = {
     show: true,
     type: 'checking',
@@ -228,6 +232,7 @@ const handleCheckUpdate = async (): Promise<void> => {
 }
 
 const handleUpdateDownload = async (): Promise<void> => {
+  userDismissedUpdate.value = false
   updateDialog.value = {
     show: true,
     type: 'downloading',
@@ -255,6 +260,7 @@ const handleUpdateInstall = async (): Promise<void> => {
 }
 
 const handleUpdateClose = (): void => {
+  userDismissedUpdate.value = true
   updateDialog.value = {
     show: false,
     type: 'checking',

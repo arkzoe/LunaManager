@@ -1,5 +1,8 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+import { marked } from 'marked'
+
+const props = defineProps<{
   show: boolean
   type: 'checking' | 'available' | 'not-available' | 'error' | 'downloading' | 'downloaded'
   version?: string
@@ -12,6 +15,11 @@ const emit = defineEmits<{
   download: []
   install: []
 }>()
+
+const parsedReleaseNotes = computed(() => {
+  if (!props.releaseNotes) return ''
+  return marked.parse(props.releaseNotes, { async: false }) as string
+})
 </script>
 
 <template>
@@ -45,7 +53,8 @@ const emit = defineEmits<{
               </p>
               <div v-if="releaseNotes" class="release-notes">
                 <p class="rn-label">更新说明：</p>
-                <div class="rn-content">{{ releaseNotes }}</div>
+                <!-- eslint-disable-next-line vue/no-v-html -->
+                <div v-once class="rn-content" v-html="parsedReleaseNotes"></div>
               </div>
             </div>
 
