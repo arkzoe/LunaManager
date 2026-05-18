@@ -45,6 +45,7 @@ const api: IElectronAPI = {
   backupSnapshot: (gameId) => ipcRenderer.invoke('snap:backup', gameId),
   restoreSnapshotInPlace: (snapshotId) => ipcRenderer.invoke('snap:restoreInPlace', snapshotId),
   getBackupDir: (gameId) => ipcRenderer.invoke('snap:getBackupDir', gameId),
+  autoMatchSaveDir: (executablePath) => ipcRenderer.invoke('snap:autoMatchSaveDir', executablePath),
 
   getGameByExecutablePath: (path) => ipcRenderer.invoke('db:getGameByExecutablePath', path),
 

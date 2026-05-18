@@ -105,6 +105,19 @@ export async function restoreSave(snapshotId: string): Promise<void> {
   })
 }
 
+export function autoMatchSaveDir(executablePath: string): string | null {
+  if (!executablePath) return null
+  const dir = path.dirname(executablePath)
+  const candidates = ['save', 'savedata']
+  for (const name of candidates) {
+    const fullPath = path.join(dir, name)
+    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+      return fullPath
+    }
+  }
+  return null
+}
+
 export function getSnapshotDirPath(gameId: string): string {
   const dir = getSnapshotDir(gameId)
   if (!fs.existsSync(dir)) {

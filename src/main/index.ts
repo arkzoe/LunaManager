@@ -167,6 +167,9 @@ function setupIpcHandlers(): void {
   ipcMain.handle('snap:getBackupDir', async (_e, gameId: string) => {
     return getSnapshotDirPath(gameId)
   })
+  ipcMain.handle('snap:autoMatchSaveDir', async (_e, executablePath: string) => {
+    return autoMatchSaveDir(executablePath)
+  })
 
   // ===== Import =====
   ipcMain.handle('import:pickFolder', (_e, options?) => pickFolderAndScan(options))
@@ -244,7 +247,7 @@ import { testApiConnection, searchMetadata, fetchMetadataDetail } from './servic
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 import { getSnapshotDir } from './config/paths'
 import { launchGame, stopGame, isGameRunning } from './services/game-launcher'
-import { backupSave, restoreSave, getSnapshotDirPath } from './services/backup'
+import { backupSave, restoreSave, getSnapshotDirPath, autoMatchSaveDir } from './services/backup'
 import { setupUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from './services/updater'
 
 app.whenReady().then(() => {

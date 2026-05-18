@@ -212,6 +212,7 @@ export interface IElectronAPI {
   backupSnapshot: (gameId: string) => Promise<string>
   restoreSnapshotInPlace: (snapshotId: string) => Promise<void>
   getBackupDir: (gameId: string) => Promise<string>
+  autoMatchSaveDir: (executablePath: string) => Promise<string | null>
 
   getGameByExecutablePath: (path: string) => Promise<GameRecord | null>
 

@@ -66,6 +66,22 @@ async function handleOpenBackupDir(): Promise<void> {
   await window.api.openPath(dir)
 }
 
+async function handleAutoMatchSaveDir(): Promise<void> {
+  error.value = ''
+  if (!props.game.executable_path) {
+    error.value = '未设置可执行文件路径'
+    return
+  }
+  const dir = await window.api.autoMatchSaveDir(props.game.executable_path)
+  if (!dir) {
+    error.value = '未找到存档目录'
+    return
+  }
+  await window.api.updateGame(props.game.id, { save_path: dir } as Partial<GameRecord>)
+  const g = store.allGames.find((x) => x.id === props.game.id)
+  if (g) g.save_path = dir
+}
+
 async function handleOpenPath(path: string): Promise<void> {
   await window.api.openPath(path)
 }
@@ -101,6 +117,7 @@ onMounted(() => {
           {{ backingUp ? '备份中...' : '立即备份' }}
         </button>
         <button class="btn-secondary btn-sm" @click="handleOpenBackupDir">打开备份文件夹</button>
+        <button class="btn-secondary btn-sm" @click="handleAutoMatchSaveDir">自动匹配</button>
       </div>
 
       <p v-if="error" class="error-msg">{{ error }}</p>
