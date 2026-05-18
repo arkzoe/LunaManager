@@ -24,7 +24,8 @@ export async function downloadCover(
     const localPath = join(getCoverDir(), filename)
     writeFileSync(localPath, buffer)
     // 返回自定义协议 URL，渲染进程通过 custom protocol 加载
-    return `cover://${filename}`
+    // 追加时间戳防止浏览器缓存旧封面
+    return `cover://${filename}?t=${Date.now()}`
   } catch {
     return null
   }
@@ -32,6 +33,6 @@ export async function downloadCover(
 
 /** 根据 cover:// URL 获取本地文件绝对路径 */
 export function resolveCoverPath(coverUrl: string): string {
-  const filename = basename(coverUrl.replace('cover://', ''))
+  const filename = basename(coverUrl.replace('cover://', '').split('?')[0])
   return join(getCoverDir(), filename)
 }

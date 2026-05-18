@@ -51,6 +51,9 @@ const handleSelectGame = (game: GameRecord): void => {
 const handleBack = (): void => {
   selectedGame.value = null
 }
+const handleUpdated = (game: GameRecord): void => {
+  selectedGame.value = game
+}
 </script>
 
 <template>
@@ -68,6 +71,7 @@ const handleBack = (): void => {
           :key="'detail-' + selectedGame.id"
           :game="selectedGame"
           @back="handleBack"
+          @updated="handleUpdated"
         />
         <HomeView
           v-else-if="activeTab === 'home'"
