@@ -6,7 +6,7 @@ let db: Database.Database | null = null
 
 function columnExists(table: string, col: string): boolean {
   const r = db!.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
-  return r.some(c => c.name === col)
+  return r.some((c) => c.name === col)
 }
 
 function migrateCollectionsTable(): void {
@@ -32,7 +32,11 @@ function migrateGamesTable(): void {
       db!.exec(`ALTER TABLE games ADD COLUMN ${name} ${def}`)
     }
   }
-  try { db!.exec('CREATE INDEX IF NOT EXISTS idx_games_status ON games(status)') } catch { /* skip */ }
+  try {
+    db!.exec('CREATE INDEX IF NOT EXISTS idx_games_status ON games(status)')
+  } catch {
+    /* skip */
+  }
 }
 
 export const initDatabase = (): Database.Database => {
@@ -106,7 +110,42 @@ export const initDatabase = (): Database.Database => {
     CREATE INDEX IF NOT EXISTS idx_play_sessions_start_time ON play_sessions(start_time);
     CREATE INDEX IF NOT EXISTS idx_collections_sort ON collections(sort_order);
     CREATE INDEX IF NOT EXISTS idx_save_snapshots_game ON save_snapshots(game_id);
+    CREATE INDEX IF NOT EXISTS idx_game_collections_col ON game_collections(collection_id);
+
+    CREATE VIRTUAL TABLE IF NOT EXISTS games_fts USING fts5(
+      title, title_cn, developer, content='games', content_rowid='rowid'
+    );
   `)
+
+  // FTS sync triggers (idempotent — IF NOT EXISTS not supported for triggers, use try/catch)
+  const triggers = [
+    `CREATE TRIGGER IF NOT EXISTS games_fts_insert AFTER INSERT ON games BEGIN
+       INSERT INTO games_fts(rowid, title, title_cn, developer) VALUES (new.rowid, new.title, new.title_cn, new.developer);
+     END`,
+    `CREATE TRIGGER IF NOT EXISTS games_fts_delete AFTER DELETE ON games BEGIN
+       INSERT INTO games_fts(games_fts, rowid, title, title_cn, developer) VALUES ('delete', old.rowid, old.title, old.title_cn, old.developer);
+     END`,
+    `CREATE TRIGGER IF NOT EXISTS games_fts_update AFTER UPDATE ON games BEGIN
+       INSERT INTO games_fts(games_fts, rowid, title, title_cn, developer) VALUES ('delete', old.rowid, old.title, old.title_cn, old.developer);
+       INSERT INTO games_fts(rowid, title, title_cn, developer) VALUES (new.rowid, new.title, new.title_cn, new.developer);
+     END`
+  ]
+  for (const sql of triggers) {
+    try {
+      db!.exec(sql)
+    } catch {
+      /* trigger may already exist */
+    }
+  }
+
+  // Populate FTS if empty
+  const ftsCount = db!.prepare('SELECT count(*) as c FROM games_fts').get() as { c: number }
+  if (ftsCount.c === 0) {
+    db!.exec(`
+      INSERT INTO games_fts(rowid, title, title_cn, developer)
+      SELECT rowid, title, title_cn, developer FROM games
+    `)
+  }
 
   migrateGamesTable()
   migrateCollectionsTable()

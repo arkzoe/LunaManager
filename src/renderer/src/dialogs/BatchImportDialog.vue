@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import type { GameRecord, ImportResult, ImportResultItem } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import { useBatchScan } from '../composables/useBatchScan'
@@ -18,6 +18,11 @@ const emit = defineEmits<{
 }>()
 const store = useGameStore()
 const isImporting = ref(false)
+const importAbortController = ref<AbortController | null>(null)
+
+onUnmounted(() => {
+  importAbortController.value?.abort()
+})
 
 const scan = useBatchScan()
 const match = useBatchMatch(scan.rows, scan.error)
@@ -42,20 +47,24 @@ const handleImportAll = async (): Promise<void> => {
   scan.importedCount.value = 0
   showResult.value = false
 
+  importAbortController.value = new AbortController()
+  const { signal } = importAbortController.value
+
   const startedAt = Date.now()
   const resultItems: ImportResultItem[] = []
   const CONCURRENCY = 3
 
   try {
     for (let i = 0; i < toImport.length; i += CONCURRENCY) {
+      if (signal.aborted) break
       const chunk = toImport.slice(i, i + CONCURRENCY)
       await Promise.allSettled(
         chunk.map(async (row) => {
+          if (signal.aborted) return
           row.importStatus = 'importing'
           row.importMessage = ''
           try {
-            const now = Date.now()
-            const gameId = `id-${now}-${Math.random().toString(36).slice(2, 6)}`
+            const gameId = `id-${crypto.randomUUID()}`
 
             const existing = store.games.find(
               (g) =>
@@ -129,6 +138,7 @@ const handleImportAll = async (): Promise<void> => {
     scan.error.value = (e instanceof Error ? e.message : String(e)) || '导入失败'
   } finally {
     isImporting.value = false
+    importAbortController.value = null
   }
 
   importResult.value = {

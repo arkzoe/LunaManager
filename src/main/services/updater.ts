@@ -4,18 +4,6 @@ import { join } from 'path'
 import { existsSync, rmSync } from 'fs'
 import { getConfig, setConfig } from '../config/store'
 
-let _pendingAutoUpdate: { version: string; releaseNotes?: string } | null = null
-
-export function getPendingAutoUpdateInfo(): { version: string; releaseNotes?: string } | null {
-  const info = _pendingAutoUpdate
-  _pendingAutoUpdate = null
-  return info
-}
-
-export function setPendingAutoUpdateInfo(info: { version: string; releaseNotes?: string } | null): void {
-  _pendingAutoUpdate = info
-}
-
 export function checkAutoUpdateCheckedToday(): boolean {
   const last = getConfig('lastUpdateCheckDate')
   if (!last) return false
@@ -94,6 +82,18 @@ export function setupUpdater(): void {
   })
 }
 
+function compareVersions(a: string, b: string): number {
+  const pa = a.split('.').map(Number)
+  const pb = b.split('.').map(Number)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0
+    const nb = pb[i] || 0
+    if (na > nb) return 1
+    if (na < nb) return -1
+  }
+  return 0
+}
+
 export async function checkForUpdates(skipDailyCheck = false): Promise<{
   updateAvailable: boolean
   version?: string
@@ -107,11 +107,16 @@ export async function checkForUpdates(skipDailyCheck = false): Promise<{
     const result = await autoUpdater.checkForUpdates()
     if (result?.updateInfo) {
       markAutoUpdateCheckedToday()
-      return {
-        updateAvailable: true,
-        version: result.updateInfo.version,
-        releaseNotes: result.updateInfo.releaseNotes as string | undefined
+      const currentVersion = app.getVersion()
+      const remoteVersion = result.updateInfo.version
+      if (compareVersions(remoteVersion, currentVersion) > 0) {
+        return {
+          updateAvailable: true,
+          version: remoteVersion,
+          releaseNotes: result.updateInfo.releaseNotes as string | undefined
+        }
       }
+      return { updateAvailable: false }
     }
     markAutoUpdateCheckedToday()
     return { updateAvailable: false }
@@ -123,8 +128,18 @@ export async function checkForUpdates(skipDailyCheck = false): Promise<{
   }
 }
 
+let cancellationToken: { cancel: () => void } | null = null
+
 export async function downloadUpdate(): Promise<void> {
-  autoUpdater.downloadUpdate()
+  const { CancellationToken } = await import('builder-util-runtime')
+  const token = new CancellationToken()
+  cancellationToken = token
+  await autoUpdater.downloadUpdate(token)
+}
+
+export function cancelDownload(): void {
+  cancellationToken?.cancel()
+  cancellationToken = null
 }
 
 export async function quitAndInstall(): Promise<void> {

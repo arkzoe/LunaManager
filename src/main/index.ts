@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, protocol, net, dialog } from 'electron'
 import { join } from 'path'
 import { existsSync, rmSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -79,13 +79,6 @@ function setupIpcHandlers(): void {
     return gameOps.delete(id)
   })
   ipcMain.handle('db:searchGames', (_, q: string) => gameOps.search(q))
-  ipcMain.handle('db:getGamesByStatus', (_, status: string) =>
-    gameOps.getByStatus(status as GameStatus)
-  )
-  ipcMain.handle(
-    'db:getGameByExecutablePath',
-    (_, path: string) => gameOps.getByExecutablePath(path) || null
-  )
 
   // ===== Config =====
   ipcMain.handle(
@@ -111,17 +104,15 @@ function setupIpcHandlers(): void {
     sessionOps.getTotalPlaytime(gameId)
   )
   ipcMain.handle('play:getSessionsByGame', (_, gameId: string) => sessionOps.getByGameId(gameId))
-  ipcMain.handle('play:getRecentSessions', (_, limit?: number) => sessionOps.getRecent(limit))
   ipcMain.handle('play:getAllSessions', () => sessionOps.getAll())
   ipcMain.handle('play:getAggregatedStats', (_, gameId: string) =>
     sessionOps.getAggregatedStats(gameId)
   )
-  ipcMain.handle('play:getTotalSessionCount', () => sessionOps.getTotalCount())
   ipcMain.handle('play:getAllAggregatedStats', () => sessionOps.getAllAggregatedStats())
 
   // ===== Game Launch =====
-  ipcMain.handle('launch:game', (_, gameId: string, mode: string) => {
-    launchGame(gameId, mode as LaunchMode)
+  ipcMain.handle('launch:game', async (_, gameId: string, mode: string) => {
+    return launchGame(gameId, mode as LaunchMode)
   })
   ipcMain.handle('launch:stop', (_, gameId: string) => {
     return stopGame(gameId)
@@ -144,18 +135,11 @@ function setupIpcHandlers(): void {
   ipcMain.handle('col:getCollectionGames', (_, colId: string) =>
     collectionOps.getCollectionGames(colId)
   )
-  ipcMain.handle('col:reorder', (_, ids: string[]) => collectionOps.reorder(ids))
   ipcMain.handle('col:getAllCollectionGamesMap', () => collectionOps.getAllCollectionGamesMap())
 
   // ===== Save Snapshots =====
   ipcMain.handle('snap:getByGame', (_, gameId: string) => snapshotOps.getByGameId(gameId))
-  ipcMain.handle('snap:create', (_, gameId: string, notes?: string) =>
-    snapshotOps.create(gameId, notes)
-  )
   ipcMain.handle('snap:delete', (_, id: string) => snapshotOps.delete(id))
-  ipcMain.handle('snap:restore', async (_, snapshotId: string) => {
-    return restoreSave(snapshotId)
-  })
   ipcMain.handle('snap:backup', async (_e, gameId: string) => {
     const game = gameOps.getById(gameId)
     if (!game || !game.save_path) throw new Error('未设置存档路径')
@@ -179,7 +163,6 @@ function setupIpcHandlers(): void {
   ipcMain.handle(
     'import:pickFile',
     async (_e, filters?: { name: string; extensions: string[] }[]) => {
-      const { dialog } = await import('electron')
       const result = await dialog.showOpenDialog({
         properties: ['openFile'],
         filters: filters ?? [{ name: 'Executable', extensions: ['exe'] }]
@@ -189,7 +172,6 @@ function setupIpcHandlers(): void {
   )
 
   ipcMain.handle('import:pickDirectory', async () => {
-    const { dialog } = await import('electron')
     const result = await dialog.showOpenDialog({
       properties: ['openDirectory']
     })
@@ -234,17 +216,15 @@ function setupIpcHandlers(): void {
   // ===== Updates =====
   ipcMain.handle('update:check', async () => checkForUpdates(true))
   ipcMain.handle('update:download', async () => downloadUpdate())
+  ipcMain.handle('update:cancelDownload', async () => cancelDownload())
   ipcMain.handle('update:install', async () => quitAndInstall())
-  ipcMain.handle('update:getPendingAutoUpdate', () => {
-    return getPendingAutoUpdateInfo()
-  })
 
   // ===== App Info =====
   ipcMain.handle('app:getVersion', () => app.getVersion())
 }
 
 import type { AppConfig } from '../shared/types'
-import type { GameStatus, LaunchMode } from '../shared/types'
+import type { LaunchMode } from '../shared/types'
 import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
 import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
@@ -252,55 +232,53 @@ import { getSnapshotDir } from './config/paths'
 import { launchGame, stopGame, isGameRunning } from './services/game-launcher'
 import { backupSave, restoreSave, getSnapshotDirPath, autoMatchSaveDir } from './services/backup'
 import {
-  setupUpdater, checkForUpdates, downloadUpdate, quitAndInstall,
-  getPendingAutoUpdateInfo, setPendingAutoUpdateInfo
+  setupUpdater,
+  checkForUpdates,
+  downloadUpdate,
+  cancelDownload,
+  quitAndInstall
 } from './services/updater'
 
-app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.electron')
+const gotLock = app.requestSingleInstanceLock()
 
-  // 注册 cover:// 自定义协议，用于在渲染进程加载本地封面图片
-  protocol.handle('cover', (request) => {
-    const filePath = resolveCoverPath(request.url)
-    const normalizedPath = filePath.replace(/\\/g, '/')
-    return net.fetch(`file:///${normalizedPath}`)
+if (!gotLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
+    }
   })
 
-  app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
-  initDatabase()
-  setupIpcHandlers()
-  setupUpdater()
-  app.setLoginItemSettings({ openAtLogin: getConfig('autoStart') })
-  createWindow()
-  if (getConfig('autoUpdate')) {
-    setTimeout(() => {
-      checkForUpdates().then((result) => {
-        if (result.updateAvailable && !result.error) {
-          setPendingAutoUpdateInfo({
-            version: result.version || '',
-            releaseNotes: result.releaseNotes
-          })
-          const wins = BrowserWindow.getAllWindows()
-          for (const win of wins) {
-            win.webContents.send('update:auto-available', {
-              version: result.version,
-              releaseNotes: result.releaseNotes
-            })
-          }
-        }
-      })
-    }, 5000)
-  }
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  app.whenReady().then(() => {
+    electronApp.setAppUserModelId('com.electron')
+
+    // 注册 cover:// 自定义协议，用于在渲染进程加载本地封面图片
+    protocol.handle('cover', (request) => {
+      const filePath = resolveCoverPath(request.url)
+      const normalizedPath = filePath.replace(/\\/g, '/')
+      return net.fetch(`file:///${normalizedPath}`)
+    })
+
+    app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
+    initDatabase()
+    setupIpcHandlers()
+    setupUpdater()
+    app.setLoginItemSettings({ openAtLogin: getConfig('autoStart') })
+    createWindow()
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
   })
-})
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    closeDatabase()
-    app.quit()
-  }
-})
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      closeDatabase()
+      app.quit()
+    }
+  })
 
-app.on('before-quit', () => closeDatabase())
+  app.on('before-quit', () => closeDatabase())
+}

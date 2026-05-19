@@ -93,7 +93,7 @@ export const useSettingsStore = defineStore('settings', () => {
       for (const [key, value] of Object.entries(newSettings)) {
         const configKey = configKeyMap[key as keyof AppSettings]
         if (configKey) {
-          (configToSave as Record<string, unknown>)[configKey] = value
+          ;(configToSave as Record<string, unknown>)[configKey] = value
         }
       }
       await window.api.setAllConfig(configToSave)

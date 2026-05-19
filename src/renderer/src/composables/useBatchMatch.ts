@@ -37,10 +37,11 @@ export function useBatchMatch(
   const isMatchingAll = ref(false)
   let matchAllAbortController: AbortController | null = null
 
-  const unmatchedCount = computed(() =>
-    rows.value.filter(
-      (r) => r.selected && r.selectedExe && !r.isDuplicate && !r.vndbId && !r.bangumiId
-    ).length
+  const unmatchedCount = computed(
+    () =>
+      rows.value.filter(
+        (r) => r.selected && r.selectedExe && !r.isDuplicate && !r.vndbId && !r.bangumiId
+      ).length
   )
 
   const handleSearchRow = (folderPath: string): void => {

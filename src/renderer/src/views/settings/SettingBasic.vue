@@ -3,7 +3,6 @@ import SelectDropdown from '../../shared/SelectDropdown.vue'
 
 defineProps<{
   autoStart: boolean
-  autoUpdate: boolean
   trackPlaytime: boolean
   recordHistory: boolean
   language: string
@@ -12,7 +11,6 @@ defineProps<{
 
 const emit = defineEmits<{
   'update:autoStart': [value: boolean]
-  'update:autoUpdate': [value: boolean]
   'update:trackPlaytime': [value: boolean]
   'update:recordHistory': [value: boolean]
   'update:language': [value: string]
@@ -33,20 +31,6 @@ const emit = defineEmits<{
             type="checkbox"
             :checked="autoStart"
             @change="emit('update:autoStart', ($event.target as HTMLInputElement).checked)"
-          />
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row">
-        <div class="setting-info">
-          <span class="setting-label">自动更新</span>
-          <span class="setting-desc">自动检查并安装应用更新</span>
-        </div>
-        <label class="toggle">
-          <input
-            type="checkbox"
-            :checked="autoUpdate"
-            @change="emit('update:autoUpdate', ($event.target as HTMLInputElement).checked)"
           />
           <span class="toggle-slider"></span>
         </label>

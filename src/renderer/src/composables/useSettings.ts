@@ -1,13 +1,21 @@
-import { ref, watch } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
-type SettingKey = 'autoStart' | 'autoUpdate' | 'language' |
-  'vndbApiKey' | 'bangumiToken' | 'lePath' | 'magpiePath' | 'magpieScale' |
-  'backupDir' |
-  'trackPlaytime' | 'recordHistory' | 'autoSyncMetadata' | 'metadataSource'
+type SettingKey =
+  | 'autoStart'
+  | 'language'
+  | 'vndbApiKey'
+  | 'bangumiToken'
+  | 'lePath'
+  | 'magpiePath'
+  | 'magpieScale'
+  | 'backupDir'
+  | 'trackPlaytime'
+  | 'recordHistory'
+  | 'autoSyncMetadata'
+  | 'metadataSource'
 
 export function useSettings() {
   const autoStart = ref(false)
-  const autoUpdate = ref(true)
   const language = ref<'zh-CN' | 'en-US'>('zh-CN')
   const vndbApiKey = ref('')
   const bangumiToken = ref('')
@@ -24,7 +32,6 @@ export function useSettings() {
     try {
       const cfg = await window.api.getAllConfig()
       autoStart.value = cfg.autoStart ?? false
-      autoUpdate.value = cfg.autoUpdate ?? true
       language.value = cfg.language ?? 'zh-CN'
       vndbApiKey.value = cfg.vndbApiKey ?? ''
       bangumiToken.value = cfg.bangumiToken ?? ''
@@ -36,23 +43,41 @@ export function useSettings() {
       recordHistory.value = cfg.recordHistory ?? true
       autoSyncMetadata.value = cfg.autoSyncMetadata ?? false
       metadataSource.value = cfg.metadataSource ?? 'bangumi'
-    } catch { /* use defaults */ }
+    } catch {
+      /* use defaults */
+    }
   }
 
   const setupPersistence = (): void => {
     let timer: ReturnType<typeof setTimeout> | null = null
     const dirty = new Set<SettingKey>()
     const allRefs = [
-      autoStart, autoUpdate, language,
-      vndbApiKey, bangumiToken, lePath, magpiePath, magpieScale,
+      autoStart,
+      language,
+      vndbApiKey,
+      bangumiToken,
+      lePath,
+      magpiePath,
+      magpieScale,
       backupDir,
-      trackPlaytime, recordHistory, autoSyncMetadata, metadataSource
+      trackPlaytime,
+      recordHistory,
+      autoSyncMetadata,
+      metadataSource
     ] as const
     const keyList: SettingKey[] = [
-      'autoStart', 'autoUpdate', 'language',
-      'vndbApiKey', 'bangumiToken', 'lePath', 'magpiePath', 'magpieScale',
+      'autoStart',
+      'language',
+      'vndbApiKey',
+      'bangumiToken',
+      'lePath',
+      'magpiePath',
+      'magpieScale',
       'backupDir',
-      'trackPlaytime', 'recordHistory', 'autoSyncMetadata', 'metadataSource'
+      'trackPlaytime',
+      'recordHistory',
+      'autoSyncMetadata',
+      'metadataSource'
     ]
     watch(allRefs, (newVals, oldVals) => {
       for (let i = 0; i < newVals.length; i++) {
@@ -66,8 +91,12 @@ export function useSettings() {
           tasks.push(window.api.setConfig(key, allRefs[idx].value as never))
         }
         dirty.clear()
-        Promise.all(tasks)
+        Promise.all(tasks).catch(() => {})
       }, 500)
+    })
+
+    onUnmounted(() => {
+      if (timer) clearTimeout(timer)
     })
   }
 
@@ -87,11 +116,22 @@ export function useSettings() {
   }
 
   return {
-    autoStart, autoUpdate, language,
-    vndbApiKey, bangumiToken, lePath, magpiePath, magpieScale,
+    autoStart,
+    language,
+    vndbApiKey,
+    bangumiToken,
+    lePath,
+    magpiePath,
+    magpieScale,
     backupDir,
-    trackPlaytime, recordHistory, autoSyncMetadata, metadataSource,
-    loadConfig, setupPersistence,
-    handleSelectLEPath, handleSelectMagpiePath, handleSelectBackupDir
+    trackPlaytime,
+    recordHistory,
+    autoSyncMetadata,
+    metadataSource,
+    loadConfig,
+    setupPersistence,
+    handleSelectLEPath,
+    handleSelectMagpiePath,
+    handleSelectBackupDir
   }
 }

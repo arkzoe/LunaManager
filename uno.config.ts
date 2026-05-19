@@ -10,13 +10,8 @@ function toCSS(vars: Record<string, string>): string {
 }
 
 export default defineConfig({
-  presets: [
-    presetUno(),
-    presetAttributify()
-  ],
-  transformers: [
-    transformerDirectives()
-  ],
+  presets: [presetUno(), presetAttributify()],
+  transformers: [transformerDirectives()],
   theme: {
     colors: {
       // ========== 品牌主色 - 月光灰系统 ==========
@@ -32,7 +27,7 @@ export default defineConfig({
         700: '#44484e',
         750: '#303235',
         800: '#1c1e1f',
-        900: '#121416',
+        900: '#121416'
       },
 
       // ========== 中性色 - 石板灰（按钮专用） ==========
@@ -46,7 +41,7 @@ export default defineConfig({
         600: '#475569',
         700: '#334155',
         800: '#1e293b',
-        900: '#0f172a',
+        900: '#0f172a'
       },
 
       // ========== 强调色 - 星光蓝 ==========
@@ -60,7 +55,7 @@ export default defineConfig({
         600: '#2563eb',
         700: '#1d4ed8',
         800: '#1e40af',
-        900: '#1e3a8a',
+        900: '#1e3a8a'
       },
 
       // ========== 背景层级 ==========
@@ -72,7 +67,7 @@ export default defineConfig({
         tertiary: '#f3f4f6',
         quaternary: '#e5e7eb',
         hover: '#f9fafb',
-        active: '#eff6ff',
+        active: '#eff6ff'
       },
 
       // ========== 文字颜色 ==========
@@ -82,7 +77,7 @@ export default defineConfig({
         tertiary: '#6b7280',
         muted: '#9ca3af',
         inverse: '#ffffff',
-        brand: '#44484e',
+        brand: '#44484e'
       },
 
       // ========== 边框颜色 ==========
@@ -91,7 +86,7 @@ export default defineConfig({
         light: '#f3f4f6',
         medium: '#d1d5db',
         strong: '#9ca3af',
-        brand: '#cbd5e1',
+        brand: '#cbd5e1'
       },
 
       // ========== 功能色系统 ==========
@@ -105,7 +100,7 @@ export default defineConfig({
         600: '#059669',
         700: '#047857',
         800: '#065f46',
-        900: '#064e3b',
+        900: '#064e3b'
       },
 
       warning: {
@@ -118,7 +113,7 @@ export default defineConfig({
         600: '#d97706',
         700: '#b45309',
         800: '#92400e',
-        900: '#78350f',
+        900: '#78350f'
       },
 
       danger: {
@@ -131,7 +126,7 @@ export default defineConfig({
         600: '#dc2626',
         700: '#b91c1c',
         800: '#991b1b',
-        900: '#7f1d1d',
+        900: '#7f1d1d'
       },
 
       info: {
@@ -144,7 +139,7 @@ export default defineConfig({
         600: '#2563eb',
         700: '#1d4ed8',
         800: '#1e40af',
-        900: '#1e3a8a',
+        900: '#1e3a8a'
       },
 
       // ========== 扩展色板 ==========
@@ -158,7 +153,7 @@ export default defineConfig({
         600: '#db2777',
         700: '#be185d',
         800: '#9d174d',
-        900: '#831843',
+        900: '#831843'
       },
 
       teal: {
@@ -171,7 +166,7 @@ export default defineConfig({
         600: '#0d9488',
         700: '#0f766e',
         800: '#115e59',
-        900: '#134e4a',
+        900: '#134e4a'
       },
 
       amber: {
@@ -184,8 +179,8 @@ export default defineConfig({
         600: '#d97706',
         700: '#b45309',
         800: '#92400e',
-        900: '#78350f',
-      },
+        900: '#78350f'
+      }
     },
 
     // ========== 圆角系统 ==========
@@ -198,7 +193,7 @@ export default defineConfig({
       xl: '16px',
       '2xl': '20px',
       '3xl': '24px',
-      full: '9999px',
+      full: '9999px'
     },
 
     // ========== 阴影系统 ==========
@@ -212,17 +207,17 @@ export default defineConfig({
       '2xl': '0 20px 40px rgba(0, 0, 0, 0.06), 0 30px 50px rgba(0, 0, 0, 0.04)',
       inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.03)',
       // 主按钮阴影 - 中性深灰
-      'neutral': '0 2px 4px rgba(51, 65, 85, 0.2), 0 4px 8px rgba(51, 65, 85, 0.12)',
+      neutral: '0 2px 4px rgba(51, 65, 85, 0.2), 0 4px 8px rgba(51, 65, 85, 0.12)',
       'neutral-lg': '0 4px 8px rgba(51, 65, 85, 0.25), 0 8px 16px rgba(51, 65, 85, 0.15)',
       // 强调按钮阴影 - 星光蓝
-      'accent': '0 2px 4px rgba(59, 130, 246, 0.2), 0 4px 8px rgba(59, 130, 246, 0.12)',
+      accent: '0 2px 4px rgba(59, 130, 246, 0.2), 0 4px 8px rgba(59, 130, 246, 0.12)',
       'accent-lg': '0 4px 8px rgba(59, 130, 246, 0.25), 0 8px 16px rgba(59, 130, 246, 0.15)',
       // 危险色按钮阴影
-      'danger': '0 2px 4px rgba(239, 68, 68, 0.2), 0 4px 8px rgba(239, 68, 68, 0.12)',
+      danger: '0 2px 4px rgba(239, 68, 68, 0.2), 0 4px 8px rgba(239, 68, 68, 0.12)',
       'danger-lg': '0 4px 8px rgba(239, 68, 68, 0.25), 0 8px 16px rgba(239, 68, 68, 0.15)',
       // 成功色按钮阴影
-      'success': '0 2px 4px rgba(16, 185, 129, 0.2), 0 4px 8px rgba(16, 185, 129, 0.12)',
-      'success-lg': '0 4px 8px rgba(16, 185, 129, 0.25), 0 8px 16px rgba(16, 185, 129, 0.15)',
+      success: '0 2px 4px rgba(16, 185, 129, 0.2), 0 4px 8px rgba(16, 185, 129, 0.12)',
+      'success-lg': '0 4px 8px rgba(16, 185, 129, 0.25), 0 8px 16px rgba(16, 185, 129, 0.15)'
     },
 
     // ========== CSS 变量 - 亮色模式 ==========
@@ -248,7 +243,7 @@ export default defineConfig({
       '--danger': '#ef4444',
       '--warning': '#f59e0b',
       '--shadow-sm': '0 1px 2px rgba(0, 0, 0, 0.03)',
-      '--shadow-md': '0 4px 8px rgba(0, 0, 0, 0.04)',
+      '--shadow-md': '0 4px 8px rgba(0, 0, 0, 0.04)'
     },
 
     // ========== CSS 变量 - 暗色模式 ==========
@@ -274,47 +269,64 @@ export default defineConfig({
       '--danger': '#f87171',
       '--warning': '#fbbf24',
       '--shadow-sm': '0 1px 3px rgba(0, 0, 0, 0.3)',
-      '--shadow-md': '0 4px 12px rgba(0, 0, 0, 0.35)',
+      '--shadow-md': '0 4px 12px rgba(0, 0, 0, 0.35)'
     },
 
     // ========== 过渡动画 ==========
     transitionDuration: {
       fast: '150ms',
       normal: '250ms',
-      slow: '350ms',
+      slow: '350ms'
     },
 
     // ========== 字体系统 ==========
     fontFamily: {
-      sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-    },
+      sans: [
+        'Inter',
+        '-apple-system',
+        'BlinkMacSystemFont',
+        'Segoe UI',
+        'Roboto',
+        'Helvetica Neue',
+        'Arial',
+        'sans-serif'
+      ]
+    }
   },
 
   // ========== 快捷类定义 ==========
   shortcuts: {
     // ===== 按钮组件 =====
-    'btn': 'px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer inline-flex items-center justify-center gap-2 select-none shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
-    'btn-primary': 'btn bg-neutral-700 text-white hover:bg-neutral-800 active:bg-neutral-900 shadow-neutral hover:shadow-neutral-lg',
-    'btn-primary-outline': 'btn bg-transparent text-neutral-700 border border-neutral-700 hover:bg-neutral-100',
-    'btn-secondary': 'btn bg-bg-tertiary text-text-secondary border border-border hover:bg-bg-quaternary hover:border-border-medium',
+    btn: 'px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer inline-flex items-center justify-center gap-2 select-none shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
+    'btn-primary':
+      'btn bg-neutral-700 text-white hover:bg-neutral-800 active:bg-neutral-900 shadow-neutral hover:shadow-neutral-lg',
+    'btn-primary-outline':
+      'btn bg-transparent text-neutral-700 border border-neutral-700 hover:bg-neutral-100',
+    'btn-secondary':
+      'btn bg-bg-tertiary text-text-secondary border border-border hover:bg-bg-quaternary hover:border-border-medium',
     'btn-ghost': 'btn bg-transparent text-text-secondary hover:bg-bg-secondary',
-    'btn-danger': 'btn bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 shadow-danger hover:shadow-danger-lg',
-    'btn-danger-outline': 'btn bg-transparent text-danger-600 border border-danger-500 hover:bg-danger-50',
-    'btn-success': 'btn bg-success-500 text-white hover:bg-success-600 active:bg-success-700 shadow-success hover:shadow-success-lg',
-    'btn-accent': 'btn bg-accent-500 text-white hover:bg-accent-600 active:bg-accent-700 shadow-accent hover:shadow-accent-lg',
+    'btn-danger':
+      'btn bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 shadow-danger hover:shadow-danger-lg',
+    'btn-danger-outline':
+      'btn bg-transparent text-danger-600 border border-danger-500 hover:bg-danger-50',
+    'btn-success':
+      'btn bg-success-500 text-white hover:bg-success-600 active:bg-success-700 shadow-success hover:shadow-success-lg',
+    'btn-accent':
+      'btn bg-accent-500 text-white hover:bg-accent-600 active:bg-accent-700 shadow-accent hover:shadow-accent-lg',
     'btn-sm': 'px-3 py-1.5 text-sm rounded-md',
     'btn-lg': 'px-6 py-3 text-base rounded-xl',
     'btn-icon': 'w-9 h-9 p-0 rounded-lg',
 
     // ===== 卡片组件 =====
-    'card': 'bg-bg-primary rounded-xl border border-border',
+    card: 'bg-bg-primary rounded-xl border border-border',
     'card-hover': 'card hover:border-border-medium transition-all duration-200',
     'card-interactive': 'card-hover cursor-pointer',
     'card-elevated': 'bg-bg-primary rounded-xl border border-border',
     'card-filled': 'bg-bg-secondary rounded-xl border border-border-light',
 
     // ===== 输入框组件 =====
-    'input': 'w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 transition-all duration-200',
+    input:
+      'w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 transition-all duration-200',
     'input-error': 'input border-danger-500 focus:border-danger-500 focus:ring-danger-500/20',
     'input-success': 'input border-success-500 focus:border-success-500 focus:ring-success-500/20',
 
@@ -332,19 +344,24 @@ export default defineConfig({
     'text-accent': 'text-accent-600 font-medium',
 
     // ===== 滚动条 =====
-    'scrollbar-thin': 'scrollbar:w-2 scrollbar:h-2 scrollbar-track:bg-transparent scrollbar-thumb:bg-border-medium scrollbar-thumb:rounded',
+    'scrollbar-thin':
+      'scrollbar:w-2 scrollbar:h-2 scrollbar-track:bg-transparent scrollbar-thumb:bg-border-medium scrollbar-thumb:rounded',
 
     // ===== 游戏卡片 =====
-    'game-card': 'bg-bg-primary rounded-xl border border-border overflow-hidden cursor-pointer transition-all duration-250 hover:-translate-y-1 hover:border-border-medium',
-    'game-cover': 'w-full aspect-[4/3] bg-gradient-to-br from-bg-secondary to-bg-tertiary flex items-center justify-center',
+    'game-card':
+      'bg-bg-primary rounded-xl border border-border overflow-hidden cursor-pointer transition-all duration-250 hover:-translate-y-1 hover:border-border-medium',
+    'game-cover':
+      'w-full aspect-[4/3] bg-gradient-to-br from-bg-secondary to-bg-tertiary flex items-center justify-center',
 
     // ===== 侧边栏导航 =====
-    'nav-item': 'w-full h-10 flex items-center gap-3 px-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
+    'nav-item':
+      'w-full h-10 flex items-center gap-3 px-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
     'nav-item-active': 'nav-item bg-accent-50 text-accent-700',
-    'nav-item-inactive': 'nav-item text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
+    'nav-item-inactive':
+      'nav-item text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
 
     // ===== 标签组件 =====
-    'tag': 'inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full',
+    tag: 'inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full',
     'tag-neutral': 'tag bg-neutral-100 text-neutral-700',
     'tag-success': 'tag bg-success-100 text-success-700',
     'tag-warning': 'tag bg-warning-100 text-warning-700',
@@ -356,7 +373,7 @@ export default defineConfig({
     'tag-amber': 'tag bg-amber-100 text-amber-700',
 
     // ===== 分隔线 =====
-    'divider': 'h-px bg-border',
+    divider: 'h-px bg-border',
     'divider-vertical': 'w-px h-full bg-border',
 
     // ===== 空状态 =====
@@ -364,23 +381,27 @@ export default defineConfig({
     'empty-state-icon': 'w-20 h-20 flex-center bg-bg-secondary rounded-2xl mb-6',
 
     // ===== 工具栏 =====
-    'toolbar': 'flex items-center justify-between gap-4 mb-6',
+    toolbar: 'flex items-center justify-between gap-4 mb-6',
     'search-box': 'relative flex items-center flex-1 max-w-md',
-    'search-input': 'w-full h-10 pl-10 pr-4 bg-bg-primary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-500 transition-all duration-200',
+    'search-input':
+      'w-full h-10 pl-10 pr-4 bg-bg-primary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-500 transition-all duration-200',
 
     // ===== 图标按钮 =====
-    'icon-btn': 'w-9 h-9 flex-center bg-bg-primary border border-border rounded-lg text-text-tertiary hover:bg-bg-secondary hover:text-text-secondary hover:border-border-medium transition-all duration-200 cursor-pointer',
+    'icon-btn':
+      'w-9 h-9 flex-center bg-bg-primary border border-border rounded-lg text-text-tertiary hover:bg-bg-secondary hover:text-text-secondary hover:border-border-medium transition-all duration-200 cursor-pointer',
     'icon-btn-sm': 'w-8 h-8 rounded-md',
 
     // ===== 下拉菜单 =====
-    'dropdown-btn': 'h-10 flex items-center gap-2 px-3 bg-bg-primary border border-border rounded-lg text-sm text-text-secondary hover:bg-bg-secondary transition-all duration-200 cursor-pointer',
+    'dropdown-btn':
+      'h-10 flex items-center gap-2 px-3 bg-bg-primary border border-border rounded-lg text-sm text-text-secondary hover:bg-bg-secondary transition-all duration-200 cursor-pointer',
 
     // ===== 表单组件 =====
     'form-label': 'block text-sm font-medium text-text-secondary mb-1.5',
     'form-group': 'mb-4',
 
     // ===== 开关组件 =====
-    'toggle': 'relative w-11 h-6 bg-border-medium rounded-full cursor-pointer transition-colors duration-300',
+    toggle:
+      'relative w-11 h-6 bg-border-medium rounded-full cursor-pointer transition-colors duration-300',
     'toggle-active': 'toggle bg-accent-500',
 
     // ===== 统计卡片 =====
@@ -390,19 +411,19 @@ export default defineConfig({
     'stat-label': 'text-sm text-text-tertiary',
 
     // ===== 模块容器 =====
-    'module': 'bg-bg-primary rounded-xl border border-border p-6',
+    module: 'bg-bg-primary rounded-xl border border-border p-6',
     'module-filled': 'bg-bg-secondary rounded-xl border border-border-light p-6',
-    'module-elevated': 'bg-bg-primary rounded-xl border border-border p-6',
+    'module-elevated': 'bg-bg-primary rounded-xl border border-border p-6'
   },
   preflights: [
     {
       getCSS: ({ theme }: any) =>
-`:root {
+        `:root {
 ${toCSS(theme.themeLight || {})}
 }
 html.dark {
 ${toCSS(theme.themeDark || {})}
-}`,
-    },
-  ],
+}`
+    }
+  ]
 })

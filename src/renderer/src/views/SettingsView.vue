@@ -10,7 +10,6 @@ import SettingAbout from './settings/SettingAbout.vue'
 
 const {
   autoStart,
-  autoUpdate,
   language,
   vndbApiKey,
   bangumiToken,
@@ -75,6 +74,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   observer?.disconnect()
+  if (scrollTimer) clearTimeout(scrollTimer)
 })
 
 interface TestResult {
@@ -228,12 +228,10 @@ const scrollToSection = (id: string): void => {
       <SettingBasic
         :section-ref="setSectionRef('basic')"
         :auto-start="autoStart"
-        :auto-update="autoUpdate"
         :track-playtime="trackPlaytime"
         :record-history="recordHistory"
         :language="language"
         @update:auto-start="autoStart = $event"
-        @update:auto-update="autoUpdate = $event"
         @update:track-playtime="trackPlaytime = $event"
         @update:record-history="recordHistory = $event"
         @update:language="language = $event as 'zh-CN' | 'en-US'"

@@ -23,14 +23,19 @@ async function limitedPool<T>(tasks: (() => Promise<T>)[], limit: number): Promi
 async function getDirSize(dirPath: string): Promise<number> {
   try {
     const entries = await readdir(dirPath, { withFileTypes: true })
-    const sizes = await limitedPool(entries.map((entry) => async () => {
-      const fullPath = join(dirPath, entry.name)
-      try {
-        if (entry.isDirectory()) return await getDirSize(fullPath)
-        if (entry.isFile()) return (await stat(fullPath)).size
-      } catch { /* skip inaccessible */ }
-      return 0
-    }), IO_CONCURRENCY)
+    const sizes = await limitedPool(
+      entries.map((entry) => async () => {
+        const fullPath = join(dirPath, entry.name)
+        try {
+          if (entry.isDirectory()) return await getDirSize(fullPath)
+          if (entry.isFile()) return (await stat(fullPath)).size
+        } catch {
+          /* skip inaccessible file/dir */
+        }
+        return 0
+      }),
+      IO_CONCURRENCY
+    )
     return sizes.reduce((sum, s) => sum + s, 0)
   } catch {
     return 0
@@ -52,16 +57,19 @@ async function scanExeFiles(dirPath: string, depth = 0, maxDepth = 3): Promise<s
   if (depth > maxDepth) return []
   try {
     const entries = await readdir(dirPath, { withFileTypes: true })
-    const results = await limitedPool(entries.map((entry) => async () => {
-      const fullPath = join(dirPath, entry.name)
-      if (entry.isDirectory() && depth < maxDepth) {
-        return scanExeFiles(fullPath, depth + 1, maxDepth)
-      }
-      if (entry.isFile() && entry.name.toLowerCase().endsWith('.exe')) {
-        return [fullPath]
-      }
-      return []
-    }), IO_CONCURRENCY)
+    const results = await limitedPool(
+      entries.map((entry) => async () => {
+        const fullPath = join(dirPath, entry.name)
+        if (entry.isDirectory() && depth < maxDepth) {
+          return scanExeFiles(fullPath, depth + 1, maxDepth)
+        }
+        if (entry.isFile() && entry.name.toLowerCase().endsWith('.exe')) {
+          return [fullPath]
+        }
+        return []
+      }),
+      IO_CONCURRENCY
+    )
     return results.flat()
   } catch {
     return []
@@ -69,9 +77,16 @@ async function scanExeFiles(dirPath: string, depth = 0, maxDepth = 3): Promise<s
 }
 
 const EXACT_EXCLUDES = new Set([
-  'unins000.exe', 'unins001.exe', 'dxwebsetup.exe', 'oalinst.exe',
-  'winrar.exe', 'steam.exe', 'setup.exe', 'install.exe',
-  'crashhandler.exe', 'unitycrashhandler.exe'
+  'unins000.exe',
+  'unins001.exe',
+  'dxwebsetup.exe',
+  'oalinst.exe',
+  'winrar.exe',
+  'steam.exe',
+  'setup.exe',
+  'install.exe',
+  'crashhandler.exe',
+  'unitycrashhandler.exe'
 ])
 
 const PREFIX_EXCLUDES = ['uninst', 'vcredist', 'dotnet', 'directx']
@@ -82,7 +97,10 @@ function isSystemExe(name: string): boolean {
   return PREFIX_EXCLUDES.some((prefix) => lower.startsWith(prefix))
 }
 
-export async function scanDirectory(folderPath: string, options: ScanOptions = {}): Promise<ScanResult> {
+export async function scanDirectory(
+  folderPath: string,
+  options: ScanOptions = {}
+): Promise<ScanResult> {
   const { maxDepth = 3, skipSize = false } = options
   const folderName = basename(folderPath)
   const [rawExes, dirSize] = await Promise.all([
@@ -124,7 +142,10 @@ export async function pickFolderAndScan(options?: ScanOptions): Promise<ScanResu
   return scanDirectory(result.filePaths[0], options)
 }
 
-export async function scanBatchDirectory(parentPath: string, options?: ScanOptions): Promise<BatchScanResult> {
+export async function scanBatchDirectory(
+  parentPath: string,
+  options?: ScanOptions
+): Promise<BatchScanResult> {
   try {
     const entries = await readdir(parentPath, { withFileTypes: true })
     const dirs = entries.filter((e) => e.isDirectory())
@@ -146,7 +167,9 @@ export async function scanBatchDirectory(parentPath: string, options?: ScanOptio
   }
 }
 
-export async function pickBatchFolderAndScan(options?: ScanOptions): Promise<BatchScanResult | null> {
+export async function pickBatchFolderAndScan(
+  options?: ScanOptions
+): Promise<BatchScanResult | null> {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory'],
     title: '选择包含多个游戏的根文件夹'

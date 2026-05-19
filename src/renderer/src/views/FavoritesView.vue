@@ -67,6 +67,7 @@ const {
 let unmounted = false
 onUnmounted(() => {
   unmounted = true
+  if (favSyncTimer) clearTimeout(favSyncTimer)
 })
 const loadCollectionGames = async (): Promise<void> => {
   if (unmounted) return
@@ -139,35 +140,39 @@ const allGamesSelected = computed(
     gameSelectedIds.value.length > 0
 )
 
-// Default collection sync
+// Default collection sync (debounced)
+let favSyncTimer: ReturnType<typeof setTimeout> | null = null
 watch(
   () => effectiveGames.value.filter((g) => g.favorite).map((g) => g.id),
   async (favIds) => {
-    const def = defaultCollection.value
-    if (!def) return
-    const colId = def.id
-    const currentIds = new Set(collectionGames.value.get(colId)?.map((g) => g.id) || [])
-    for (const id of favIds) {
-      if (!currentIds.has(id)) {
-        try {
-          await window.api.addGameToCollection(id, colId)
-        } catch {
-          /* */
+    if (favSyncTimer) clearTimeout(favSyncTimer)
+    favSyncTimer = setTimeout(async () => {
+      const def = defaultCollection.value
+      if (!def) return
+      const colId = def.id
+      const currentIds = new Set(collectionGames.value.get(colId)?.map((g) => g.id) || [])
+      for (const id of favIds) {
+        if (!currentIds.has(id)) {
+          try {
+            await window.api.addGameToCollection(id, colId)
+          } catch {
+            /* */
+          }
         }
       }
-    }
-    for (const id of currentIds) {
-      if (!favIds.includes(id)) {
-        try {
-          await window.api.removeGameFromCollection(id, colId)
-        } catch {
-          /* */
+      for (const id of currentIds) {
+        if (!favIds.includes(id)) {
+          try {
+            await window.api.removeGameFromCollection(id, colId)
+          } catch {
+            /* */
+          }
         }
       }
-    }
-    const games = await window.api.getCollectionGames(colId)
-    collectionGames.value.set(colId, games)
-    def.gameIds = games.map((g) => g.id)
+      const games = await window.api.getCollectionGames(colId)
+      collectionGames.value.set(colId, games)
+      def.gameIds = games.map((g) => g.id)
+    }, 500)
   },
   { immediate: true }
 )
@@ -265,11 +270,33 @@ const handleBatchMoveGames = async (targetId: string): Promise<void> => {
   const colId = selectedCollectionId.value
   if (!colId) return
   const moveCount = gameSelectedIds.value.length
+
+  // Snapshot current collection memberships for rollback
+  const snapshot = new Map<string, string[]>()
+  for (const col of collections.value) {
+    const games = await window.api.getCollectionGames(col.id)
+    snapshot.set(
+      col.id,
+      games.map((g) => g.id)
+    )
+  }
+
   for (const gameId of gameSelectedIds.value) {
-    for (const col of collections.value) {
-      await window.api.removeGameFromCollection(gameId, col.id).catch(() => {})
+    try {
+      for (const col of collections.value) {
+        await window.api.removeGameFromCollection(gameId, col.id)
+      }
+      await window.api.addGameToCollection(gameId, targetId)
+    } catch {
+      // Rollback: restore game to its original collections
+      for (const [colId, gameIds] of snapshot) {
+        if (gameIds.includes(gameId)) {
+          await window.api.addGameToCollection(gameId, colId).catch(() => {})
+        }
+      }
+      showToastMsg('移动失败，已回滚', 'error')
+      return
     }
-    await window.api.addGameToCollection(gameId, targetId)
   }
   const games = await window.api.getCollectionGames(colId)
   collectionGames.value.set(colId, games)

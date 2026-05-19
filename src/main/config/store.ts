@@ -66,4 +66,3 @@ export const setAllConfig = (config: Partial<AppConfig>): void => {
     }
   }
 }
-

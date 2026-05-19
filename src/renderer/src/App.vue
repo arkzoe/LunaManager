@@ -32,6 +32,7 @@ const userDismissedUpdate = ref(false)
 
 function handleUpdateClose(): void {
   userDismissedUpdate.value = true
+  window.api.cancelDownload()
   updateDialog.value = {
     show: false,
     type: 'checking',
@@ -63,7 +64,14 @@ function handleDownload(): void {
     type: 'downloading',
     progress: 0
   }
-  window.api.downloadUpdate()
+  window.api.downloadUpdate().catch((err: unknown) => {
+    updateDialog.value = {
+      ...updateDialog.value,
+      show: true,
+      type: 'error',
+      errorMessage: (err instanceof Error ? err.message : String(err)) || '下载失败'
+    }
+  })
 }
 
 function handleInstall(): void {
@@ -71,42 +79,15 @@ function handleInstall(): void {
 }
 
 // --- Persistent update listeners ---
-let cleanupAutoUpdate: (() => void) | null = null
 let cleanupUpdateStatus: (() => void) | null = null
 
 onMounted(() => {
   themeStore.initTheme()
   themeStore.startWatchingSystemTheme()
 
-  // Check for pending auto-update (missed because view was not mounted)
-  window.api.getPendingAutoUpdate().then((info) => {
-    if (info) {
-      updateDialog.value = {
-        show: true,
-        type: 'available',
-        version: info.version || '',
-        releaseNotes: info.releaseNotes || '',
-        errorMessage: '',
-        progress: 0
-      }
-    }
-  })
-
-  // Listen for auto-update available (real-time)
-  cleanupAutoUpdate = window.api.onAutoUpdateAvailable((data) => {
-    if (userDismissedUpdate.value) return
-    updateDialog.value = {
-      show: true,
-      type: 'available',
-      version: data.version || '',
-      releaseNotes: data.releaseNotes || '',
-      errorMessage: '',
-      progress: 0
-    }
-  })
-
   // Listen for update status events (downloading, downloaded, etc.)
   cleanupUpdateStatus = window.api.onUpdateStatus((status, data) => {
+    if (userDismissedUpdate.value) return
     if (status === 'downloading') {
       const progressData = data as { percent: number } | undefined
       updateDialog.value = {
@@ -128,7 +109,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   themeStore.stopWatchingSystemTheme()
-  cleanupAutoUpdate?.()
   cleanupUpdateStatus?.()
 })
 </script>

@@ -8,7 +8,6 @@ const api: IElectronAPI = {
   updateGame: (id, updates) => ipcRenderer.invoke('db:updateGame', id, updates),
   deleteGame: (id) => ipcRenderer.invoke('db:deleteGame', id),
   searchGames: (query) => ipcRenderer.invoke('db:searchGames', query),
-  getGamesByStatus: (status) => ipcRenderer.invoke('db:getGamesByStatus', status),
 
   getConfig: (key) => ipcRenderer.invoke('config:get', key),
   setConfig: (key, value) => ipcRenderer.invoke('config:set', key, value),
@@ -20,9 +19,7 @@ const api: IElectronAPI = {
   getGamePlaytime: (gameId) => ipcRenderer.invoke('play:getTotalPlaytime', gameId),
   getSessionsByGame: (gameId) => ipcRenderer.invoke('play:getSessionsByGame', gameId),
   getAllSessions: () => ipcRenderer.invoke('play:getAllSessions'),
-  getRecentSessions: (limit) => ipcRenderer.invoke('play:getRecentSessions', limit),
   getAggregatedStats: (gameId) => ipcRenderer.invoke('play:getAggregatedStats', gameId),
-  getTotalSessionCount: () => ipcRenderer.invoke('play:getTotalSessionCount'),
   getAllAggregatedStats: () => ipcRenderer.invoke('play:getAllAggregatedStats'),
   launchGame: (gameId, mode) => ipcRenderer.invoke('launch:game', gameId, mode),
   stopGame: (gameId) => ipcRenderer.invoke('launch:stop', gameId),
@@ -35,19 +32,14 @@ const api: IElectronAPI = {
   addGameToCollection: (gameId, colId) => ipcRenderer.invoke('col:addGame', gameId, colId),
   removeGameFromCollection: (gameId, colId) => ipcRenderer.invoke('col:removeGame', gameId, colId),
   getCollectionGames: (colId) => ipcRenderer.invoke('col:getCollectionGames', colId),
-  reorderCollections: (ids) => ipcRenderer.invoke('col:reorder', ids),
   getAllCollectionGamesMap: () => ipcRenderer.invoke('col:getAllCollectionGamesMap'),
 
   getSnapshots: (gameId) => ipcRenderer.invoke('snap:getByGame', gameId),
-  createSnapshot: (gameId, notes) => ipcRenderer.invoke('snap:create', gameId, notes),
   deleteSnapshot: (id) => ipcRenderer.invoke('snap:delete', id),
-  restoreSnapshot: (id) => ipcRenderer.invoke('snap:restore', id),
   backupSnapshot: (gameId) => ipcRenderer.invoke('snap:backup', gameId),
   restoreSnapshotInPlace: (snapshotId) => ipcRenderer.invoke('snap:restoreInPlace', snapshotId),
   getBackupDir: (gameId) => ipcRenderer.invoke('snap:getBackupDir', gameId),
   autoMatchSaveDir: (executablePath) => ipcRenderer.invoke('snap:autoMatchSaveDir', executablePath),
-
-  getGameByExecutablePath: (path) => ipcRenderer.invoke('db:getGameByExecutablePath', path),
 
   pickImportFolder: (options?) => ipcRenderer.invoke('import:pickFolder', options),
   pickBatchImportFolder: (options?) => ipcRenderer.invoke('import:pickBatchFolder', options),
@@ -66,19 +58,14 @@ const api: IElectronAPI = {
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
   checkForUpdates: () => ipcRenderer.invoke('update:check'),
   downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  cancelDownload: () => ipcRenderer.invoke('update:cancelDownload'),
   quitAndInstall: () => ipcRenderer.invoke('update:install'),
   onUpdateStatus: (callback) => {
     const handler = (_e, status, data) => callback(status, data)
     ipcRenderer.on('update:status', handler)
     return () => ipcRenderer.removeListener('update:status', handler)
   },
-  getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
-  onAutoUpdateAvailable: (callback) => {
-    const handler = (_e, data) => callback(data)
-    ipcRenderer.on('update:auto-available', handler)
-    return () => ipcRenderer.removeListener('update:auto-available', handler)
-  },
-  getPendingAutoUpdate: () => ipcRenderer.invoke('update:getPendingAutoUpdate')
+  getAppVersion: () => ipcRenderer.invoke('app:getVersion')
 }
 
 if (process.contextIsolated) {

@@ -1,9 +1,6 @@
 import { ref, watch, onUnmounted, computed, isRef, type Ref } from 'vue'
 
-export function useCountUp(
-  target: number | Ref<number> | (() => number),
-  duration = 600
-) {
+export function useCountUp(target: number | Ref<number> | (() => number), duration = 600) {
   const display = ref(0)
   let animId: number | null = null
   let startTime = 0

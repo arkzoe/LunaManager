@@ -13,5 +13,3 @@ export const LAUNCH_MODES = [
   { value: 'le', label: 'LE 转区启动' },
   { value: 'magpie', label: 'Magpie 超分启动' }
 ] as const
-
-

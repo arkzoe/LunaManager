@@ -31,19 +31,22 @@ export const useThemeStore = defineStore('theme', () => {
       currentTheme.value = saved
       applyTheme(currentTheme.value)
     } else {
-      window.api.getConfig('theme').then((t) => {
-        if (t === 'light' || t === 'dark') {
-          currentTheme.value = t
-        } else {
+      window.api
+        .getConfig('theme')
+        .then((t) => {
+          if (t === 'light' || t === 'dark') {
+            currentTheme.value = t
+          } else {
+            currentTheme.value = getSystemTheme()
+          }
+          applyTheme(currentTheme.value)
+          localStorage.setItem('lunamanager-theme', currentTheme.value)
+        })
+        .catch(() => {
           currentTheme.value = getSystemTheme()
-        }
-        applyTheme(currentTheme.value)
-        localStorage.setItem('lunamanager-theme', currentTheme.value)
-      }).catch(() => {
-        currentTheme.value = getSystemTheme()
-        applyTheme(currentTheme.value)
-        localStorage.setItem('lunamanager-theme', getSystemTheme())
-      })
+          applyTheme(currentTheme.value)
+          localStorage.setItem('lunamanager-theme', getSystemTheme())
+        })
     }
   }
 
@@ -76,7 +79,9 @@ export const useThemeStore = defineStore('theme', () => {
     localStorage.setItem('lunamanager-theme', theme)
     try {
       await window.api.setConfig('theme', theme)
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   const toggleTheme = (): void => {
@@ -84,8 +89,13 @@ export const useThemeStore = defineStore('theme', () => {
   }
 
   return {
-    currentTheme, isDark, isLight,
-    initTheme, setTheme, toggleTheme,
-    startWatchingSystemTheme, stopWatchingSystemTheme
+    currentTheme,
+    isDark,
+    isLight,
+    initTheme,
+    setTheme,
+    toggleTheme,
+    startWatchingSystemTheme,
+    stopWatchingSystemTheme
   }
 })

@@ -12,10 +12,7 @@ export interface DetailTarget {
   rating?: number
 }
 
-export function fillGameFromDetail(
-  detail: Partial<GameRecord>,
-  target: DetailTarget
-): void {
+export function fillGameFromDetail(detail: Partial<GameRecord>, target: DetailTarget): void {
   if (detail.title) target.title = detail.title_cn || detail.title || target.title
   if (detail.title_cn) target.titleCn = detail.title_cn
   if (detail.developer) target.developer = detail.developer

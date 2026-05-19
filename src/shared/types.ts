@@ -44,11 +44,6 @@ export interface Collection {
   updated_at: number
 }
 
-export interface GameCollection {
-  game_id: string
-  collection_id: string
-}
-
 export interface ScanOptions {
   maxDepth?: number
   skipSize?: boolean
@@ -167,7 +162,6 @@ export interface IElectronAPI {
   updateGame: (id: string, updates: Partial<GameRecord>) => Promise<void>
   deleteGame: (id: string) => Promise<void>
   searchGames: (query: string) => Promise<GameRecord[]>
-  getGamesByStatus: (status: GameStatus) => Promise<GameRecord[]>
 
   getConfig: <K extends keyof AppConfig>(key: K) => Promise<AppConfig[K]>
   setConfig: <K extends keyof AppConfig>(key: K, value: AppConfig[K]) => Promise<void>
@@ -179,7 +173,6 @@ export interface IElectronAPI {
   getGamePlaytime: (gameId: string) => Promise<number>
   getSessionsByGame: (gameId: string) => Promise<PlaySession[]>
   getAllSessions: () => Promise<PlaySession[]>
-  getRecentSessions: (limit?: number) => Promise<PlaySession[]>
   getAggregatedStats: (
     gameId: string
   ) => Promise<{ total_sessions: number; total_duration: number; last_played: number | null }>
@@ -191,7 +184,6 @@ export interface IElectronAPI {
       last_played: number | null
     }[]
   >
-  getTotalSessionCount: () => Promise<number>
   launchGame: (gameId: string, mode: LaunchMode) => Promise<void>
   stopGame: (gameId: string) => Promise<void>
   isGameRunning: (gameId: string) => Promise<boolean>
@@ -203,19 +195,14 @@ export interface IElectronAPI {
   addGameToCollection: (gameId: string, collectionId: string) => Promise<void>
   removeGameFromCollection: (gameId: string, collectionId: string) => Promise<void>
   getCollectionGames: (collectionId: string) => Promise<GameRecord[]>
-  reorderCollections: (ids: string[]) => Promise<void>
   getAllCollectionGamesMap: () => Promise<Record<string, string[]>>
 
   getSnapshots: (gameId: string) => Promise<SaveSnapshot[]>
-  createSnapshot: (gameId: string, notes?: string) => Promise<SaveSnapshot>
   deleteSnapshot: (id: string) => Promise<void>
-  restoreSnapshot: (id: string) => Promise<void>
   backupSnapshot: (gameId: string) => Promise<string>
   restoreSnapshotInPlace: (snapshotId: string) => Promise<void>
   getBackupDir: (gameId: string) => Promise<string>
   autoMatchSaveDir: (executablePath: string) => Promise<string | null>
-
-  getGameByExecutablePath: (path: string) => Promise<GameRecord | null>
 
   pickImportFolder: (options?: ScanOptions) => Promise<ScanResult | null>
   pickBatchImportFolder: (options?: ScanOptions) => Promise<BatchScanResult | null>
@@ -242,11 +229,15 @@ export interface IElectronAPI {
   ) => Promise<Partial<GameRecord>>
   downloadCover: (gameId: string, url: string) => Promise<string | null>
   openExternal: (url: string) => Promise<void>
-  checkForUpdates: () => Promise<{ updateAvailable: boolean; version?: string; releaseNotes?: string; error?: string }>
+  checkForUpdates: () => Promise<{
+    updateAvailable: boolean
+    version?: string
+    releaseNotes?: string
+    error?: string
+  }>
   downloadUpdate: () => Promise<void>
+  cancelDownload: () => Promise<void>
   quitAndInstall: () => Promise<void>
   onUpdateStatus: (callback: (status: string, data?: unknown) => void) => () => void
   getAppVersion: () => Promise<string>
-  onAutoUpdateAvailable: (callback: (data: { version?: string; releaseNotes?: string }) => void) => () => void
-  getPendingAutoUpdate: () => Promise<{ version: string; releaseNotes?: string } | null>
 }

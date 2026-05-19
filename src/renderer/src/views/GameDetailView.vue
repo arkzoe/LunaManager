@@ -107,18 +107,23 @@ const handleStop = async (): Promise<void> => {
   }
 }
 
+let ratingTimer: ReturnType<typeof setTimeout> | null = null
+
 const handleRatingChange = async (val: number): Promise<void> => {
   tempRating.value = val
-  try {
-    await window.api.updateGame(props.game.id, { personal_rating: val })
-    const idx = store.games.findIndex((g) => g.id === props.game.id)
-    if (idx !== -1) {
-      store.games[idx] = { ...store.games[idx], personal_rating: val }
+  if (ratingTimer) clearTimeout(ratingTimer)
+  ratingTimer = setTimeout(async () => {
+    try {
+      await window.api.updateGame(props.game.id, { personal_rating: val })
+      const idx = store.games.findIndex((g) => g.id === props.game.id)
+      if (idx !== -1) {
+        store.games[idx] = { ...store.games[idx], personal_rating: val }
+      }
+      emit('updated', { ...props.game, personal_rating: val })
+    } catch {
+      /* ignore */
     }
-    emit('updated', { ...props.game, personal_rating: val })
-  } catch {
-    /* ignore */
-  }
+  }, 500)
 }
 
 const handleSave = async (extraUpdates?: Partial<GameRecord>): Promise<void> => {
@@ -223,6 +228,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 onUnmounted(() => {
   unmounted = true
   if (pollTimer) clearInterval(pollTimer)
+  if (ratingTimer) clearTimeout(ratingTimer)
 })
 
 onMounted(async () => {

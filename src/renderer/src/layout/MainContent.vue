@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import type { GameRecord } from '../../../shared/types'
 import HomeView from '../views/HomeView.vue'
 
@@ -8,15 +8,6 @@ const FavoritesView = defineAsyncComponent(() => import('../views/FavoritesView.
 const StatsView = defineAsyncComponent(() => import('../views/StatsView.vue'))
 const SettingsView = defineAsyncComponent(() => import('../views/SettingsView.vue'))
 const GameDetailView = defineAsyncComponent(() => import('../views/GameDetailView.vue'))
-
-// 挂载后立即预加载所有视图 chunk，确保导航即点即开
-onMounted(() => {
-  import('../views/LibraryView.vue')
-  import('../views/FavoritesView.vue')
-  import('../views/StatsView.vue')
-  import('../views/SettingsView.vue')
-  import('../views/GameDetailView.vue')
-})
 
 const props = defineProps<{ activeTab: string }>()
 const emit = defineEmits<{ (e: 'update:activeTab', tab: string): void }>()

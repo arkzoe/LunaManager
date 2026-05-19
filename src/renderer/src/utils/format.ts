@@ -5,23 +5,13 @@ export const formatPlaytime = (seconds: number): string => {
   return `${hours.toFixed(1)}小时`
 }
 
-export const formatPlaytimeShort = (seconds: number): string => {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  return `${(seconds / 3600).toFixed(1)}h`
-}
-
 export const formatDate = (ts: number): string => {
   const d = new Date(ts)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export const formatDateTime = (ts: number): string => {
-  const d = new Date(ts)
-  return `${formatDate(ts)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
-
-const toTime = (v: string | number | null): number => (typeof v === 'string' ? new Date(v).getTime() : v ?? NaN)
+const toTime = (v: string | number | null): number =>
+  typeof v === 'string' ? new Date(v).getTime() : (v ?? NaN)
 
 export const formatRelativeTime = (v: string | number | null): string => {
   const ts = toTime(v)

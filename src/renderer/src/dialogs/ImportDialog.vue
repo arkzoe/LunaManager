@@ -213,8 +213,7 @@ const handleConfirm = async (): Promise<void> => {
   isLoading.value = true
   error.value = ''
   try {
-    const now = Date.now()
-    const gameId = `id-${now}-${Math.random().toString(36).slice(2, 6)}`
+    const gameId = `id-${crypto.randomUUID()}`
     let cover = ''
     if (coverUrl.value) {
       if (coverUrl.value.startsWith('cover://')) {

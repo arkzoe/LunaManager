@@ -53,7 +53,9 @@ export function useCollections() {
       const dbCol = await window.api.createCollection(name.trim())
       const ui = mapDBCollection(dbCol)
       collections.value.push(ui)
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   const renameCollection = async (id: string, name: string): Promise<void> => {
@@ -62,14 +64,18 @@ export function useCollections() {
       await window.api.renameCollection(id, name.trim())
       const col = collections.value.find((c) => c.id === id)
       if (col) col.name = name.trim()
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   const deleteCollection = async (id: string): Promise<void> => {
     try {
       await window.api.deleteCollection(id)
       collections.value = collections.value.filter((c) => c.id !== id)
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   return {

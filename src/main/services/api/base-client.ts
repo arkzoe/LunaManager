@@ -14,7 +14,7 @@ export function apiError(code: ApiError['code'], message: string): Error {
   return err
 }
 
-export function normalizeError(err: unknown): ApiError {
+function normalizeError(err: unknown): ApiError {
   if (err && typeof err === 'object' && 'code' in err) {
     const e = err as { code: string; message?: string }
     return { code: e.code as ApiError['code'], message: e.message || '未知错误' }
@@ -36,7 +36,12 @@ export function normalizeError(err: unknown): ApiError {
     if (msg.includes('500') || msg.includes('502') || msg.includes('503')) {
       return { code: 'SERVER_ERROR', message: '服务器错误，请稍后重试' }
     }
-    if (msg.includes('fetch') || msg.includes('network') || msg.includes('ENOTFOUND') || msg.includes('ECONNREFUSED')) {
+    if (
+      msg.includes('fetch') ||
+      msg.includes('network') ||
+      msg.includes('ENOTFOUND') ||
+      msg.includes('ECONNREFUSED')
+    ) {
       return { code: 'NETWORK', message: '网络连接失败，请检查网络' }
     }
     return { code: 'NETWORK', message: msg }
@@ -89,12 +94,9 @@ export async function safeFetchWithRetry<T>(
       return await safeFetch(fn)
     } catch (err: unknown) {
       lastErr = err
-      const code =
-        err && typeof err === 'object' && 'code' in err
-          ? (err as any).code
-          : ''
+      const code = err && typeof err === 'object' && 'code' in err ? (err as any).code : ''
       if (RETRYABLE_CODES.has(code) && i < maxRetries - 1) {
-        await new Promise(r => setTimeout(r, delayMs))
+        await new Promise((r) => setTimeout(r, delayMs))
         continue
       }
       throw err

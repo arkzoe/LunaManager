@@ -6,7 +6,7 @@ const RE_LANG_TAG = /[[(][A-Za-z]{2,8}[)\]]/g
 const RE_SPECIAL_CHARS = /[_ ]+/g
 const RE_WHITESPACE = /\s+/g
 
-export function cleanQuery(query: string): string {
+function cleanQuery(query: string): string {
   return query
     .replace(RE_VERSION_TAG, '')
     .replace(RE_LANG_TAG, '')

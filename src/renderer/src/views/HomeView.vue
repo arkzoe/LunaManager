@@ -63,19 +63,27 @@ const sortedByAdded = computed(() =>
   [...store.allGames].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
 )
 
-const homeData = computed(() => ({
-  recentGames: sortedByPlayed.value.slice(0, 10),
-  recentAdded: sortedByAdded.value.slice(0, 10),
-  playedActs: sortedByPlayed.value.slice(0, 5).map((g) => ({
+const recentGames = computed(() => sortedByPlayed.value.slice(0, 10))
+const recentAdded = computed(() => sortedByAdded.value.slice(0, 10))
+const playedActs = computed(() =>
+  sortedByPlayed.value.slice(0, 5).map((g) => ({
     type: 'played' as const,
     game: g,
     time: formatRelativeTime(g.last_played || '')
-  })),
-  addedActs: sortedByAdded.value.slice(0, 5).map((g) => ({
+  }))
+)
+const addedActs = computed(() =>
+  sortedByAdded.value.slice(0, 5).map((g) => ({
     type: 'added' as const,
     game: g,
     time: formatRelativeTime(g.created_at)
   }))
+)
+const homeData = computed(() => ({
+  recentGames: recentGames.value,
+  recentAdded: recentAdded.value,
+  playedActs: playedActs.value,
+  addedActs: addedActs.value
 }))
 </script>
 

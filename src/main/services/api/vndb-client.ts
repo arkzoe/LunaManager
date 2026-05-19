@@ -5,7 +5,9 @@ const VNDB_API = 'https://api.vndb.org/kana'
 
 const TITLE_FIELDS = 'titles.title, titles.latin, titles.lang, titles.official'
 
-function pickChineseTitle(titles: Array<{ lang: string; title: string; official?: boolean }>): string {
+function pickChineseTitle(
+  titles: Array<{ lang: string; title: string; official?: boolean }>
+): string {
   if (!titles?.length) return ''
   const pref = ['zh-Hans', 'zh', 'zh-Hant']
   for (const lang of pref) {
@@ -93,11 +95,12 @@ export class VndbApiClient {
     const vn = data.results?.[0]
     if (!vn) throw apiError('NOT_FOUND', `未找到 VNDB 条目: ${vndbId}`)
 
-    const tags = (vn.tags || [])
-      ?.filter((t: any) => t.rating >= 2 && !t.lie)
-      .sort((a: any, b: any) => b.rating - a.rating)
-      .slice(0, 10)
-      .map((t: any) => t.name) ?? []
+    const tags =
+      (vn.tags || [])
+        ?.filter((t: any) => t.rating >= 2 && !t.lie)
+        .sort((a: any, b: any) => b.rating - a.rating)
+        .slice(0, 10)
+        .map((t: any) => t.name) ?? []
 
     return {
       title: vn.title || '',

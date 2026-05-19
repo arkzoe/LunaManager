@@ -113,7 +113,7 @@ const parsedReleaseNotes = computed(() => {
             </template>
 
             <template v-else-if="type === 'downloading'">
-              <button class="btn-ghost" @click="emit('close')">后台下载</button>
+              <button class="btn-ghost" @click="emit('close')">取消下载</button>
             </template>
 
             <template v-else-if="type === 'downloaded'">

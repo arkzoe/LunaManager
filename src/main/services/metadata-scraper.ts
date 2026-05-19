@@ -16,9 +16,10 @@ export async function testApiConnection(
   token?: string
 ): Promise<{ ok: boolean; message: string }> {
   try {
-    const ok = source === 'vndb'
-      ? await getVndbClient(token).testConnection()
-      : await getBangumiClient(token).testConnection()
+    const ok =
+      source === 'vndb'
+        ? await getVndbClient(token).testConnection()
+        : await getBangumiClient(token).testConnection()
     if (ok) {
       const label = source === 'vndb' ? 'VNDB' : 'Bangumi'
       return { ok: true, message: `${label} 连接成功` }
@@ -48,9 +49,10 @@ export async function fetchMetadataDetail(
   source: 'vndb' | 'bangumi',
   apiKey?: string
 ): Promise<Partial<GameRecord>> {
-  const detail = source === 'vndb'
-    ? await getVndbClient(apiKey).getVNDetail(sourceId)
-    : await getBangumiClient(apiKey).getSubjectDetail(sourceId)
+  const detail =
+    source === 'vndb'
+      ? await getVndbClient(apiKey).getVNDetail(sourceId)
+      : await getBangumiClient(apiKey).getSubjectDetail(sourceId)
 
   return detail
 }

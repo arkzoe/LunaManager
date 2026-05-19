@@ -68,7 +68,9 @@ const emit = defineEmits<{
         <span class="status-tag" :class="game.status">{{ statusLabels[game.status] }}</span>
       </span>
       <span class="lr-rating">{{ game.personal_rating ? game.personal_rating + '/10' : '-' }}</span>
-      <span class="lr-playtime">{{ game.playtime_seconds ? formatPlaytime(game.playtime_seconds) : '-' }}</span>
+      <span class="lr-playtime">{{
+        game.playtime_seconds ? formatPlaytime(game.playtime_seconds) : '-'
+      }}</span>
       <span class="lr-last">{{ formatRelativeTime(game.last_played) || '-' }}</span>
     </div>
   </div>

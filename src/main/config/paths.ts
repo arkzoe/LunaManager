@@ -2,9 +2,7 @@ import { app } from 'electron'
 import { join } from 'path'
 
 export function getDataDir(): string {
-  const basePath = app.isPackaged
-    ? join(app.getAppPath(), '..', '..')
-    : process.cwd()
+  const basePath = app.isPackaged ? join(app.getAppPath(), '..', '..') : process.cwd()
   return join(basePath, 'data')
 }
 

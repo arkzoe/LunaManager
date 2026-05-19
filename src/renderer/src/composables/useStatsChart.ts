@@ -64,17 +64,19 @@ export function useStatsChart(
 
     return {
       labels,
-      datasets: [{
-        label: '游玩时长 (小时)',
-        data: values,
-        borderColor: ac,
-        backgroundColor: hexToRgba(ac, 0.08),
-        fill: true,
-        tension: 0.3,
-        pointRadius: 4,
-        pointHitRadius: 20,
-        pointBackgroundColor: ac
-      }]
+      datasets: [
+        {
+          label: '游玩时长 (小时)',
+          data: values,
+          borderColor: ac,
+          backgroundColor: hexToRgba(ac, 0.08),
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointHitRadius: 20,
+          pointBackgroundColor: ac
+        }
+      ]
     }
   })
 
