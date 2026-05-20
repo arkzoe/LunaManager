@@ -52,16 +52,12 @@ export const initDatabase = (): Database.Database => {
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       cover TEXT DEFAULT '',
-      rating REAL DEFAULT 0,
       size TEXT DEFAULT '',
-      installed INTEGER DEFAULT 0,
       favorite INTEGER DEFAULT 0,
       last_played TEXT,
       description TEXT,
       developer TEXT,
-      publisher TEXT,
       release_date TEXT,
-      playtime TEXT,
       executable_path TEXT,
       save_path TEXT,
       created_at INTEGER NOT NULL,
@@ -151,6 +147,13 @@ export const initDatabase = (): Database.Database => {
   migrateCollectionsTable()
   if (!columnExists('games', 'playtime_seconds')) {
     db!.exec('ALTER TABLE games ADD COLUMN playtime_seconds INTEGER DEFAULT 0')
+  }
+
+  const dropCols = ['rating', 'installed', 'publisher', 'playtime']
+  for (const col of dropCols) {
+    if (columnExists('games', col)) {
+      db!.exec(`ALTER TABLE games DROP COLUMN ${col}`)
+    }
   }
 
   console.log('Database initialized at:', dbPath)

@@ -62,7 +62,6 @@ export function useBatchMatch(
     if (result.source === 'vndb') row.vndbId = result.id
     if (result.source === 'bangumi') row.bangumiId = result.id
     if (result.cover) row.cover = result.cover
-    if (result.rating) row.rating = result.rating
     if (result.date) row.releaseDate = result.date
     searchSource.value = result.source
 
@@ -127,7 +126,6 @@ export function useBatchMatch(
             if (best.source === 'vndb') row.vndbId = best.id
             if (best.source === 'bangumi') row.bangumiId = best.id
             if (best.cover) row.cover = best.cover
-            if (best.rating) row.rating = best.rating
             if (best.date) row.releaseDate = best.date
 
             if (best.id) {

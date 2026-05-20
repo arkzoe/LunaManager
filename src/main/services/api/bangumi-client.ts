@@ -98,10 +98,8 @@ export class BangumiApiClient {
       title_cn: data.name_cn || '',
       description: data.summary || '',
       cover: data.images?.large || data.images?.common || '',
-      rating: data.rating?.score || 0,
       release_date: data.date || '',
       developer,
-      publisher: '',
       custom_tags: JSON.stringify(tags),
       bangumi_id: String(data.id)
     }

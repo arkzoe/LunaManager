@@ -107,10 +107,8 @@ export class VndbApiClient {
       title_cn: pickChineseTitle(vn.titles),
       description: vn.description || '',
       cover: vn.image?.url || '',
-      rating: vn.rating ? vn.rating / 10 : 0,
       release_date: vn.released || '',
       developer: vn.developers?.[0]?.name || '',
-      publisher: '',
       custom_tags: JSON.stringify(tags),
       vndb_id: vn.id || ''
     }

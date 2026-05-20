@@ -3,18 +3,14 @@ export interface GameRecord {
   title: string
   title_cn: string
   cover: string
-  rating: number
   size: string
-  installed: number
   favorite: number
   status: GameStatus
   personal_rating: number
   last_played: string | null
   description: string
   developer: string
-  publisher: string
   release_date: string
-  playtime: string
   playtime_seconds: number
   executable_path: string
   save_path: string
@@ -71,9 +67,7 @@ export interface ImportRowState extends ScanResult {
   vndbId: string
   bangumiId: string
   cover: string
-  rating: number
   developer: string
-  publisher: string
   releaseDate: string
   description: string
   customTags: string
