@@ -141,7 +141,8 @@ export interface AppConfig {
   recordHistory: boolean
   dbPath: string
   magpiePath: string
-  magpieScale: string
+  magpieHotkey: 'fullscreen' | 'windowed'
+  autoLaunchMagpie: boolean
   bangumiToken: string
   vndbApiKey: string
   backupDir: string

@@ -6,7 +6,8 @@ type SettingKey =
   | 'vndbApiKey'
   | 'bangumiToken'
   | 'magpiePath'
-  | 'magpieScale'
+  | 'magpieHotkey'
+  | 'autoLaunchMagpie'
   | 'backupDir'
   | 'trackPlaytime'
   | 'recordHistory'
@@ -19,7 +20,8 @@ export function useSettings() {
   const vndbApiKey = ref('')
   const bangumiToken = ref('')
   const magpiePath = ref('')
-  const magpieScale = ref('2.0')
+  const magpieHotkey = ref<'fullscreen' | 'windowed'>('fullscreen')
+  const autoLaunchMagpie = ref(true)
   const backupDir = ref('')
   const trackPlaytime = ref(true)
   const recordHistory = ref(true)
@@ -34,7 +36,8 @@ export function useSettings() {
       vndbApiKey.value = cfg.vndbApiKey ?? ''
       bangumiToken.value = cfg.bangumiToken ?? ''
       magpiePath.value = cfg.magpiePath ?? ''
-      magpieScale.value = cfg.magpieScale ?? '2.0'
+      magpieHotkey.value = cfg.magpieHotkey ?? 'fullscreen'
+      autoLaunchMagpie.value = cfg.autoLaunchMagpie ?? true
       backupDir.value = cfg.backupDir ?? ''
       trackPlaytime.value = cfg.trackPlaytime ?? true
       recordHistory.value = cfg.recordHistory ?? true
@@ -54,7 +57,8 @@ export function useSettings() {
       vndbApiKey,
       bangumiToken,
       magpiePath,
-      magpieScale,
+      magpieHotkey,
+      autoLaunchMagpie,
       backupDir,
       trackPlaytime,
       recordHistory,
@@ -67,7 +71,8 @@ export function useSettings() {
       'vndbApiKey',
       'bangumiToken',
       'magpiePath',
-      'magpieScale',
+      'magpieHotkey',
+      'autoLaunchMagpie',
       'backupDir',
       'trackPlaytime',
       'recordHistory',
@@ -111,7 +116,8 @@ export function useSettings() {
     vndbApiKey,
     bangumiToken,
     magpiePath,
-    magpieScale,
+    magpieHotkey,
+    autoLaunchMagpie,
     backupDir,
     trackPlaytime,
     recordHistory,

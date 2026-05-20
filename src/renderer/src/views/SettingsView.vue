@@ -14,7 +14,8 @@ const {
   vndbApiKey,
   bangumiToken,
   magpiePath,
-  magpieScale,
+  magpieHotkey,
+  autoLaunchMagpie,
   backupDir,
   trackPlaytime,
   recordHistory,
@@ -255,9 +256,10 @@ const scrollToSection = (id: string): void => {
       <SettingLauncher
         :section-ref="setSectionRef('launcher')"
         :magpie-path="magpiePath"
-        :magpie-scale="magpieScale"
-        @update:magpie-path="magpiePath = $event"
-        @update:magpie-scale="magpieScale = $event"
+        :magpie-hotkey="magpieHotkey"
+        :auto-launch-magpie="autoLaunchMagpie"
+        @update:magpie-hotkey="magpieHotkey = $event as 'fullscreen' | 'windowed'"
+        @update:auto-launch-magpie="autoLaunchMagpie = $event"
         @select-magpie-path="handleSelectMagpiePath"
       />
 

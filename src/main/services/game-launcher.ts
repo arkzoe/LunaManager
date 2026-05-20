@@ -1,4 +1,4 @@
-import { spawn, execFile, type ChildProcess } from 'child_process'
+import { spawn, execFile, exec, type ChildProcess } from 'child_process'
 import path from 'path'
 import { getConfig } from '../config/store'
 import { getLeProcPath } from '../config/paths'
@@ -11,6 +11,57 @@ const launchLocks = new Map<string, Promise<void>>()
 export function isGameRunning(gameId: string): boolean {
   const proc = activeProcesses.get(gameId)
   return proc !== undefined && proc.exitCode === null
+}
+
+function isProcessRunning(name: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    execFile(
+      'tasklist',
+      ['/FI', `IMAGENAME eq ${name}`, '/NH'],
+      { windowsHide: true },
+      (err, stdout) => {
+        if (err) {
+          resolve(false)
+          return
+        }
+        resolve(stdout.toLowerCase().includes(name.toLowerCase()))
+      }
+    )
+  })
+}
+
+function sendMagpieHotkey(delayMs = 3000, hotkey: 'fullscreen' | 'windowed' = 'fullscreen'): void {
+  const vk3 = hotkey === 'fullscreen' ? '0x41' : '0x51'
+  const psScript = [
+    'Add-Type -TypeDefinition @"',
+    'using System;',
+    'using System.Runtime.InteropServices;',
+    'public class MagpieHelper {',
+    '    [DllImport("user32.dll")]',
+    '    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, System.UIntPtr dwExtraInfo);',
+    '    public static void SendKeys(byte vk1, byte vk2, byte vk3) {',
+    '        keybd_event(vk1, 0, 0, UIntPtr.Zero);',
+    '        keybd_event(vk2, 0, 0, UIntPtr.Zero);',
+    '        keybd_event(vk3, 0, 0, UIntPtr.Zero);',
+    '        keybd_event(vk3, 0, 2, UIntPtr.Zero);',
+    '        keybd_event(vk2, 0, 2, UIntPtr.Zero);',
+    '        keybd_event(vk1, 0, 2, UIntPtr.Zero);',
+    '    }',
+    '}',
+    '"@',
+    `Start-Sleep -Milliseconds ${delayMs}`,
+    `[MagpieHelper]::SendKeys(0x12, 0x10, ${vk3})`
+  ].join('\n')
+
+  const encoded = Buffer.from(psScript, 'utf16le').toString('base64')
+
+  exec(
+    `powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${encoded}`,
+    { windowsHide: true },
+    (_err, _stdout, stderr) => {
+      if (stderr) console.error('[Magpie]', stderr.trim())
+    }
+  )
 }
 
 export async function launchGame(gameId: string, mode: LaunchMode): Promise<void> {
@@ -35,6 +86,8 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
 
     const trackPlaytime = getConfig('trackPlaytime')
     const magpiePath = getConfig('magpiePath')
+    const autoLaunchMagpie = getConfig('autoLaunchMagpie')
+    const magpieHotkey = getConfig('magpieHotkey')
     const gameDir = path.dirname(game.executable_path)
 
     let cmd: string
@@ -47,8 +100,18 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
         break
       case 'magpie':
         if (!magpiePath) throw new Error('请先在设置中配置 Magpie 路径')
-        cmd = magpiePath
-        args = [game.executable_path]
+        if (autoLaunchMagpie) {
+          const running = await isProcessRunning('Magpie.exe')
+          if (!running) {
+            const magpieProc = spawn(magpiePath, ['-t'], {
+              detached: true,
+              stdio: 'ignore'
+            })
+            magpieProc.unref()
+          }
+        }
+        cmd = game.executable_path
+        args = []
         break
       case 'normal':
       default:
@@ -76,6 +139,10 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
     })
 
     activeProcesses.set(gameId, proc)
+
+    if (mode === 'magpie') {
+      sendMagpieHotkey(3000, magpieHotkey)
+    }
 
     proc.on('error', (err) => {
       activeProcesses.delete(gameId)

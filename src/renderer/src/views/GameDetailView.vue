@@ -74,7 +74,7 @@ const launchModes: LaunchModeItem[] = [
     desc: '转区启动，解决乱码问题',
     disabled: false
   },
-  { id: 'magpie', label: 'Magpie 超分', desc: '放大窗口并优化画质（即将支持）', disabled: true }
+  { id: 'magpie', label: 'Magpie 超分', desc: '使用 Magpie 自动超分放大游戏窗口', disabled: false }
 ]
 
 const toggleLaunchMenu = (): void => {
