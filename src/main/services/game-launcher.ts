@@ -1,6 +1,7 @@
 import { spawn, execFile, type ChildProcess } from 'child_process'
 import path from 'path'
 import { getConfig } from '../config/store'
+import { getLeProcPath } from '../config/paths'
 import { sessionOps, gameOps, getDatabase } from '../database'
 import type { LaunchMode } from '../../shared/types'
 
@@ -32,12 +33,8 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
 
     if (isGameRunning(gameId)) throw new Error('游戏已在运行中')
 
-    const cfg = {
-      trackPlaytime: getConfig('trackPlaytime'),
-      lePath: getConfig('lePath'),
-      magpiePath: getConfig('magpiePath')
-    }
-
+    const trackPlaytime = getConfig('trackPlaytime')
+    const magpiePath = getConfig('magpiePath')
     const gameDir = path.dirname(game.executable_path)
 
     let cmd: string
@@ -45,13 +42,12 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
 
     switch (mode) {
       case 'le':
-        if (!cfg.lePath) throw new Error('请先在设置中配置 Locale Emulator 路径')
-        cmd = cfg.lePath
+        cmd = getLeProcPath()
         args = [game.executable_path]
         break
       case 'magpie':
-        if (!cfg.magpiePath) throw new Error('请先在设置中配置 Magpie 路径')
-        cmd = cfg.magpiePath
+        if (!magpiePath) throw new Error('请先在设置中配置 Magpie 路径')
+        cmd = magpiePath
         args = [game.executable_path]
         break
       case 'normal':
@@ -61,7 +57,6 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
         break
     }
 
-    const trackPlaytime = cfg.trackPlaytime
     let sessionId: string | null = null
 
     const db = getDatabase()

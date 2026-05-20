@@ -13,7 +13,6 @@ const {
   language,
   vndbApiKey,
   bangumiToken,
-  lePath,
   magpiePath,
   magpieScale,
   backupDir,
@@ -23,7 +22,6 @@ const {
   metadataSource,
   loadConfig,
   setupPersistence,
-  handleSelectLEPath,
   handleSelectMagpiePath,
   handleSelectBackupDir
 } = useSettings()
@@ -256,13 +254,10 @@ const scrollToSection = (id: string): void => {
 
       <SettingLauncher
         :section-ref="setSectionRef('launcher')"
-        :le-path="lePath"
         :magpie-path="magpiePath"
         :magpie-scale="magpieScale"
-        @update:le-path="lePath = $event"
         @update:magpie-path="magpiePath = $event"
         @update:magpie-scale="magpieScale = $event"
-        @select-l-e-path="handleSelectLEPath"
         @select-magpie-path="handleSelectMagpiePath"
       />
 

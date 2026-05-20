@@ -51,7 +51,8 @@
       "smartUnpack": true
     },
     "asarUnpack": [
-      "resources/**"
+      "resources/**",
+      "tool/Locale.Emulator/**"
     ],
     "afterPack": "build/after-pack.js",
     "win": {

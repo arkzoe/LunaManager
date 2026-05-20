@@ -23,7 +23,6 @@ const defaultConfig: AppConfig = {
   trackPlaytime: true,
   recordHistory: true,
   dbPath: '',
-  lePath: '',
   magpiePath: '',
   magpieScale: '2x',
   bangumiToken: '',

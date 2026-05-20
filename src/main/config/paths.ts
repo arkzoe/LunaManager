@@ -17,3 +17,11 @@ export function getDbPath(): string {
 export function getSnapshotDir(gameId: string): string {
   return join(getDataDir(), 'snapshots', gameId)
 }
+
+export function getLeProcPath(): string {
+  const relativePath = join('tool', 'Locale.Emulator', 'LEProc.exe')
+  if (app.isPackaged) {
+    return join(process.resourcesPath, 'app.asar.unpacked', relativePath)
+  }
+  return join(app.getAppPath(), relativePath)
+}

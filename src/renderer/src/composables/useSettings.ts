@@ -5,7 +5,6 @@ type SettingKey =
   | 'language'
   | 'vndbApiKey'
   | 'bangumiToken'
-  | 'lePath'
   | 'magpiePath'
   | 'magpieScale'
   | 'backupDir'
@@ -19,7 +18,6 @@ export function useSettings() {
   const language = ref<'zh-CN' | 'en-US'>('zh-CN')
   const vndbApiKey = ref('')
   const bangumiToken = ref('')
-  const lePath = ref('')
   const magpiePath = ref('')
   const magpieScale = ref('2.0')
   const backupDir = ref('')
@@ -35,7 +33,6 @@ export function useSettings() {
       language.value = cfg.language ?? 'zh-CN'
       vndbApiKey.value = cfg.vndbApiKey ?? ''
       bangumiToken.value = cfg.bangumiToken ?? ''
-      lePath.value = cfg.lePath ?? ''
       magpiePath.value = cfg.magpiePath ?? ''
       magpieScale.value = cfg.magpieScale ?? '2.0'
       backupDir.value = cfg.backupDir ?? ''
@@ -56,7 +53,6 @@ export function useSettings() {
       language,
       vndbApiKey,
       bangumiToken,
-      lePath,
       magpiePath,
       magpieScale,
       backupDir,
@@ -70,7 +66,6 @@ export function useSettings() {
       'language',
       'vndbApiKey',
       'bangumiToken',
-      'lePath',
       'magpiePath',
       'magpieScale',
       'backupDir',
@@ -100,11 +95,6 @@ export function useSettings() {
     })
   }
 
-  const handleSelectLEPath = async (): Promise<void> => {
-    const p = await window.api.pickFile([{ name: 'Executable', extensions: ['exe'] }])
-    if (p) lePath.value = p
-  }
-
   const handleSelectMagpiePath = async (): Promise<void> => {
     const p = await window.api.pickFile([{ name: 'Executable', extensions: ['exe'] }])
     if (p) magpiePath.value = p
@@ -120,7 +110,6 @@ export function useSettings() {
     language,
     vndbApiKey,
     bangumiToken,
-    lePath,
     magpiePath,
     magpieScale,
     backupDir,
@@ -130,7 +119,6 @@ export function useSettings() {
     metadataSource,
     loadConfig,
     setupPersistence,
-    handleSelectLEPath,
     handleSelectMagpiePath,
     handleSelectBackupDir
   }

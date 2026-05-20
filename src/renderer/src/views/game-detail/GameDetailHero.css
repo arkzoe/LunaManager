@@ -12,7 +12,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: width 0.25s ease;
 }
 
 .hero-cover-wide {
@@ -275,9 +274,18 @@
 }
 
 .lm-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.lm-check {
+  color: var(--accent-primary);
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .lm-desc {

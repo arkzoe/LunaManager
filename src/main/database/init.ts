@@ -101,7 +101,6 @@ export const initDatabase = (): Database.Database => {
     );
 
     CREATE INDEX IF NOT EXISTS idx_games_favorite ON games(favorite);
-    CREATE INDEX IF NOT EXISTS idx_games_installed ON games(installed);
     CREATE INDEX IF NOT EXISTS idx_play_sessions_game_id ON play_sessions(game_id);
     CREATE INDEX IF NOT EXISTS idx_play_sessions_start_time ON play_sessions(start_time);
     CREATE INDEX IF NOT EXISTS idx_collections_sort ON collections(sort_order);
@@ -152,6 +151,7 @@ export const initDatabase = (): Database.Database => {
   const dropCols = ['rating', 'installed', 'publisher', 'playtime']
   for (const col of dropCols) {
     if (columnExists('games', col)) {
+      db!.exec(`DROP INDEX IF EXISTS idx_games_${col}`)
       db!.exec(`ALTER TABLE games DROP COLUMN ${col}`)
     }
   }

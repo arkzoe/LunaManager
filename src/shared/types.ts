@@ -140,7 +140,6 @@ export interface AppConfig {
   trackPlaytime: boolean
   recordHistory: boolean
   dbPath: string
-  lePath: string
   magpiePath: string
   magpieScale: string
   bangumiToken: string

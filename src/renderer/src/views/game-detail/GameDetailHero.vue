@@ -54,6 +54,8 @@ const parsedTags = computed<string[]>(() => {
 const hasMetadata = computed(() => {
   return props.game.vndb_id || props.game.bangumi_id
 })
+
+const defaultLaunchMode = computed(() => props.game.last_launch_method || 'normal')
 </script>
 
 <template>
@@ -147,7 +149,11 @@ const hasMetadata = computed(() => {
 
       <div class="launch-area">
         <div class="launch-group">
-          <button v-if="!isRunning" class="launch-main" @click.stop="$emit('launch', 'normal')">
+          <button
+            v-if="!isRunning"
+            class="launch-main"
+            @click.stop="$emit('launch', defaultLaunchMode)"
+          >
             <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
               <path d="M8 5v14l11-7z" />
             </svg>
@@ -180,7 +186,10 @@ const hasMetadata = computed(() => {
             :disabled="mode.disabled"
             @click="$emit('launch', mode.id)"
           >
-            <div class="lm-label">{{ mode.label }}</div>
+            <div class="lm-label">
+              <span>{{ mode.label }}</span>
+              <span v-if="mode.id === defaultLaunchMode" class="lm-check">✓</span>
+            </div>
             <div class="lm-desc">{{ mode.desc }}</div>
           </button>
         </div>

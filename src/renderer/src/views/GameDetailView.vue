@@ -71,8 +71,8 @@ const launchModes: LaunchModeItem[] = [
   {
     id: 'le',
     label: 'Locale Emulator',
-    desc: '转区启动，解决乱码问题（即将支持）',
-    disabled: true
+    desc: '转区启动，解决乱码问题',
+    disabled: false
   },
   { id: 'magpie', label: 'Magpie 超分', desc: '放大窗口并优化画质（即将支持）', disabled: true }
 ]
@@ -92,6 +92,8 @@ const handleLaunch = async (mode: string): Promise<void> => {
     await window.api.launchGame(props.game.id, mode as LaunchMode)
     isRunning.value = true
     showToastMsg('游戏已启动', 'success')
+    const updated = await window.api.getGameById(props.game.id)
+    if (updated) emit('updated', updated)
   } catch (err: unknown) {
     showToastMsg((err instanceof Error ? err.message : String(err)) || '启动失败', 'error')
   }
@@ -341,7 +343,7 @@ const iconPaths: Record<string, string> = {
     <ConfirmDialog
       :show="showDeleteConfirm"
       title="确认删除"
-      :message="`确定要删除 <strong>${game.title}</strong> 吗？此操作不可恢复。`"
+      :message="`确定要删除 ${game.title} 吗？此操作不可恢复。`"
       confirm-text="确认删除"
       danger
       @confirm="handleDeleteGame"
