@@ -2,8 +2,22 @@ import { randomUUID } from 'node:crypto'
 import type { PlaySession } from '../../shared/types'
 import { getDatabase } from './init'
 
+type AggregatedStats = {
+  game_id: string
+  total_sessions: number
+  total_duration: number
+  last_played: number | null
+}
+
+let statsCache: AggregatedStats[] | null = null
+
+function invalidateStatsCache(): void {
+  statsCache = null
+}
+
 export const sessionOps = {
   start: (gameId: string): PlaySession => {
+    invalidateStatsCache()
     const db = getDatabase()
     const session: PlaySession = {
       id: `session-${randomUUID()}`,
@@ -19,6 +33,7 @@ export const sessionOps = {
   },
 
   end: (sessionId: string): void => {
+    invalidateStatsCache()
     const now = Date.now()
     getDatabase()
       .prepare(
@@ -61,13 +76,9 @@ export const sessionOps = {
     return r.count
   },
 
-  getAllAggregatedStats: (): {
-    game_id: string
-    total_sessions: number
-    total_duration: number
-    last_played: number | null
-  }[] => {
-    return getDatabase()
+  getAllAggregatedStats: (): AggregatedStats[] => {
+    if (statsCache) return statsCache
+    statsCache = getDatabase()
       .prepare(
         `
       SELECT game_id, COUNT(*) as total_sessions,
@@ -78,12 +89,8 @@ export const sessionOps = {
       ORDER BY total_duration DESC
     `
       )
-      .all() as {
-      game_id: string
-      total_sessions: number
-      total_duration: number
-      last_played: number | null
-    }[]
+      .all() as AggregatedStats[]
+    return statsCache
   },
 
   getAggregatedStats: (

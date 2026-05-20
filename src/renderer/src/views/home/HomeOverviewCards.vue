@@ -108,7 +108,11 @@ const { display: avgDisplay } = useCountUp(() => props.overview.avgPerDay, 700)
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px 18px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
   animation: fade-in-up 0.5s ease forwards;
 }

@@ -112,9 +112,8 @@ export function useBatchMatch(
 
       let matchFailedCount = 0
 
-      for (let i = 0; i < toMatch.length; i++) {
-        if (signal.aborted) break
-        const row = toMatch[i]
+      const processOne = async (row: ImportRowState): Promise<void> => {
+        if (signal.aborted) return
         const query = row.title || row.folderName
         row.matchStatus = 'searching'
 
@@ -150,11 +149,23 @@ export function useBatchMatch(
           row.matchStatus = 'noresult'
           matchFailedCount++
         }
-
-        if (i < toMatch.length - 1 && !signal.aborted) {
-          await new Promise((resolve) => setTimeout(resolve, 300))
-        }
       }
+
+      // Concurrency pool of 4
+      const concurrency = 4
+      let idx = 0
+      const workers: Promise<void>[] = []
+      for (let i = 0; i < concurrency && i < toMatch.length; i++) {
+        workers.push(
+          (async () => {
+            while (idx < toMatch.length && !signal.aborted) {
+              const current = idx++
+              await processOne(toMatch[current])
+            }
+          })()
+        )
+      }
+      await Promise.allSettled(workers)
 
       if (matchFailedCount > 0 && !signal.aborted) {
         error.value = `${matchFailedCount} 个游戏匹配失败，可手动搜索`

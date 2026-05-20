@@ -42,16 +42,22 @@ export default defineConfig({
       })
     ],
     build: {
-      cssCodeSplit: true,
+      cssCodeSplit: false,
       sourcemap: false,
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('node_modules/vue') || id.includes('node_modules/pinia')) {
+            if (id.includes('node_modules/vue')) {
               return 'vue-vendor'
             }
             if (id.includes('chart.js') || id.includes('vue-chartjs')) {
               return 'chart-vendor'
+            }
+            if (id.includes('node_modules/fuse.js')) {
+              return 'fuse-vendor'
+            }
+            if (id.includes('node_modules/marked')) {
+              return 'markdown-vendor'
             }
           }
         }

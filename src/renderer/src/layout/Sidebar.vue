@@ -172,7 +172,11 @@ const iconMap: Record<string, string> = {
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
   text-align: left;
   overflow: hidden;
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import type { GameRecord, GameStatus, LaunchMode } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import { useToast } from '../composables/useToast'
@@ -36,6 +36,24 @@ const tempBangumiId = ref(props.game.bangumi_id || '')
 const saving = ref(false)
 const fetching = ref(false)
 const showDeleteConfirm = ref(false)
+
+function resetForm(game: GameRecord): void {
+  tempStatus.value = (game.status as GameStatus) || 'want'
+  tempRating.value = game.personal_rating || 0
+  tempNotes.value = game.notes || ''
+  tempTitle.value = game.title || ''
+  tempTitleCn.value = game.title_cn || ''
+  tempDeveloper.value = game.developer || ''
+  tempReleaseDate.value = game.release_date || ''
+  tempTags.value = game.custom_tags || '[]'
+  tempExecutablePath.value = game.executable_path || ''
+  tempDescription.value = game.description || ''
+  tempDataSource.value = game.vndb_id ? 'vndb' : game.bangumi_id ? 'bangumi' : ''
+  tempVndbId.value = game.vndb_id || ''
+  tempBangumiId.value = game.bangumi_id || ''
+}
+
+watch(() => props.game, resetForm)
 
 // Toast
 const {
@@ -377,7 +395,11 @@ const iconPaths: Record<string, string> = {
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 
 .tab:hover {

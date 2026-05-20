@@ -1,9 +1,52 @@
 import { ref, watch, onUnmounted, computed, isRef, type Ref } from 'vue'
 
+type ActiveCounter = {
+  display: Ref<number>
+  targetRef: Ref<number>
+  duration: number
+  startTime: number
+}
+
+let activeCounters: ActiveCounter[] = []
+let globalRafId: number | null = null
+
+function globalTick(timestamp: number): void {
+  const remaining: ActiveCounter[] = []
+  for (const c of activeCounters) {
+    if (!c.startTime) c.startTime = timestamp
+    const elapsed = timestamp - c.startTime
+    const progress = Math.min(elapsed / c.duration, 1)
+    const eased = 1 - Math.pow(1 - progress, 3)
+    c.display.value = Math.round(eased * c.targetRef.value)
+    if (progress < 1) {
+      remaining.push(c)
+    }
+  }
+  activeCounters = remaining
+  if (activeCounters.length > 0) {
+    globalRafId = requestAnimationFrame(globalTick)
+  } else {
+    globalRafId = null
+  }
+}
+
+function registerCounter(c: ActiveCounter): void {
+  activeCounters.push(c)
+  if (!globalRafId) {
+    globalRafId = requestAnimationFrame(globalTick)
+  }
+}
+
+function unregisterCounter(c: ActiveCounter): void {
+  activeCounters = activeCounters.filter((x) => x !== c)
+  if (activeCounters.length === 0 && globalRafId !== null) {
+    cancelAnimationFrame(globalRafId)
+    globalRafId = null
+  }
+}
+
 export function useCountUp(target: number | Ref<number> | (() => number), duration = 600) {
   const display = ref(0)
-  let animId: number | null = null
-  let startTime = 0
 
   const targetRef: Ref<number> = isRef(target)
     ? (target as Ref<number>)
@@ -11,16 +54,7 @@ export function useCountUp(target: number | Ref<number> | (() => number), durati
       ? computed(target as () => number)
       : ref(target)
 
-  const animate = (timestamp: number) => {
-    if (!startTime) startTime = timestamp
-    const elapsed = timestamp - startTime
-    const progress = Math.min(elapsed / duration, 1)
-    const eased = 1 - Math.pow(1 - progress, 3)
-    display.value = Math.round(eased * targetRef.value)
-    if (progress < 1) {
-      animId = requestAnimationFrame(animate)
-    }
-  }
+  let counter: ActiveCounter | null = null
 
   const start = () => {
     stop()
@@ -28,14 +62,14 @@ export function useCountUp(target: number | Ref<number> | (() => number), durati
       display.value = 0
       return
     }
-    startTime = 0
-    animId = requestAnimationFrame(animate)
+    counter = { display, targetRef, duration, startTime: 0 }
+    registerCounter(counter)
   }
 
   const stop = () => {
-    if (animId !== null) {
-      cancelAnimationFrame(animId)
-      animId = null
+    if (counter) {
+      unregisterCounter(counter)
+      counter = null
     }
   }
 

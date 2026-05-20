@@ -92,7 +92,11 @@ const emit = defineEmits<{
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -159,7 +163,11 @@ const emit = defineEmits<{
   font-family: inherit;
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s,
+    color 0.1s,
+    box-shadow 0.1s;
   text-align: left;
 }
 

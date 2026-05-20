@@ -143,6 +143,7 @@ export interface AppConfig {
   magpiePath: string
   magpieHotkey: 'fullscreen' | 'windowed'
   autoLaunchMagpie: boolean
+  magpieDelay: number
   bangumiToken: string
   vndbApiKey: string
   backupDir: string

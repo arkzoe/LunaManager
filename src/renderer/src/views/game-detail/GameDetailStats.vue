@@ -192,7 +192,11 @@ onUnmounted(() => {
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 
 .toggle-btn:hover {

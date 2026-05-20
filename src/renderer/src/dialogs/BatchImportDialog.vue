@@ -397,7 +397,11 @@ watch(
   font-size: 18px;
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s,
+    color 0.1s,
+    box-shadow 0.1s;
 }
 
 .dialog-close:hover {
@@ -482,7 +486,11 @@ watch(
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 
 .sort-btn:hover {
@@ -515,7 +523,11 @@ watch(
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 
 .btn-match-all {
@@ -590,7 +602,11 @@ watch(
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 
 .btn-cancel:hover {

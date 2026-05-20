@@ -376,7 +376,11 @@ const handlePickSavePath = async (): Promise<void> => {
   font-size: 18px;
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s,
+    color 0.1s,
+    box-shadow 0.1s;
 }
 .dialog-close:hover {
   background: var(--bg-hover);

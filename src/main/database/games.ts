@@ -13,7 +13,7 @@ export const gameOps = {
     const db = getDatabase()
     return db
       .prepare(
-        'SELECT id, title, title_cn, cover, rating, size, installed, favorite, status, personal_rating, last_played, developer, publisher, release_date, playtime, playtime_seconds, executable_path, save_path, vndb_id, bangumi_id, last_launch_method, created_at, updated_at FROM games ORDER BY created_at DESC'
+        'SELECT id, title, title_cn, cover, size, favorite, status, personal_rating, last_played, developer, release_date, playtime_seconds, executable_path, save_path, vndb_id, bangumi_id, last_launch_method, created_at, updated_at FROM games ORDER BY created_at DESC'
       )
       .all() as GameRecord[]
   },

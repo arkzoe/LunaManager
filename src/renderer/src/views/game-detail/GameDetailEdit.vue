@@ -326,7 +326,11 @@ const onSourceChange = (val: string): void => {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 
 .btn-danger:hover {

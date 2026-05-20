@@ -1,7 +1,7 @@
 import fs from 'fs'
 import fsp from 'fs/promises'
 import path from 'path'
-import { spawn } from 'child_process'
+import { pipeline } from 'stream/promises'
 import { randomUUID } from 'node:crypto'
 import { snapshotOps, gameOps } from '../database'
 import { getSnapshotDir } from '../config/paths'
@@ -111,33 +111,30 @@ export async function restoreSave(snapshotId: string): Promise<void> {
     }
 
     const extractPath = savePath
-    const result = new Promise<void>((resolve, reject) => {
-      const unzip = spawn('powershell', [
-        '-NoProfile',
-        '-Command',
-        '& Expand-Archive -LiteralPath',
-        snap.snapshot_path,
-        '-DestinationPath',
-        extractPath,
-        '-Force'
-      ])
-      void unzip.on('close', (code: number) => {
-        if (code === 0) {
-          fsp.rm(backupDir, { recursive: true }).catch(() => {})
-          resolve()
+    try {
+      const { Parse } = await import('unzipper')
+      const zipStream = fs.createReadStream(snap.snapshot_path)
+      const parser = zipStream.pipe(Parse({ forceStream: true }))
+
+      for await (const entry of parser) {
+        const entryPath = entry.path as string
+        const outputPath = path.join(extractPath, entryPath)
+        if (entry.type === 'Directory') {
+          await fsp.mkdir(outputPath, { recursive: true })
         } else {
-          fsp.rm(savePath, { recursive: true }).catch(() => {})
-          fsp.rename(backupDir, savePath).catch(() => {})
-          reject(new Error('解压失败'))
+          await fsp.mkdir(path.dirname(outputPath), { recursive: true })
+          await pipeline(entry, fs.createWriteStream(outputPath))
         }
-      })
-      void unzip.on('error', () => {
-        fsp.rm(savePath, { recursive: true }).catch(() => {})
-        fsp.rename(backupDir, savePath).catch(() => {})
-        reject(new Error('解压失败'))
-      })
-    }).finally(releaseLock)
-    return result
+      }
+
+      await fsp.rm(backupDir, { recursive: true }).catch(() => {})
+    } catch {
+      await fsp.rm(savePath, { recursive: true }).catch(() => {})
+      await fsp.rename(backupDir, savePath).catch(() => {})
+      releaseLock()
+      throw new Error('解压失败')
+    }
+    releaseLock()
   } catch (err) {
     releaseLock()
     throw err

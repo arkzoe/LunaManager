@@ -278,7 +278,11 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 .search-btn:hover {
   border-color: var(--accent-primary);
@@ -376,7 +380,11 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
   border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s,
+    color 0.1s,
+    box-shadow 0.1s;
 }
 .exe-item:hover {
   border-color: var(--accent-primary);
@@ -437,7 +445,11 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
   font-family: inherit;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 .btn-pick-path:hover {
   border-color: var(--accent-primary);

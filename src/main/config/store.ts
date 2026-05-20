@@ -26,6 +26,7 @@ const defaultConfig: AppConfig = {
   magpiePath: '',
   magpieHotkey: 'fullscreen',
   autoLaunchMagpie: true,
+  magpieDelay: 5000,
   bangumiToken: '',
   vndbApiKey: '',
   backupDir: '',
@@ -60,9 +61,5 @@ export const getAllConfig = (): AppConfig => {
 }
 
 export const setAllConfig = (config: Partial<AppConfig>): void => {
-  for (const [key, value] of Object.entries(config)) {
-    if (value !== undefined) {
-      configStore.set(key as keyof AppConfig, value as AppConfig[keyof AppConfig])
-    }
-  }
+  Object.assign(configStore.store, config)
 }

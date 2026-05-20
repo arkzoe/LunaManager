@@ -58,7 +58,11 @@ const emit = defineEmits<{
   gap: 14px;
   padding: 14px 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
   opacity: 0;
   animation: fade-in-left 0.4s ease forwards;
 }

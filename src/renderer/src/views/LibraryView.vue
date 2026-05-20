@@ -140,16 +140,14 @@ const closeBatchStatusMenu = (): void => {
 const handleBatchStatus = async (status: GameStatus): Promise<void> => {
   showBatchStatusMenu.value = false
   const ids = [...selectedIds.value]
-  const failed: string[] = []
-  for (const id of ids) {
-    try {
+  const results = await Promise.allSettled(
+    ids.map(async (id) => {
       await window.api.updateGame(id, { status } as Partial<GameRecord>)
       const g = store.allGames.find((x) => x.id === id)
       if (g) g.status = status
-    } catch {
-      failed.push(id)
-    }
-  }
+    })
+  )
+  const failed = ids.filter((_, i) => results[i].status === 'rejected')
   if (failed.length > 0) {
     selectedIds.value = new Set(failed)
     showToastMsg(`${failed.length}/${ids.length} 个操作失败`, 'error')
@@ -173,18 +171,14 @@ const handleAddToCollection = async (collectionId: string): Promise<void> => {
   const col = collections.value.find((c) => c.id === collectionId)
   if (!col) return
   const ids = [...selectedIds.value]
-  let added = 0
-  for (const id of ids) {
-    if (!col.gameIds.includes(id)) {
-      try {
-        await window.api.addGameToCollection(id, collectionId)
-        col.gameIds.push(id)
-        added++
-      } catch {
-        /* skip */
-      }
-    }
-  }
+  const toAdd = ids.filter((id) => !col.gameIds.includes(id))
+  const results = await Promise.allSettled(
+    toAdd.map(async (id) => {
+      await window.api.addGameToCollection(id, collectionId)
+      col.gameIds.push(id)
+    })
+  )
+  const added = results.filter((r) => r.status === 'fulfilled').length
   showCollectionPicker.value = false
   selectedIds.value = new Set()
   batchMode.value = false
@@ -202,15 +196,13 @@ const closeDeleteConfirm = (): void => {
 const confirmBatchDelete = async (): Promise<void> => {
   showDeleteConfirm.value = false
   const ids = [...selectedIds.value]
-  const failed: string[] = []
-  for (const id of ids) {
-    try {
+  const results = await Promise.allSettled(
+    ids.map(async (id) => {
       await window.api.deleteGame(id)
       store.games = store.games.filter((g) => g.id !== id)
-    } catch {
-      failed.push(id)
-    }
-  }
+    })
+  )
+  const failed = ids.filter((_, i) => results[i].status === 'rejected')
   if (failed.length > 0) {
     selectedIds.value = new Set(failed)
     showToastMsg(`${failed.length}/${ids.length} 个删除失败`, 'error')
@@ -426,6 +418,11 @@ const handleBatchImported = (result: ImportResult): void => {
       </button>
     </div>
 
+    <!-- 错误提示 -->
+    <div v-if="store.error" class="error-banner">
+      <span>加载游戏失败：{{ store.error }}</span>
+    </div>
+
     <!-- 骨架屏 -->
     <div v-if="store.isLoading" class="skeleton-grid">
       <div v-for="i in 8" :key="i" class="skeleton-card" />
@@ -459,7 +456,7 @@ const handleBatchImported = (result: ImportResult): void => {
     </template>
 
     <!-- 空状态：游戏库为空 -->
-    <div v-else-if="store.games.length === 0" class="empty-state">
+    <div v-else-if="!store.error && store.games.length === 0" class="empty-state">
       <svg viewBox="0 0 24 24" class="w-12 h-12 fill-text-muted opacity-25 mb-4">
         <path
           d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
@@ -549,6 +546,20 @@ const handleBatchImported = (result: ImportResult): void => {
   animation: fade-in-up 0.4s ease;
 }
 
+/* ===== 错误提示 ===== */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
 /* ===== 骨架屏 ===== */
 .skeleton-grid {
   display: grid;
@@ -593,7 +604,11 @@ const handleBatchImported = (result: ImportResult): void => {
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 
 .sort-btn:hover {

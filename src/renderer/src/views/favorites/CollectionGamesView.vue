@@ -110,7 +110,11 @@ const emit = defineEmits<{
   color: var(--text-tertiary);
   font-size: 14px;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
 }
 .back-btn:hover {
   background: var(--bg-secondary);
@@ -128,7 +132,11 @@ const emit = defineEmits<{
   border-radius: 8px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
 }
 .icon-btn:hover {
   background: var(--bg-secondary);
@@ -178,7 +186,11 @@ const emit = defineEmits<{
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
   display: flex;
   align-items: center;
   gap: 4px;

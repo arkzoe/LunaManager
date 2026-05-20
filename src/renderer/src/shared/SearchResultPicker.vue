@@ -147,7 +147,11 @@ const handleSelect = (): void => {
   font-size: 18px;
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s,
+    color 0.1s,
+    box-shadow 0.1s;
 }
 
 .dialog-close:hover {
@@ -195,7 +199,11 @@ const handleSelect = (): void => {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s,
+    color 0.1s,
+    box-shadow 0.1s;
 }
 
 .picker-item:hover {

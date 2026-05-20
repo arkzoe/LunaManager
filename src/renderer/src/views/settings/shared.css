@@ -162,7 +162,7 @@
   font-family: inherit;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
 .sbtn-primary {

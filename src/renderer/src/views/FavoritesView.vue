@@ -484,7 +484,11 @@ const handleCloseModal = (): void => {
 
 .view-fade-enter-active,
 .view-fade-leave-active {
-  transition: all 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .view-fade-enter-from {

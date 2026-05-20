@@ -41,50 +41,36 @@ const sectionDelays = computed(() => {
   }
 })
 
-// 全局概览
-const overview = computed(() => {
-  const total = store.allGames.length
-  const totalMinutes = store.allGames.reduce((sum, g) => {
-    return sum + Math.floor((g.playtime_seconds || 0) / 60)
-  }, 0)
+const homeData = computed(() => {
+  const all = store.allGames
+  const total = all.length
+  const totalMinutes = all.reduce((sum, g) => sum + Math.floor((g.playtime_seconds || 0) / 60), 0)
   const totalHours = Math.floor(totalMinutes / 60) || 0
   const avgPerDay = total > 0 ? Math.round((totalHours / Math.max(total, 1)) * 10) / 10 : 0
+  const overview = { totalGames: total, totalHours, monthlyHours: 0, avgPerDay }
 
-  return { totalGames: total, totalHours, monthlyHours: 0, avgPerDay }
+  const withPlayed = all.filter((g) => g.last_played)
+  const sortedByPlayed = [...withPlayed].sort((a, b) =>
+    (b.last_played || '').localeCompare(a.last_played || '')
+  )
+  const sortedByAdded = [...all].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+
+  return {
+    overview,
+    recentGames: sortedByPlayed.slice(0, 10),
+    recentAdded: sortedByAdded.slice(0, 10),
+    playedActs: sortedByPlayed.slice(0, 5).map((g) => ({
+      type: 'played' as const,
+      game: g,
+      time: formatRelativeTime(g.last_played || '')
+    })),
+    addedActs: sortedByAdded.slice(0, 5).map((g) => ({
+      type: 'added' as const,
+      game: g,
+      time: formatRelativeTime(g.created_at)
+    }))
+  }
 })
-
-const withPlayed = computed(() => store.allGames.filter((g) => g.last_played))
-
-const sortedByPlayed = computed(() =>
-  [...withPlayed.value].sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
-)
-
-const sortedByAdded = computed(() =>
-  [...store.allGames].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
-)
-
-const recentGames = computed(() => sortedByPlayed.value.slice(0, 10))
-const recentAdded = computed(() => sortedByAdded.value.slice(0, 10))
-const playedActs = computed(() =>
-  sortedByPlayed.value.slice(0, 5).map((g) => ({
-    type: 'played' as const,
-    game: g,
-    time: formatRelativeTime(g.last_played || '')
-  }))
-)
-const addedActs = computed(() =>
-  sortedByAdded.value.slice(0, 5).map((g) => ({
-    type: 'added' as const,
-    game: g,
-    time: formatRelativeTime(g.created_at)
-  }))
-)
-const homeData = computed(() => ({
-  recentGames: recentGames.value,
-  recentAdded: recentAdded.value,
-  playedActs: playedActs.value,
-  addedActs: addedActs.value
-}))
 </script>
 
 <template>
@@ -102,10 +88,21 @@ const homeData = computed(() => ({
       </div>
     </template>
 
-    <HomeOverviewCards v-else :overview="overview" />
+    <!-- 错误提示 -->
+    <div v-if="store.error" class="error-banner">
+      <span
+        >加载游戏失败：{{ store.error }}。请尝试重新启动应用，或检查 data/lunamanager.db
+        数据库文件。</span
+      >
+    </div>
+
+    <HomeOverviewCards v-else-if="!store.isLoading" :overview="homeData.overview" />
 
     <!-- 空状态 -->
-    <div v-if="!store.isLoading && overview.totalGames === 0" class="empty-state">
+    <div
+      v-if="!store.isLoading && !store.error && homeData.overview.totalGames === 0"
+      class="empty-state"
+    >
       <div class="empty-icon">
         <svg viewBox="0 0 24 24" class="w-12 h-12 home-empty-svg-icon">
           <path
@@ -118,7 +115,7 @@ const homeData = computed(() => ({
       <button class="btn-primary" @click="emit('navigateLibrary')">浏览游戏库</button>
     </div>
 
-    <template v-else>
+    <template v-else-if="!store.error">
       <!-- 最近游玩 — 横滑列表 -->
       <section
         v-if="homeData.recentGames.length > 0"
@@ -377,5 +374,18 @@ const homeData = computed(() => ({
 .home-empty-svg-icon {
   fill: var(--accent-primary);
   opacity: 0.65;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--text-primary);
+  font-size: 13px;
 }
 </style>

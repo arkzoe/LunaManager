@@ -217,7 +217,11 @@ const timeRanges = [
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
   opacity: 0;
   animation: fade-in-up 0.5s ease forwards;
@@ -350,7 +354,11 @@ const timeRanges = [
   font-family: inherit;
   cursor: pointer;
   border-radius: 4px;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 .tt-btn:hover {
   color: var(--text-primary);

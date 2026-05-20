@@ -13,11 +13,7 @@ export const useGameStore = defineStore('games', () => {
     isLoading.value = true
     error.value = null
     try {
-      const [loadedGames] = await Promise.all([
-        window.api.getGames(),
-        window.api.getAllAggregatedStats()
-      ])
-      games.value = loadedGames
+      games.value = await window.api.getGames()
     } catch (e: any) {
       error.value = e.message || '加载游戏失败'
     } finally {

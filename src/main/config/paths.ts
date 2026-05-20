@@ -21,7 +21,7 @@ export function getSnapshotDir(gameId: string): string {
 export function getLeProcPath(): string {
   const relativePath = join('tool', 'Locale.Emulator', 'LEProc.exe')
   if (app.isPackaged) {
-    return join(process.resourcesPath, 'app.asar.unpacked', relativePath)
+    return join(process.resourcesPath, relativePath)
   }
   return join(app.getAppPath(), relativePath)
 }

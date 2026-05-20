@@ -138,7 +138,11 @@ const emit = defineEmits<{
   border-radius: 6px;
   color: var(--text-tertiary);
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .action-menu-btn:hover {

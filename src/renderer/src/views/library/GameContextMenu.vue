@@ -168,7 +168,11 @@ watch(
   font-family: inherit;
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s,
+    color 0.1s,
+    box-shadow 0.1s;
   text-align: left;
 }
 

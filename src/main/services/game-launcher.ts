@@ -1,5 +1,6 @@
 import { spawn, execFile, exec, type ChildProcess } from 'child_process'
 import path from 'path'
+import { existsSync } from 'fs'
 import { getConfig } from '../config/store'
 import { getLeProcPath } from '../config/paths'
 import { sessionOps, gameOps, getDatabase } from '../database'
@@ -30,30 +31,42 @@ function isProcessRunning(name: string): Promise<boolean> {
   })
 }
 
-function sendMagpieHotkey(delayMs = 3000, hotkey: 'fullscreen' | 'windowed' = 'fullscreen'): void {
-  const vk3 = hotkey === 'fullscreen' ? '0x41' : '0x51'
-  const psScript = [
-    'Add-Type -TypeDefinition @"',
-    'using System;',
-    'using System.Runtime.InteropServices;',
-    'public class MagpieHelper {',
-    '    [DllImport("user32.dll")]',
-    '    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, System.UIntPtr dwExtraInfo);',
-    '    public static void SendKeys(byte vk1, byte vk2, byte vk3) {',
-    '        keybd_event(vk1, 0, 0, UIntPtr.Zero);',
-    '        keybd_event(vk2, 0, 0, UIntPtr.Zero);',
-    '        keybd_event(vk3, 0, 0, UIntPtr.Zero);',
-    '        keybd_event(vk3, 0, 2, UIntPtr.Zero);',
-    '        keybd_event(vk2, 0, 2, UIntPtr.Zero);',
-    '        keybd_event(vk1, 0, 2, UIntPtr.Zero);',
-    '    }',
-    '}',
-    '"@',
-    `Start-Sleep -Milliseconds ${delayMs}`,
-    `[MagpieHelper]::SendKeys(0x12, 0x10, ${vk3})`
-  ].join('\n')
+const magpieHelperScript = [
+  'Add-Type -TypeDefinition @"',
+  'using System;',
+  'using System.Runtime.InteropServices;',
+  'public class MagpieHelper {',
+  '    [DllImport("user32.dll")]',
+  '    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, System.UIntPtr dwExtraInfo);',
+  '    public static void SendKeys(byte vk1, byte vk2, byte vk3) {',
+  '        keybd_event(vk1, 0, 0, UIntPtr.Zero);',
+  '        keybd_event(vk2, 0, 0, UIntPtr.Zero);',
+  '        keybd_event(vk3, 0, 0, UIntPtr.Zero);',
+  '        keybd_event(vk3, 0, 2, UIntPtr.Zero);',
+  '        keybd_event(vk2, 0, 2, UIntPtr.Zero);',
+  '        keybd_event(vk1, 0, 2, UIntPtr.Zero);',
+  '    }',
+  '}',
+  '"@'
+].join('\n')
 
-  const encoded = Buffer.from(psScript, 'utf16le').toString('base64')
+const magpieEncodedFullscreen = Buffer.from(
+  magpieHelperScript +
+    '\n' +
+    'Start-Sleep -Milliseconds ___DELAY___\n[MagpieHelper]::SendKeys(0x12, 0x10, 0x41)',
+  'utf16le'
+).toString('base64')
+
+const magpieEncodedWindowed = Buffer.from(
+  magpieHelperScript +
+    '\n' +
+    'Start-Sleep -Milliseconds ___DELAY___\n[MagpieHelper]::SendKeys(0x12, 0x10, 0x51)',
+  'utf16le'
+).toString('base64')
+
+function sendMagpieHotkey(delayMs = 3000, hotkey: 'fullscreen' | 'windowed' = 'fullscreen'): void {
+  const template = hotkey === 'fullscreen' ? magpieEncodedFullscreen : magpieEncodedWindowed
+  const encoded = template.replace('___DELAY___', String(delayMs))
 
   exec(
     `powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${encoded}`,
@@ -88,16 +101,21 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
     const magpiePath = getConfig('magpiePath')
     const autoLaunchMagpie = getConfig('autoLaunchMagpie')
     const magpieHotkey = getConfig('magpieHotkey')
+    const magpieDelay = getConfig('magpieDelay')
     const gameDir = path.dirname(game.executable_path)
 
     let cmd: string
     let args: string[]
 
     switch (mode) {
-      case 'le':
-        cmd = getLeProcPath()
+      case 'le': {
+        const lePath = getLeProcPath()
+        if (!existsSync(lePath))
+          throw new Error(`LEProc.exe 未找到：${lePath}，请确认程序已正确安装`)
+        cmd = lePath
         args = [game.executable_path]
         break
+      }
       case 'magpie':
         if (!magpiePath) throw new Error('请先在设置中配置 Magpie 路径')
         if (autoLaunchMagpie) {
@@ -141,7 +159,7 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
     activeProcesses.set(gameId, proc)
 
     if (mode === 'magpie') {
-      sendMagpieHotkey(3000, magpieHotkey)
+      sendMagpieHotkey(magpieDelay, magpieHotkey)
     }
 
     proc.on('error', (err) => {

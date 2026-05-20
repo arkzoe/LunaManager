@@ -96,7 +96,11 @@ const emit = defineEmits<{
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 .btn-cancel:hover {
   background: var(--bg-hover);
@@ -112,7 +116,11 @@ const emit = defineEmits<{
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 .btn-danger:hover {
   opacity: 0.85;

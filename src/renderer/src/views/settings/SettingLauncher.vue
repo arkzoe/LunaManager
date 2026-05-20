@@ -3,6 +3,7 @@ defineProps<{
   magpiePath: string
   magpieHotkey: 'fullscreen' | 'windowed'
   autoLaunchMagpie: boolean
+  magpieDelay: number
   sectionRef?: (el: unknown) => void
 }>()
 
@@ -10,6 +11,7 @@ const emit = defineEmits<{
   'update:magpiePath': [value: string]
   'update:magpieHotkey': [value: 'fullscreen' | 'windowed']
   'update:autoLaunchMagpie': [value: boolean]
+  'update:magpieDelay': [value: number]
   selectMagpiePath: []
 }>()
 </script>
@@ -68,6 +70,26 @@ const emit = defineEmits<{
       </div>
       <div class="setting-row">
         <div class="setting-info">
+          <span class="setting-label">延迟触发 (毫秒)</span>
+          <span class="setting-desc"
+            >启动游戏后等待多少毫秒再发送热键，若游戏启动较慢请适当增加该值</span
+          >
+        </div>
+        <div class="delay-input">
+          <input
+            type="number"
+            min="500"
+            max="30000"
+            step="500"
+            :value="magpieDelay"
+            class="sbtn delay-number"
+            @input="emit('update:magpieDelay', Number(($event.target as HTMLInputElement).value))"
+          />
+          <span class="delay-unit">ms</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
           <span class="setting-label">使用说明</span>
           <span class="setting-desc">
             使用前请保持 Magpie 在后台运行（或开启自动启动）。Magpie 默认热键 Alt+Shift+A 和
@@ -91,5 +113,21 @@ const emit = defineEmits<{
   background: var(--accent-primary);
   color: #fff;
   border-color: var(--accent-primary);
+}
+
+.delay-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delay-number {
+  width: 90px;
+  text-align: center;
+}
+
+.delay-unit {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 </style>

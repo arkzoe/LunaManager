@@ -181,7 +181,11 @@ const handleSortSelect = (field: string): void => {
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
-  transition: all 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .search-input::placeholder {
@@ -211,7 +215,11 @@ const handleSortSelect = (field: string): void => {
   border-radius: 8px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
 }
 .icon-btn:hover {
   background: var(--bg-secondary);
@@ -234,7 +242,11 @@ const handleSortSelect = (field: string): void => {
   color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
 }
 .filter-btn:hover {
   background: var(--bg-secondary);
@@ -286,7 +298,11 @@ const handleSortSelect = (field: string): void => {
   font-family: inherit;
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s,
+    color 0.1s,
+    box-shadow 0.1s;
   text-align: left;
 }
 .sort-option:hover {
@@ -338,7 +354,11 @@ const handleSortSelect = (field: string): void => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
 }
 .add-btn:hover {
   background: var(--accent-primary-dark);
@@ -387,7 +407,11 @@ const handleSortSelect = (field: string): void => {
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
   display: flex;
   align-items: center;
   gap: 4px;

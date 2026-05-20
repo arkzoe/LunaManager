@@ -118,7 +118,11 @@ const emit = defineEmits<{
   font-family: inherit;
   cursor: pointer;
   border-radius: 4px;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 
 .tt-btn:hover {

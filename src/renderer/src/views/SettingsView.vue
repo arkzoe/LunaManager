@@ -8,24 +8,8 @@ import SettingLauncher from './settings/SettingLauncher.vue'
 import SettingBackup from './settings/SettingBackup.vue'
 import SettingAbout from './settings/SettingAbout.vue'
 
-const {
-  autoStart,
-  language,
-  vndbApiKey,
-  bangumiToken,
-  magpiePath,
-  magpieHotkey,
-  autoLaunchMagpie,
-  backupDir,
-  trackPlaytime,
-  recordHistory,
-  autoSyncMetadata,
-  metadataSource,
-  loadConfig,
-  setupPersistence,
-  handleSelectMagpiePath,
-  handleSelectBackupDir
-} = useSettings()
+const { settings, loadConfig, setupPersistence, handleSelectMagpiePath, handleSelectBackupDir } =
+  useSettings()
 
 const currentVersion = ref('')
 
@@ -86,13 +70,13 @@ interface TestResult {
 const testResult = ref<TestResult | null>(null)
 
 const handleTestBangumi = async (): Promise<void> => {
-  if (!bangumiToken.value) {
+  if (!settings.bangumiToken) {
     await window.api.openExternal('https://next.bgm.tv/demo/access-token/create')
     return
   }
   testResult.value = { source: 'bangumi', loading: true }
   try {
-    const res = await window.api.testApiConnection('bangumi', bangumiToken.value || undefined)
+    const res = await window.api.testApiConnection('bangumi', settings.bangumiToken || undefined)
     testResult.value = { source: 'bangumi', loading: false, ...res }
   } catch (err: unknown) {
     testResult.value = {
@@ -105,13 +89,13 @@ const handleTestBangumi = async (): Promise<void> => {
 }
 
 const handleTestVNDB = async (): Promise<void> => {
-  if (!vndbApiKey.value) {
+  if (!settings.vndbApiKey) {
     await window.api.openExternal('https://vndb.org/u/tokens')
     return
   }
   testResult.value = { source: 'vndb', loading: true }
   try {
-    const res = await window.api.testApiConnection('vndb', vndbApiKey.value || undefined)
+    const res = await window.api.testApiConnection('vndb', settings.vndbApiKey || undefined)
     testResult.value = { source: 'vndb', loading: false, ...res }
   } catch (err: unknown) {
     testResult.value = {
@@ -226,47 +210,49 @@ const scrollToSection = (id: string): void => {
     <div ref="contentRef" class="settings-content">
       <SettingBasic
         :section-ref="setSectionRef('basic')"
-        :auto-start="autoStart"
-        :track-playtime="trackPlaytime"
-        :record-history="recordHistory"
-        :language="language"
-        @update:auto-start="autoStart = $event"
-        @update:track-playtime="trackPlaytime = $event"
-        @update:record-history="recordHistory = $event"
-        @update:language="language = $event as 'zh-CN' | 'en-US'"
+        :auto-start="settings.autoStart"
+        :track-playtime="settings.trackPlaytime"
+        :record-history="settings.recordHistory"
+        :language="settings.language"
+        @update:auto-start="settings.autoStart = $event"
+        @update:track-playtime="settings.trackPlaytime = $event"
+        @update:record-history="settings.recordHistory = $event"
+        @update:language="settings.language = $event as 'zh-CN' | 'en-US'"
       />
 
       <SettingAppearance :section-ref="setSectionRef('appearance')" />
 
       <SettingDatasource
         :section-ref="setSectionRef('datasource')"
-        :metadata-source="metadataSource"
-        :auto-sync-metadata="autoSyncMetadata"
-        :vndb-api-key="vndbApiKey"
-        :bangumi-token="bangumiToken"
+        :metadata-source="settings.metadataSource"
+        :auto-sync-metadata="settings.autoSyncMetadata"
+        :vndb-api-key="settings.vndbApiKey"
+        :bangumi-token="settings.bangumiToken"
         :test-result="testResult"
-        @update:metadata-source="metadataSource = $event as 'vndb' | 'bangumi'"
-        @update:auto-sync-metadata="autoSyncMetadata = $event"
-        @update:vndb-api-key="vndbApiKey = $event"
-        @update:bangumi-token="bangumiToken = $event"
+        @update:metadata-source="settings.metadataSource = $event as 'vndb' | 'bangumi'"
+        @update:auto-sync-metadata="settings.autoSyncMetadata = $event"
+        @update:vndb-api-key="settings.vndbApiKey = $event"
+        @update:bangumi-token="settings.bangumiToken = $event"
         @test-bangumi="handleTestBangumi"
         @test-vndb="handleTestVNDB"
       />
 
       <SettingLauncher
         :section-ref="setSectionRef('launcher')"
-        :magpie-path="magpiePath"
-        :magpie-hotkey="magpieHotkey"
-        :auto-launch-magpie="autoLaunchMagpie"
-        @update:magpie-hotkey="magpieHotkey = $event as 'fullscreen' | 'windowed'"
-        @update:auto-launch-magpie="autoLaunchMagpie = $event"
+        :magpie-path="settings.magpiePath"
+        :magpie-hotkey="settings.magpieHotkey"
+        :auto-launch-magpie="settings.autoLaunchMagpie"
+        :magpie-delay="settings.magpieDelay"
+        @update:magpie-hotkey="settings.magpieHotkey = $event as 'fullscreen' | 'windowed'"
+        @update:auto-launch-magpie="settings.autoLaunchMagpie = $event"
+        @update:magpie-delay="settings.magpieDelay = $event"
         @select-magpie-path="handleSelectMagpiePath"
       />
 
       <SettingBackup
         :section-ref="setSectionRef('backup')"
-        :backup-dir="backupDir"
-        @update:backup-dir="backupDir = $event"
+        :backup-dir="settings.backupDir"
+        @update:backup-dir="settings.backupDir = $event"
         @select-backup-dir="handleSelectBackupDir"
       />
 
@@ -341,7 +327,11 @@ const scrollToSection = (id: string): void => {
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
   text-align: left;
   position: relative;
 }

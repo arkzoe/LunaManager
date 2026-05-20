@@ -17,6 +17,11 @@ function migrateCollectionsTable(): void {
 }
 
 function migrateGamesTable(): void {
+  const columns = (db!.prepare('PRAGMA table_info(games)').all() as { name: string }[]).map(
+    (c) => c.name
+  )
+  const hasColumn = (col: string): boolean => columns.includes(col)
+
   const additions: [string, string][] = [
     ['title_cn', 'TEXT DEFAULT ""'],
     ['status', 'TEXT DEFAULT "want"'],
@@ -28,7 +33,7 @@ function migrateGamesTable(): void {
     ['last_launch_method', 'TEXT DEFAULT "normal"']
   ]
   for (const [name, def] of additions) {
-    if (!columnExists('games', name)) {
+    if (!hasColumn(name)) {
       db!.exec(`ALTER TABLE games ADD COLUMN ${name} ${def}`)
     }
   }

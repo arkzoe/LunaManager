@@ -1,6 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, protocol, net, dialog } from 'electron'
 import { join } from 'path'
-import { existsSync, rmSync } from 'fs'
+import { existsSync, createReadStream, rmSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
@@ -62,7 +62,7 @@ function createWindow(): void {
 
 function setupIpcHandlers(): void {
   // ===== Games =====
-  ipcMain.handle('db:getGames', () => gameOps.getAll())
+  ipcMain.handle('db:getGames', () => gameOps.getList())
   ipcMain.handle('db:getGameById', (_, id: string) => gameOps.getById(id) || null)
   ipcMain.handle('db:createGame', (_, game) => gameOps.create(game))
   ipcMain.handle('db:updateGame', (_, id: string, updates) => gameOps.update(id, updates))
@@ -258,8 +258,20 @@ if (!gotLock) {
     // 注册 cover:// 自定义协议，用于在渲染进程加载本地封面图片
     protocol.handle('cover', (request) => {
       const filePath = resolveCoverPath(request.url)
-      const normalizedPath = filePath.replace(/\\/g, '/')
-      return net.fetch(`file:///${normalizedPath}`)
+      try {
+        const mimeType = filePath.endsWith('.png')
+          ? 'image/png'
+          : filePath.endsWith('.webp')
+            ? 'image/webp'
+            : filePath.endsWith('.gif')
+              ? 'image/gif'
+              : 'image/jpeg'
+        return new Response(createReadStream(filePath) as unknown as ReadableStream, {
+          headers: { 'content-type': mimeType }
+        })
+      } catch {
+        return net.fetch(`file:///${filePath.replace(/\\/g, '/')}`)
+      }
     })
 
     app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
