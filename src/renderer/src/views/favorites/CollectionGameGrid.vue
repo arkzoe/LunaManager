@@ -19,15 +19,7 @@ const emit = defineEmits<{
 
 <template>
   <div v-if="games.length > 0" class="flc-grid">
-    <div
-      v-for="game in games"
-      :key="game.id"
-      class="flc-game"
-      :class="{
-        'ring-2 ring-accent-500/50 rounded-xl': batchMode && selectedIds?.includes(game.id)
-      }"
-      @click="emit('cardClick', game)"
-    >
+    <div v-for="game in games" :key="game.id" class="flc-game" @click="emit('cardClick', game)">
       <div
         class="flc-check"
         :class="{ 'cb-hidden': !batchMode }"
@@ -42,7 +34,7 @@ const emit = defineEmits<{
           </svg>
         </div>
       </div>
-      <GameCard :game="game" />
+      <GameCard :game="game" :selected="batchMode && selectedIds?.includes(game.id)" />
       <button v-if="!batchMode" class="flc-move" title="移动" @click.stop="emit('moveGame', game)">
         <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current">
           <path

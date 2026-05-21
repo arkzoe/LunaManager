@@ -17,7 +17,7 @@ const emit = defineEmits<{
   (e: 'create', name: string): void
   (e: 'rename', id: string, name: string): void
   (e: 'delete', id: string): void
-  (e: 'move', gameId: string, targetId: string): void
+  (e: 'move', gameId: string | undefined, targetId: string): void
   (e: 'close'): void
 }>()
 
@@ -67,7 +67,7 @@ const handleConfirm = (): void => {
 }
 
 const handleMoveTarget = (targetId: string): void => {
-  if (props.game) emit('move', props.game.id, targetId)
+  emit('move', props.game?.id, targetId)
 }
 </script>
 

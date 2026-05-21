@@ -160,15 +160,6 @@ watch(
           }
         }
       }
-      for (const id of currentIds) {
-        if (!favIds.includes(id)) {
-          try {
-            await window.api.removeGameFromCollection(id, colId)
-          } catch {
-            /* */
-          }
-        }
-      }
       const games = await window.api.getCollectionGames(colId)
       collectionGames.value.set(colId, games)
       def.gameIds = games.map((g) => g.id)
@@ -311,8 +302,8 @@ const handleBatchMoveGames = async (targetId: string): Promise<void> => {
   modalMode.value = null
   showToastMsg(`已移动 ${moveCount} 个游戏`, 'success')
 }
-const handleMoveGame = async (gameId: string, targetId: string): Promise<void> => {
-  if (gameBatchMode.value) {
+const handleMoveGame = async (gameId: string | undefined, targetId: string): Promise<void> => {
+  if (gameBatchMode.value || !gameId) {
     await handleBatchMoveGames(targetId)
     return
   }
