@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
 defineProps<{
   searchQuery: string
   viewMode: 'grid' | 'list'
@@ -16,9 +14,6 @@ const emit = defineEmits<{
   (e: 'batchImport'): void
   (e: 'toggleBatchMode'): void
 }>()
-
-const importBtnRef = ref<HTMLElement | null>(null)
-void importBtnRef.value
 </script>
 
 <template>
@@ -78,7 +73,7 @@ void importBtnRef.value
       </button>
 
       <div class="import-dropdown">
-        <button ref="importBtnRef" class="btn-primary btn-sm" @click="emit('toggleImportMenu')">
+        <button class="btn-primary btn-sm" @click="emit('toggleImportMenu')">
           <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
           </svg>
@@ -88,7 +83,7 @@ void importBtnRef.value
           </svg>
         </button>
         <Transition name="dropdown">
-          <div v-if="showImportMenu" class="import-menu-local">
+          <div v-show="showImportMenu" class="import-menu-local">
             <button class="ctx-item" @click="emit('manualImport')">
               <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />

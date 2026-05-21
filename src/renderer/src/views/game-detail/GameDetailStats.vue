@@ -5,18 +5,7 @@ import { formatPlaytime, formatRelativeTime } from '../../utils/format'
 import { useThemeStore } from '../../stores/useThemeStore'
 import { useSettingsStore } from '../../stores/useSettingsStore'
 import { useStatsChart } from '../../composables/useStatsChart'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Filler
-} from 'chart.js'
-import { Line } from 'vue-chartjs'
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
+import { Line } from '../../utils/chart'
 
 const props = defineProps<{ game: GameRecord }>()
 const theme = useThemeStore()

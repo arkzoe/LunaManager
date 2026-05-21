@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
 import { useToast } from '../composables/useToast'
 import type { UICollection } from '../composables/useCollections'
-import ImportDialog from '../dialogs/ImportDialog.vue'
-import BatchImportDialog from '../dialogs/BatchImportDialog.vue'
-import ToastNotification from '../shared/ToastNotification.vue'
 import LibraryToolbar from './library/LibraryToolbar.vue'
 import LibraryFilterBar from './library/LibraryFilterBar.vue'
 import LibraryBatchBar from './library/LibraryBatchBar.vue'
 import GameGridView from './library/GameGridView.vue'
 import GameListView from './library/GameListView.vue'
 import GameContextMenu from './library/GameContextMenu.vue'
-import ConfirmDialog from '../shared/ConfirmDialog.vue'
-import CollectionPickerDialog from '../shared/CollectionPickerDialog.vue'
+
+const ImportDialog = defineAsyncComponent(() => import('../dialogs/ImportDialog.vue'))
+const BatchImportDialog = defineAsyncComponent(() => import('../dialogs/BatchImportDialog.vue'))
+const CollectionPickerDialog = defineAsyncComponent(
+  () => import('../shared/CollectionPickerDialog.vue')
+)
+const ConfirmDialog = defineAsyncComponent(() => import('../shared/ConfirmDialog.vue'))
+const ToastNotification = defineAsyncComponent(() => import('../shared/ToastNotification.vue'))
 
 const emit = defineEmits<{ (e: 'selectGame', game: GameRecord): void }>()
 
@@ -26,11 +29,6 @@ const viewMode = ref<'grid' | 'list'>('grid')
 type SortKey = 'name' | 'playtime' | 'rating' | 'last_played'
 const sortKey = ref<SortKey>('name')
 const sortDir = ref<'asc' | 'desc'>('asc')
-
-const filterSortKey = ref(0)
-watch([activeFilter, sortKey, sortDir, searchQuery], () => {
-  filterSortKey.value++
-})
 
 const sortOptions = [
   { key: 'name' as const, label: '名称' },
@@ -432,7 +430,6 @@ const handleBatchImported = (result: ImportResult): void => {
     <template v-else-if="filteredGames.length > 0">
       <GameGridView
         v-if="viewMode === 'grid'"
-        :key="'grid-' + filterSortKey"
         :filtered-games="filteredGames"
         :batch-mode="batchMode"
         :selected-ids="selectedIds"
@@ -442,7 +439,6 @@ const handleBatchImported = (result: ImportResult): void => {
       />
       <GameListView
         v-else
-        :key="'list-' + filterSortKey"
         :filtered-games="filteredGames"
         :batch-mode="batchMode"
         :selected-ids="selectedIds"

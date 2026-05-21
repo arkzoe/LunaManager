@@ -42,7 +42,6 @@ export default defineConfig({
       })
     ],
     build: {
-      cssCodeSplit: false,
       sourcemap: false,
       rollupOptions: {
         output: {
@@ -55,9 +54,6 @@ export default defineConfig({
             }
             if (id.includes('node_modules/fuse.js')) {
               return 'fuse-vendor'
-            }
-            if (id.includes('node_modules/marked')) {
-              return 'markdown-vendor'
             }
           }
         }

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { marked } from 'marked'
+import { ref, watch } from 'vue'
 
 const props = defineProps<{
   show: boolean
@@ -16,10 +15,20 @@ const emit = defineEmits<{
   install: []
 }>()
 
-const parsedReleaseNotes = computed(() => {
-  if (!props.releaseNotes) return ''
-  return marked.parse(props.releaseNotes, { async: false }) as string
-})
+const parsedReleaseNotes = ref('')
+
+watch(
+  () => props.releaseNotes,
+  async (notes) => {
+    if (!notes) {
+      parsedReleaseNotes.value = ''
+      return
+    }
+    const { marked } = await import('marked')
+    parsedReleaseNotes.value = marked.parse(notes, { async: false }) as string
+  },
+  { immediate: true }
+)
 </script>
 
 <template>

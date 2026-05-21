@@ -1,91 +1,64 @@
 import { reactive, watch, onUnmounted } from 'vue'
-
-type SettingKey =
-  | 'autoStart'
-  | 'language'
-  | 'vndbApiKey'
-  | 'bangumiToken'
-  | 'magpiePath'
-  | 'magpieHotkey'
-  | 'autoLaunchMagpie'
-  | 'magpieDelay'
-  | 'backupDir'
-  | 'trackPlaytime'
-  | 'recordHistory'
-  | 'autoSyncMetadata'
-  | 'metadataSource'
+import type { AppSettings } from '../stores/useSettingsStore'
+import { useSettingsStore } from '../stores/useSettingsStore'
 
 export function useSettings() {
-  const settings = reactive({
+  const store = useSettingsStore()
+  const settings = reactive<AppSettings>({
     autoStart: false,
-    language: 'zh-CN' as 'zh-CN' | 'en-US',
+    autoUpdate: true,
+    language: 'zh-CN',
     vndbApiKey: '',
     bangumiToken: '',
     magpiePath: '',
-    magpieHotkey: 'fullscreen' as 'fullscreen' | 'windowed',
+    magpieHotkey: 'fullscreen',
     autoLaunchMagpie: true,
     magpieDelay: 5000,
     backupDir: '',
     trackPlaytime: true,
     recordHistory: true,
     autoSyncMetadata: false,
-    metadataSource: 'bangumi' as 'vndb' | 'bangumi'
+    metadataSource: 'bangumi'
   })
 
   const loadConfig = async (): Promise<void> => {
-    try {
-      const cfg = await window.api.getAllConfig()
-      settings.autoStart = cfg.autoStart ?? false
-      settings.language = cfg.language ?? 'zh-CN'
-      settings.vndbApiKey = cfg.vndbApiKey ?? ''
-      settings.bangumiToken = cfg.bangumiToken ?? ''
-      settings.magpiePath = cfg.magpiePath ?? ''
-      settings.magpieHotkey = cfg.magpieHotkey ?? 'fullscreen'
-      settings.autoLaunchMagpie = cfg.autoLaunchMagpie ?? true
-      settings.magpieDelay = cfg.magpieDelay ?? 5000
-      settings.backupDir = cfg.backupDir ?? ''
-      settings.trackPlaytime = cfg.trackPlaytime ?? true
-      settings.recordHistory = cfg.recordHistory ?? true
-      settings.autoSyncMetadata = cfg.autoSyncMetadata ?? false
-      settings.metadataSource = cfg.metadataSource ?? 'bangumi'
-    } catch {
-      /* use defaults */
+    await store.initSettings()
+    // Sync store values into the reactive proxy
+    const stored = store.settings
+    for (const key of Object.keys(settings) as (keyof AppSettings)[]) {
+      ;(settings as Record<string, unknown>)[key] = stored[key]
     }
   }
 
   const setupPersistence = (): void => {
     let timer: ReturnType<typeof setTimeout> | null = null
-    const dirty = new Set<SettingKey>()
-    const keyList: SettingKey[] = [
-      'autoStart',
-      'language',
-      'vndbApiKey',
-      'bangumiToken',
-      'magpiePath',
-      'magpieHotkey',
-      'autoLaunchMagpie',
-      'magpieDelay',
-      'backupDir',
-      'trackPlaytime',
-      'recordHistory',
-      'autoSyncMetadata',
-      'metadataSource'
-    ]
+    const dirty = new Set<keyof AppSettings>()
+
+    const watchedKeys = [
+      'autoStart', 'autoUpdate', 'language', 'vndbApiKey', 'bangumiToken',
+      'magpiePath', 'magpieHotkey', 'autoLaunchMagpie', 'magpieDelay',
+      'backupDir', 'trackPlaytime', 'recordHistory', 'autoSyncMetadata', 'metadataSource'
+    ] as const
+
     watch(
-      () => keyList.map((k) => settings[k]),
+      () => watchedKeys.map((k) => settings[k]),
       (newVals, oldVals) => {
         if (!oldVals) return
-        for (let i = 0; i < newVals.length; i++) {
-          if (newVals[i] !== oldVals[i]) dirty.add(keyList[i])
+        for (let i = 0; i < watchedKeys.length; i++) {
+          if (newVals[i] !== oldVals[i]) {
+            const key = watchedKeys[i]
+            dirty.add(key)
+            ;(store.settings as Record<string, unknown>)[key] = newVals[i]
+          }
         }
         if (timer) clearTimeout(timer)
-        timer = setTimeout(() => {
+        timer = setTimeout(async () => {
           const tasks: Promise<void>[] = []
-          for (const key of dirty) {
-            tasks.push(window.api.setConfig(key, settings[key] as never))
+          for (const k of dirty) {
+            tasks.push(store.updateSetting(k, settings[k] as never))
           }
           dirty.clear()
-          Promise.all(tasks).catch(() => {})
+          await Promise.allSettled(tasks)
         }, 500)
       }
     )

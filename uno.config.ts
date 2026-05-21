@@ -413,7 +413,27 @@ export default defineConfig({
     // ===== 模块容器 =====
     module: 'bg-bg-primary rounded-xl border border-border p-6',
     'module-filled': 'bg-bg-secondary rounded-xl border border-border-light p-6',
-    'module-elevated': 'bg-bg-primary rounded-xl border border-border p-6'
+    'module-elevated': 'bg-bg-primary rounded-xl border border-border p-6',
+
+    // ===== 对话框通用 =====
+    'dialog-overlay':
+      'fixed inset-0 z-1002 bg-black/45 flex items-center justify-center',
+    'dialog-card':
+      'bg-bg-primary border border-border rounded-xl shadow-2xl flex flex-col max-h-80vh',
+    'dialog-header':
+      'flex items-center justify-between px-5 py-4 border-b border-border-light shrink-0',
+    'dialog-title': 'text-15px font-bold text-text-primary m-0',
+    'dialog-close':
+      'w-7 h-7 flex-center border-none bg-transparent text-text-tertiary text-lg cursor-pointer rounded-md transition-colors duration-100 hover:bg-bg-hover hover:text-text-primary',
+    'dialog-body': 'px-5 py-6 overflow-y-auto flex-1',
+    'dialog-footer':
+      'flex justify-end gap-2 px-5 py-3.5 border-t border-border-light shrink-0',
+
+    // ===== 过渡简写 =====
+    'transition-ui':
+      'transition-all duration-150',
+    'transition-ui-slow':
+      'transition-all duration-250',
   },
   preflights: [
     {
@@ -423,6 +443,62 @@ ${toCSS(theme.themeLight || {})}
 }
 html.dark {
 ${toCSS(theme.themeDark || {})}
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes modal-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.96) translateY(8px); }
+}
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dropdown-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-4px) scale(0.96); }
+}
+@keyframes active-bar-in {
+  from { transform: translateY(-50%) scaleY(0); }
+  to { transform: translateY(-50%) scaleY(1); }
+}
+@keyframes icon-wiggle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
 }`
     }
   ]

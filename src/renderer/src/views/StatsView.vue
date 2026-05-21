@@ -1,22 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Filler
-} from 'chart.js'
-import { Line } from 'vue-chartjs'
+import { Line } from '../utils/chart'
 import { useGameStore } from '../stores/useGameStore'
 import { useStats, computeRankings } from '../composables/useStats'
 import { useStatsChart } from '../composables/useStatsChart'
 import { useSettingsStore } from '../stores/useSettingsStore'
 import StatsRanking from './stats/StatsRanking.vue'
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
 const settingsStore = useSettingsStore()
 const gameStore = useGameStore()

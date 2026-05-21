@@ -3,66 +3,72 @@ import { defineStore } from 'pinia'
 import type { AppConfig } from '../../../shared/types'
 
 export interface AppSettings {
-  // 基础配置
   autoStart: boolean
   autoUpdate: boolean
-
-  // 元数据设置
-  metadataSource: 'vndb' | 'bangumi'
-  autoSyncMetadata: boolean
-
-  // 外观设置
   language: 'zh-CN' | 'en-US'
-
-  // 游玩配置
+  vndbApiKey: string
+  bangumiToken: string
+  magpiePath: string
+  magpieHotkey: 'fullscreen' | 'windowed'
+  autoLaunchMagpie: boolean
+  magpieDelay: number
+  backupDir: string
   trackPlaytime: boolean
   recordHistory: boolean
+  autoSyncMetadata: boolean
+  metadataSource: 'vndb' | 'bangumi'
 }
 
 const defaultSettings: AppSettings = {
   autoStart: false,
   autoUpdate: true,
-  metadataSource: 'bangumi',
-  autoSyncMetadata: true,
   language: 'zh-CN',
+  vndbApiKey: '',
+  bangumiToken: '',
+  magpiePath: '',
+  magpieHotkey: 'fullscreen',
+  autoLaunchMagpie: true,
+  magpieDelay: 5000,
+  backupDir: '',
   trackPlaytime: true,
-  recordHistory: true
+  recordHistory: true,
+  autoSyncMetadata: false,
+  metadataSource: 'bangumi'
 }
 
-// Electron Store 配置键名映射
 const configKeyMap: Record<keyof AppSettings, keyof AppConfig> = {
   autoStart: 'autoStart',
   autoUpdate: 'autoUpdate',
-  metadataSource: 'metadataSource',
-  autoSyncMetadata: 'autoSyncMetadata',
   language: 'language',
+  vndbApiKey: 'vndbApiKey',
+  bangumiToken: 'bangumiToken',
+  magpiePath: 'magpiePath',
+  magpieHotkey: 'magpieHotkey',
+  autoLaunchMagpie: 'autoLaunchMagpie',
+  magpieDelay: 'magpieDelay',
+  backupDir: 'backupDir',
   trackPlaytime: 'trackPlaytime',
-  recordHistory: 'recordHistory'
+  recordHistory: 'recordHistory',
+  autoSyncMetadata: 'autoSyncMetadata',
+  metadataSource: 'metadataSource'
 }
 
 export const useSettingsStore = defineStore('settings', () => {
-  // State
   const settings = ref<AppSettings>({ ...defaultSettings })
   const isLoading = ref(false)
 
-  // Getters
   const allSettings = computed(() => settings.value)
-
   const currentLanguage = computed(() => settings.value.language)
 
-  // Actions
   const initSettings = async (): Promise<void> => {
     isLoading.value = true
     try {
       const config = await window.api.getAllConfig()
-      settings.value = {
-        autoStart: config.autoStart ?? defaultSettings.autoStart,
-        autoUpdate: config.autoUpdate ?? defaultSettings.autoUpdate,
-        metadataSource: config.metadataSource ?? defaultSettings.metadataSource,
-        autoSyncMetadata: config.autoSyncMetadata ?? defaultSettings.autoSyncMetadata,
-        language: config.language ?? defaultSettings.language,
-        trackPlaytime: config.trackPlaytime ?? defaultSettings.trackPlaytime,
-        recordHistory: config.recordHistory ?? defaultSettings.recordHistory
+      for (const key of Object.keys(defaultSettings) as (keyof AppSettings)[]) {
+        const val = config[configKeyMap[key] as keyof AppConfig]
+        if (val !== undefined && val !== null) {
+          ;(settings.value as Record<string, unknown>)[key] = val
+        }
       }
     } catch (error) {
       console.error('Failed to load settings:', error)
@@ -76,7 +82,6 @@ export const useSettingsStore = defineStore('settings', () => {
     value: AppSettings[K]
   ): Promise<void> => {
     settings.value[key] = value
-
     try {
       const configKey = configKeyMap[key]
       await window.api.setConfig(configKey, value as unknown as AppConfig[typeof configKey])
@@ -87,7 +92,6 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const updateSettings = async (newSettings: Partial<AppSettings>): Promise<void> => {
     settings.value = { ...settings.value, ...newSettings }
-
     try {
       const configToSave: Partial<AppConfig> = {}
       for (const [key, value] of Object.entries(newSettings)) {
@@ -102,27 +106,13 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  const resetSettings = async (): Promise<void> => {
-    settings.value = { ...defaultSettings }
-
-    try {
-      await window.api.setAllConfig(defaultSettings as Partial<AppConfig>)
-    } catch (error) {
-      console.error('Failed to reset settings:', error)
-    }
-  }
-
   return {
-    // State
     settings,
     isLoading,
-    // Getters
     allSettings,
     currentLanguage,
-    // Actions
     initSettings,
     updateSetting,
-    updateSettings,
-    resetSettings
+    updateSettings
   }
 })
