@@ -111,8 +111,8 @@ function setupIpcHandlers(): void {
   ipcMain.handle('play:getAllAggregatedStats', () => sessionOps.getAllAggregatedStats())
 
   // ===== Game Launch =====
-  ipcMain.handle('launch:game', async (_, gameId: string, mode: string) => {
-    return launchGame(gameId, mode as LaunchMode)
+  ipcMain.handle('launch:game', async (_, gameId: string, modes: LaunchMode[]) => {
+    return launchGame(gameId, modes)
   })
   ipcMain.handle('launch:stop', (_, gameId: string) => {
     return stopGame(gameId)

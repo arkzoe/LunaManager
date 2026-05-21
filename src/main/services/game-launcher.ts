@@ -50,23 +50,10 @@ const magpieHelperScript = [
   '"@'
 ].join('\n')
 
-const magpieEncodedFullscreen = Buffer.from(
-  magpieHelperScript +
-    '\n' +
-    'Start-Sleep -Milliseconds ___DELAY___\n[MagpieHelper]::SendKeys(0x12, 0x10, 0x41)',
-  'utf16le'
-).toString('base64')
-
-const magpieEncodedWindowed = Buffer.from(
-  magpieHelperScript +
-    '\n' +
-    'Start-Sleep -Milliseconds ___DELAY___\n[MagpieHelper]::SendKeys(0x12, 0x10, 0x51)',
-  'utf16le'
-).toString('base64')
-
 function sendMagpieHotkey(delayMs = 3000, hotkey: 'fullscreen' | 'windowed' = 'fullscreen'): void {
-  const template = hotkey === 'fullscreen' ? magpieEncodedFullscreen : magpieEncodedWindowed
-  const encoded = template.replace('___DELAY___', String(delayMs))
+  const keys = hotkey === 'fullscreen' ? '0x12, 0x10, 0x41' : '0x12, 0x10, 0x51'
+  const script = `${magpieHelperScript}\nStart-Sleep -Milliseconds ${delayMs}\n[MagpieHelper]::SendKeys(${keys})`
+  const encoded = Buffer.from(script, 'utf16le').toString('base64')
 
   exec(
     `powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${encoded}`,
@@ -77,7 +64,7 @@ function sendMagpieHotkey(delayMs = 3000, hotkey: 'fullscreen' | 'windowed' = 'f
   )
 }
 
-export async function launchGame(gameId: string, mode: LaunchMode): Promise<void> {
+export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<void> {
   if (launchLocks.has(gameId)) {
     await launchLocks.get(gameId)
     return
@@ -104,38 +91,35 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
     const magpieDelay = getConfig('magpieDelay')
     const gameDir = path.dirname(game.executable_path)
 
+    const useLE = modes.includes('le')
+    const useMagpie = modes.includes('magpie')
+
     let cmd: string
     let args: string[]
 
-    switch (mode) {
-      case 'le': {
-        const lePath = getLeProcPath()
-        if (!existsSync(lePath))
-          throw new Error(`LEProc.exe 未找到：${lePath}，请确认程序已正确安装`)
-        cmd = lePath
-        args = [game.executable_path]
-        break
-      }
-      case 'magpie':
-        if (!magpiePath) throw new Error('请先在设置中配置 Magpie 路径')
-        if (autoLaunchMagpie) {
-          const running = await isProcessRunning('Magpie.exe')
-          if (!running) {
-            const magpieProc = spawn(magpiePath, ['-t'], {
-              detached: true,
-              stdio: 'ignore'
-            })
-            magpieProc.unref()
-          }
+    if (useLE) {
+      const lePath = getLeProcPath()
+      if (!existsSync(lePath))
+        throw new Error(`LEProc.exe 未找到：${lePath}，请确认程序已正确安装`)
+      cmd = lePath
+      args = [game.executable_path]
+    } else {
+      cmd = game.executable_path
+      args = []
+    }
+
+    if (useMagpie) {
+      if (!magpiePath) throw new Error('请先在设置中配置 Magpie 路径')
+      if (autoLaunchMagpie) {
+        const running = await isProcessRunning('Magpie.exe')
+        if (!running) {
+          const magpieProc = spawn(magpiePath, ['-t'], {
+            detached: true,
+            stdio: 'ignore'
+          })
+          magpieProc.unref()
         }
-        cmd = game.executable_path
-        args = []
-        break
-      case 'normal':
-      default:
-        cmd = game.executable_path
-        args = []
-        break
+      }
     }
 
     let sessionId: string | null = null
@@ -146,7 +130,7 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
         const session = sessionOps.start(gameId)
         sessionId = session.id
       }
-      gameOps.update(gameId, { last_launch_method: mode })
+      gameOps.update(gameId, { last_launch_method: modes.join(',') })
     })
     initTxn()
 
@@ -158,7 +142,7 @@ export async function launchGame(gameId: string, mode: LaunchMode): Promise<void
 
     activeProcesses.set(gameId, proc)
 
-    if (mode === 'magpie') {
+    if (useMagpie) {
       sendMagpieHotkey(magpieDelay, magpieHotkey)
     }
 

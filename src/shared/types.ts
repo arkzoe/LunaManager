@@ -18,7 +18,7 @@ export interface GameRecord {
   bangumi_id: string
   notes: string
   custom_tags: string
-  last_launch_method: LaunchMode
+  last_launch_method: string
   created_at: number
   updated_at: number
 }
@@ -179,7 +179,7 @@ export interface IElectronAPI {
       last_played: number | null
     }[]
   >
-  launchGame: (gameId: string, mode: LaunchMode) => Promise<void>
+  launchGame: (gameId: string, modes: LaunchMode[]) => Promise<void>
   stopGame: (gameId: string) => Promise<void>
   isGameRunning: (gameId: string) => Promise<boolean>
 

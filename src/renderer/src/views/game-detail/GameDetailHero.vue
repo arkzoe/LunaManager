@@ -26,14 +26,16 @@ const props = defineProps<{
   showLaunchMenu: boolean
   statuses: { id: GameStatus; label: string }[]
   launchModes: LaunchModeItem[]
+  selectedModes: string[]
 }>()
 
 defineEmits<{
   (e: 'update:tempRating', val: number): void
   (e: 'update:tempStatus', val: GameStatus): void
   (e: 'toggleLaunchMenu'): void
-  (e: 'launch', mode: string): void
+  (e: 'launch'): void
   (e: 'stop'): void
+  (e: 'select-mode', mode: string): void
 }>()
 
 const dataSourceLabel = computed(() => {
@@ -54,8 +56,6 @@ const parsedTags = computed<string[]>(() => {
 const hasMetadata = computed(() => {
   return props.game.vndb_id || props.game.bangumi_id
 })
-
-const defaultLaunchMode = computed(() => props.game.last_launch_method || 'normal')
 </script>
 
 <template>
@@ -149,11 +149,7 @@ const defaultLaunchMode = computed(() => props.game.last_launch_method || 'norma
 
       <div class="launch-area">
         <div class="launch-group">
-          <button
-            v-if="!isRunning"
-            class="launch-main"
-            @click.stop="$emit('launch', defaultLaunchMode)"
-          >
+          <button v-if="!isRunning" class="launch-main" @click.stop="$emit('launch')">
             <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
               <path d="M8 5v14l11-7z" />
             </svg>
@@ -184,11 +180,18 @@ const defaultLaunchMode = computed(() => props.game.last_launch_method || 'norma
             class="lm-item"
             :class="{ 'lm-item-disabled': mode.disabled }"
             :disabled="mode.disabled"
-            @click="$emit('launch', mode.id)"
+            @click="$emit('select-mode', mode.id)"
           >
             <div class="lm-label">
               <span>{{ mode.label }}</span>
-              <span v-if="mode.id === defaultLaunchMode" class="lm-check">✓</span>
+              <span
+                v-if="
+                  selectedModes.includes(mode.id) ||
+                  (mode.id === 'normal' && selectedModes.length === 0)
+                "
+                class="lm-check"
+                >✓</span
+              >
             </div>
             <div class="lm-desc">{{ mode.desc }}</div>
           </button>

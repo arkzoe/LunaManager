@@ -21,7 +21,7 @@ const api: IElectronAPI = {
   getAllSessions: () => ipcRenderer.invoke('play:getAllSessions'),
   getAggregatedStats: (gameId) => ipcRenderer.invoke('play:getAggregatedStats', gameId),
   getAllAggregatedStats: () => ipcRenderer.invoke('play:getAllAggregatedStats'),
-  launchGame: (gameId, mode) => ipcRenderer.invoke('launch:game', gameId, mode),
+  launchGame: (gameId, modes) => ipcRenderer.invoke('launch:game', gameId, modes),
   stopGame: (gameId) => ipcRenderer.invoke('launch:stop', gameId),
   isGameRunning: (gameId) => ipcRenderer.invoke('launch:isRunning', gameId),
 

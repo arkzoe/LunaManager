@@ -18,6 +18,7 @@ const store = useGameStore()
 const activeTab = ref<'stats' | 'edit' | 'backup'>('stats')
 const showLaunchMenu = ref(false)
 const isRunning = ref(false)
+const selectedLaunchModes = ref<string[]>([])
 const tempStatus = ref<GameStatus>((props.game.status as GameStatus) || 'want')
 const tempRating = ref(props.game.personal_rating || 0)
 const tempNotes = ref(props.game.notes || '')
@@ -51,6 +52,12 @@ function resetForm(game: GameRecord): void {
   tempDataSource.value = game.vndb_id ? 'vndb' : game.bangumi_id ? 'bangumi' : ''
   tempVndbId.value = game.vndb_id || ''
   tempBangumiId.value = game.bangumi_id || ''
+  selectedLaunchModes.value = parseLaunchMethods(game.last_launch_method)
+}
+
+function parseLaunchMethods(value: string): string[] {
+  if (!value) return []
+  return value.split(',').filter((m) => m && m !== 'normal')
 }
 
 watch(() => props.game, resetForm)
@@ -99,15 +106,30 @@ const toggleLaunchMenu = (): void => {
   showLaunchMenu.value = !showLaunchMenu.value
 }
 
-const handleLaunch = async (mode: string): Promise<void> => {
-  showLaunchMenu.value = false
-  const modeObj = launchModes.find((m) => m.id === mode)
-  if (modeObj?.disabled) {
-    showToastMsg('此启动方式尚未实现', 'error')
+const selectLaunchMode = (mode: string): void => {
+  if (mode === 'normal') {
+    selectedLaunchModes.value = []
     return
   }
+  const current = [...selectedLaunchModes.value]
+  const normalIdx = current.indexOf('normal')
+  if (normalIdx >= 0) {
+    current.splice(normalIdx, 1)
+  }
+  const modeIdx = current.indexOf(mode)
+  if (modeIdx >= 0) {
+    current.splice(modeIdx, 1)
+  } else {
+    current.push(mode)
+  }
+  selectedLaunchModes.value = current
+}
+
+const handleLaunch = async (): Promise<void> => {
+  showLaunchMenu.value = false
+  const modes = selectedLaunchModes.value.length > 0 ? [...selectedLaunchModes.value] : ['normal']
   try {
-    await window.api.launchGame(props.game.id, mode as LaunchMode)
+    await window.api.launchGame(props.game.id, modes as LaunchMode[])
     isRunning.value = true
     showToastMsg('游戏已启动', 'success')
     const updated = await window.api.getGameById(props.game.id)
@@ -292,11 +314,13 @@ const iconPaths: Record<string, string> = {
       :show-launch-menu="showLaunchMenu"
       :statuses="statuses"
       :launch-modes="launchModes"
+      :selected-modes="selectedLaunchModes"
       @update:temp-rating="handleRatingChange($event)"
       @update:temp-status="tempStatus = $event"
       @toggle-launch-menu="toggleLaunchMenu"
       @launch="handleLaunch"
       @stop="handleStop"
+      @select-mode="selectLaunchMode"
     />
 
     <div class="tabs">
