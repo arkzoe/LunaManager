@@ -656,5 +656,6 @@ const handleBatchImported = (result: ImportResult): void => {
   max-height: 500px;
   opacity: 1;
   pointer-events: auto;
+  overflow: visible;
 }
 </style>

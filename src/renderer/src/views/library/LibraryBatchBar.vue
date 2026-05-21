@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { ref, watch, nextTick } from 'vue'
 import type { GameStatus } from '../../../../shared/types'
 
-defineProps<{
+const props = defineProps<{
   batchCount: number
   allFilteredSelected: boolean
   statusFilters: { id: GameStatus; label: string }[]
@@ -16,6 +17,28 @@ const emit = defineEmits<{
   (e: 'openDeleteConfirm'): void
   (e: 'closeBatchStatusMenu'): void
 }>()
+
+const triggerRef = ref<HTMLElement | null>(null)
+const menuStyle = ref<Record<string, string>>({})
+
+const updateMenuPosition = (): void => {
+  if (!triggerRef.value) return
+  const rect = triggerRef.value.getBoundingClientRect()
+  menuStyle.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+    minWidth: `${rect.width}px`
+  }
+}
+
+watch(
+  () => props.showBatchStatusMenu,
+  (val) => {
+    if (val) {
+      nextTick(updateMenuPosition)
+    }
+  }
+)
 </script>
 
 <template>
@@ -25,29 +48,36 @@ const emit = defineEmits<{
       {{ allFilteredSelected ? '取消全选' : '全选' }}
     </button>
     <div class="bb-status-wrap">
-      <button class="bb-btn" :disabled="batchCount === 0" @click="emit('toggleBatchStatus')">
+      <button
+        ref="triggerRef"
+        class="bb-btn"
+        :disabled="batchCount === 0"
+        @click="emit('toggleBatchStatus')"
+      >
         修改状态
         <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current"><path d="M7 10l5 5 5-5z" /></svg>
       </button>
-      <Transition name="dropdown">
-        <div
-          v-if="showBatchStatusMenu"
-          class="context-overlay"
-          @click="emit('closeBatchStatusMenu')"
-        />
-      </Transition>
-      <Transition name="dropdown">
-        <div v-if="showBatchStatusMenu" class="batch-status-menu">
-          <button
-            v-for="f in statusFilters"
-            :key="f.id"
-            class="ctx-item"
-            @click="emit('handleBatchStatus', f.id)"
-          >
-            {{ f.label }}
-          </button>
-        </div>
-      </Transition>
+      <Teleport to="body">
+        <Transition name="dropdown">
+          <div
+            v-if="showBatchStatusMenu"
+            class="context-overlay"
+            @click="emit('closeBatchStatusMenu')"
+          />
+        </Transition>
+        <Transition name="dropdown">
+          <div v-if="showBatchStatusMenu" class="batch-status-menu" :style="menuStyle">
+            <button
+              v-for="f in statusFilters"
+              :key="f.id"
+              class="ctx-item"
+              @click="emit('handleBatchStatus', f.id)"
+            >
+              {{ f.label }}
+            </button>
+          </div>
+        </Transition>
+      </Teleport>
     </div>
     <button class="bb-btn" :disabled="batchCount === 0" @click="emit('openCollectionPicker')">
       添加到收藏夹
@@ -120,6 +150,7 @@ const emit = defineEmits<{
 
 .bb-status-wrap {
   position: relative;
+  z-index: 10;
 }
 
 .context-overlay {
@@ -129,9 +160,7 @@ const emit = defineEmits<{
 }
 
 .batch-status-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
+  position: fixed;
   z-index: 1000;
   min-width: 120px;
   background: var(--bg-primary);
