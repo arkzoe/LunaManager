@@ -303,7 +303,7 @@ export default defineConfig({
     'btn-primary-outline':
       'btn bg-transparent text-neutral-700 border border-neutral-700 hover:bg-neutral-100',
     'btn-secondary':
-      'btn bg-bg-tertiary text-text-secondary border border-border hover:bg-bg-quaternary hover:border-border-medium',
+      'btn bg-bg-tertiary text-text-secondary border border-border hover:bg-bg-hover hover:border-border-medium',
     'btn-ghost': 'btn bg-transparent text-text-secondary hover:bg-bg-secondary',
     'btn-danger':
       'btn bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 shadow-danger hover:shadow-danger-lg',
