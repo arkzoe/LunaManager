@@ -60,31 +60,31 @@ export default defineConfig({
 
       // ========== 背景层级 ==========
       bg: {
-        base: '#f8f9fa',
-        sidebar: '#ffffff',
-        primary: '#ffffff',
-        secondary: '#f9fafb',
-        tertiary: '#f3f4f6',
+        base: 'var(--bg-base)',
+        sidebar: 'var(--bg-sidebar)',
+        primary: 'var(--bg-primary)',
+        secondary: 'var(--bg-secondary)',
+        tertiary: 'var(--bg-tertiary)',
         quaternary: '#e5e7eb',
-        hover: '#f9fafb',
-        active: '#eff6ff'
+        hover: 'var(--bg-hover)',
+        active: 'var(--bg-active)'
       },
 
       // ========== 文字颜色 ==========
       text: {
-        primary: '#374151',
-        secondary: '#4b5563',
-        tertiary: '#6b7280',
-        muted: '#9ca3af',
+        primary: 'var(--text-primary)',
+        secondary: 'var(--text-secondary)',
+        tertiary: 'var(--text-tertiary)',
+        muted: 'var(--text-muted)',
         inverse: '#ffffff',
         brand: '#44484e'
       },
 
       // ========== 边框颜色 ==========
       border: {
-        DEFAULT: '#e5e7eb',
-        light: '#f3f4f6',
-        medium: '#d1d5db',
+        DEFAULT: 'var(--border-color)',
+        light: 'var(--border-color-light)',
+        medium: 'var(--border-color-medium)',
         strong: '#9ca3af',
         brand: '#cbd5e1'
       },
@@ -499,6 +499,49 @@ ${toCSS(theme.themeDark || {})}
 @keyframes slide-up {
   from { opacity: 1; transform: translateY(0); }
   to { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fade-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fade-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+}
+@keyframes pulse-dot-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+@keyframes toast-shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+@keyframes slide-expand {
+  from { max-height: 0; opacity: 0; transform: translateY(-8px); }
+  to { max-height: 600px; opacity: 1; transform: translateY(0); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(20px) scale(0.95); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }`
     }
   ]

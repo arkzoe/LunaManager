@@ -320,15 +320,6 @@ const handlePickSavePath = async (): Promise<void> => {
 </template>
 
 <style scoped>
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .modal-enter-active {
   animation: overlay-in 0.2s ease;
 }
@@ -340,8 +331,6 @@ const handlePickSavePath = async (): Promise<void> => {
   max-width: 90vw;
   max-height: 85vh;
   overflow-y: auto;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
 }
@@ -350,41 +339,6 @@ const handlePickSavePath = async (): Promise<void> => {
 }
 .modal-leave-active .dialog-card {
   animation: modal-out 0.15s ease forwards;
-}
-.dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color-light);
-}
-.dialog-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-.dialog-close {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  font-size: 18px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition:
-    background-color 0.1s,
-    border-color 0.1s,
-    color 0.1s,
-    box-shadow 0.1s;
-}
-.dialog-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
 }
 .dialog-body {
   padding: 20px;

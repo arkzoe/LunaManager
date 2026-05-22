@@ -1,5 +1,4 @@
 import 'virtual:uno.css'
-import './assets/animations.css'
 
 import { createApp } from 'vue'
 import { pinia } from './stores'
