@@ -4,6 +4,12 @@ import { useSettingsStore } from '../stores/useSettingsStore'
 
 export function useSettings() {
   const store = useSettingsStore()
+  let persistTimer: ReturnType<typeof setTimeout> | null = null
+
+  onUnmounted(() => {
+    if (persistTimer) clearTimeout(persistTimer)
+  })
+
   const settings = reactive<AppSettings>({
     autoStart: false,
     autoUpdate: true,
@@ -31,7 +37,6 @@ export function useSettings() {
   }
 
   const setupPersistence = (): void => {
-    let timer: ReturnType<typeof setTimeout> | null = null
     const dirty = new Set<keyof AppSettings>()
 
     const watchedKeys = [
@@ -51,8 +56,8 @@ export function useSettings() {
             ;(store.settings as Record<string, unknown>)[key] = newVals[i]
           }
         }
-        if (timer) clearTimeout(timer)
-        timer = setTimeout(async () => {
+        if (persistTimer) clearTimeout(persistTimer)
+        persistTimer = setTimeout(async () => {
           const tasks: Promise<void>[] = []
           for (const k of dirty) {
             tasks.push(store.updateSetting(k, settings[k] as never))
@@ -62,10 +67,6 @@ export function useSettings() {
         }, 500)
       }
     )
-
-    onUnmounted(() => {
-      if (timer) clearTimeout(timer)
-    })
   }
 
   const handleSelectMagpiePath = async (): Promise<void> => {

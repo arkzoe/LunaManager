@@ -151,6 +151,10 @@ const handleUpdated = (game: GameRecord): void => {
     box-shadow 0.15s;
 }
 
+.back-btn {
+  -webkit-app-region: no-drag;
+}
+
 .back-btn:hover {
   background: var(--bg-secondary);
   color: var(--text-primary);

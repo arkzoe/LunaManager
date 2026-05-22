@@ -235,4 +235,10 @@ export interface IElectronAPI {
   quitAndInstall: () => Promise<void>
   onUpdateStatus: (callback: (status: string, data?: unknown) => void) => () => void
   getAppVersion: () => Promise<string>
+
+  minimizeWindow: () => Promise<void>
+  toggleMaximizeWindow: () => Promise<void>
+  closeWindow: () => Promise<void>
+  isMaximized: () => Promise<boolean>
+  onMaximizeChange: (callback: (maximized: boolean) => void) => () => void
 }

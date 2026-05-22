@@ -93,7 +93,7 @@ const iconMap: Record<string, string> = {
 .sidebar {
   width: 200px;
   min-width: 200px;
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg-sidebar);
@@ -138,6 +138,7 @@ const iconMap: Record<string, string> = {
   align-items: center;
   gap: 8px;
   padding: 16px 8px 20px;
+  -webkit-app-region: drag;
 }
 
 .logo-icon {

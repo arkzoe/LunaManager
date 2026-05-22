@@ -65,7 +65,17 @@ const api: IElectronAPI = {
     ipcRenderer.on('update:status', handler)
     return () => ipcRenderer.removeListener('update:status', handler)
   },
-  getAppVersion: () => ipcRenderer.invoke('app:getVersion')
+  getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+
+  minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
+  toggleMaximizeWindow: () => ipcRenderer.invoke('window:maximize'),
+  closeWindow: () => ipcRenderer.invoke('window:close'),
+  isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+  onMaximizeChange: (callback) => {
+    const handler = (_e, maximized) => callback(maximized)
+    ipcRenderer.on('window:maximize-change', handler)
+    return () => ipcRenderer.removeListener('window:maximize-change', handler)
+  }
 }
 
 if (process.contextIsolated) {

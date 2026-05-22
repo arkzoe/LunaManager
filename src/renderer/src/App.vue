@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, provide } from 'vue'
+import TitleBar from './layout/TitleBar.vue'
 import Sidebar from './layout/Sidebar.vue'
 import MainContent from './layout/MainContent.vue'
 import UpdateDialog from './shared/UpdateDialog.vue'
@@ -115,8 +116,11 @@ onUnmounted(() => {
 
 <template>
   <div class="app-shell">
-    <Sidebar :active-tab="activeTab" @update:active-tab="handleTabChange" />
-    <MainContent :active-tab="activeTab" @update:active-tab="handleTabChange" />
+    <TitleBar />
+    <div class="app-body">
+      <Sidebar :active-tab="activeTab" @update:active-tab="handleTabChange" />
+      <MainContent :active-tab="activeTab" @update:active-tab="handleTabChange" />
+    </div>
 
     <UpdateDialog
       :show="updateDialog.show"
@@ -167,11 +171,18 @@ body {
 
 .app-shell {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   width: 100vw;
   min-width: 520px;
   min-height: 400px;
   overflow: hidden;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 ::-webkit-scrollbar {

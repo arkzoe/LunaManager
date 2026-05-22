@@ -23,9 +23,11 @@ import {
 } from './database'
 import { getConfig, setConfig, getAllConfig, setAllConfig } from './config/store'
 
+let mainWindow: BrowserWindow | null = null
+
 function createWindow(): void {
   const bounds = getConfig('windowBounds')
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: bounds.width,
     height: bounds.height,
     x: bounds.x,
@@ -34,6 +36,7 @@ function createWindow(): void {
     minHeight: 700,
     show: false,
     autoHideMenuBar: true,
+    frame: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       nodeIntegration: false,
@@ -43,20 +46,23 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => mainWindow.show())
+  mainWindow!.on('ready-to-show', () => mainWindow!.show())
 
-  mainWindow.on('resize', () => debounceSetBounds(mainWindow))
-  mainWindow.on('move', () => debounceSetBounds(mainWindow))
+  mainWindow!.on('resize', () => debounceSetBounds(mainWindow!))
+  mainWindow!.on('move', () => debounceSetBounds(mainWindow!))
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  mainWindow!.on('maximize', () => mainWindow!.webContents.send('window:maximize-change', true))
+  mainWindow!.on('unmaximize', () => mainWindow!.webContents.send('window:maximize-change', false))
+
+  mainWindow!.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow!.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow!.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
@@ -221,6 +227,25 @@ function setupIpcHandlers(): void {
 
   // ===== App Info =====
   ipcMain.handle('app:getVersion', () => app.getVersion())
+
+  // ===== Window Controls =====
+  ipcMain.handle('window:minimize', () => {
+    mainWindow?.minimize()
+  })
+  ipcMain.handle('window:maximize', () => {
+    if (!mainWindow) return
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow.maximize()
+    }
+  })
+  ipcMain.handle('window:close', () => {
+    mainWindow?.close()
+  })
+  ipcMain.handle('window:isMaximized', () => {
+    return mainWindow?.isMaximized() ?? false
+  })
 }
 
 import type { AppConfig } from '../shared/types'
