@@ -1,6 +1,7 @@
 import { spawn, execFile, exec, type ChildProcess } from 'child_process'
 import path from 'path'
 import { existsSync } from 'fs'
+import { BrowserWindow } from 'electron'
 import { getConfig } from '../config/store'
 import { getLeProcPath } from '../config/paths'
 import { sessionOps, gameOps, getDatabase } from '../database'
@@ -169,6 +170,14 @@ export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<v
         gameOps.update(gameId, {
           last_played: new Date().toISOString()
         })
+      }
+
+      const wins = BrowserWindow.getAllWindows()
+      if (wins.length > 0) {
+        const updated = gameOps.getById(gameId)
+        if (updated) {
+          wins[0].webContents.send('game:updated', updated)
+        }
       }
     })
   } finally {

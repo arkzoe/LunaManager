@@ -75,6 +75,11 @@ const api: IElectronAPI = {
     const handler = (_e, maximized) => callback(maximized)
     ipcRenderer.on('window:maximize-change', handler)
     return () => ipcRenderer.removeListener('window:maximize-change', handler)
+  },
+  onGameUpdated: (callback) => {
+    const handler = (_e, game) => callback(game)
+    ipcRenderer.on('game:updated', handler)
+    return () => ipcRenderer.removeListener('game:updated', handler)
   }
 }
 

@@ -27,6 +27,11 @@ export const useGameStore = defineStore('games', () => {
     if (idx !== -1) Object.assign(games.value[idx], updates, { updated_at: Date.now() })
   }
 
+  const refreshGame = (updated: GameRecord): void => {
+    const idx = games.value.findIndex((g) => g.id === updated.id)
+    if (idx !== -1) games.value[idx] = updated
+  }
+
   const deleteGame = async (id: string): Promise<void> => {
     await window.api.deleteGame(id)
     games.value = games.value.filter((g) => g.id !== id)
@@ -39,6 +44,7 @@ export const useGameStore = defineStore('games', () => {
     allGames,
     loadGames,
     updateGame,
+    refreshGame,
     deleteGame
   }
 })

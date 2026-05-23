@@ -4,7 +4,7 @@ import TitleBar from './layout/TitleBar.vue'
 import Sidebar from './layout/Sidebar.vue'
 import MainContent from './layout/MainContent.vue'
 import UpdateDialog from './shared/UpdateDialog.vue'
-import { useThemeStore } from './stores'
+import { useGameStore, useThemeStore } from './stores'
 
 const activeTab = ref('home')
 const themeStore = useThemeStore()
@@ -81,8 +81,10 @@ function handleInstall(): void {
 
 // --- Persistent update listeners ---
 let cleanupUpdateStatus: (() => void) | null = null
+let cleanupGameUpdated: (() => void) | null = null
 
 onMounted(() => {
+  const gameStore = useGameStore()
   themeStore.initTheme()
   themeStore.startWatchingSystemTheme()
 
@@ -106,11 +108,17 @@ onMounted(() => {
       }
     }
   })
+
+  // Listen for game data updates (e.g. after game exits and last_played is updated)
+  cleanupGameUpdated = window.api.onGameUpdated((game) => {
+    gameStore.refreshGame(game)
+  })
 })
 
 onUnmounted(() => {
   themeStore.stopWatchingSystemTheme()
   cleanupUpdateStatus?.()
+  cleanupGameUpdated?.()
 })
 </script>
 
