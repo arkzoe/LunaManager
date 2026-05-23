@@ -36,8 +36,9 @@ const tabTitle = computed(() => {
   return map[props.activeTab] || ''
 })
 
-const handleSelectGame = (game: GameRecord): void => {
-  selectedGame.value = game
+const handleSelectGame = async (game: GameRecord): Promise<void> => {
+  const full = await window.api.getGameById(game.id)
+  selectedGame.value = full || game
   nextTick(() => {
     contentRef.value?.scrollTo(0, 0)
   })
