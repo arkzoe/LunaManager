@@ -23,7 +23,6 @@ const props = defineProps<{
   searchNoResults: boolean
   metadataFilled: boolean
   searchSource: 'vndb' | 'bangumi'
-  isLoading: boolean
   error: string
 }>()
 
@@ -31,8 +30,6 @@ const emit = defineEmits<{
   (e: 'update:form', val: MetadataForm): void
   (e: 'search'): void
   (e: 'pickSavePath'): void
-  (e: 'confirm'): void
-  (e: 'cancel'): void
 }>()
 
 const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): void => {
@@ -212,17 +209,8 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
         <div class="form-path save-path-text" :class="{ empty: !form.savePath }">
           {{ form.savePath || '未设置' }}
         </div>
-        <button class="btn-pick-path" :disabled="isLoading" @click="emit('pickSavePath')">
-          选择
-        </button>
+        <button class="btn-pick-path" @click="emit('pickSavePath')">选择</button>
       </div>
-    </div>
-
-    <div class="form-actions">
-      <button class="btn-ghost" :disabled="isLoading" @click="emit('cancel')">取消</button>
-      <button class="btn-primary" :disabled="isLoading" @click="emit('confirm')">
-        {{ isLoading ? '导入中...' : '确认导入' }}
-      </button>
     </div>
   </div>
 </template>
@@ -456,14 +444,6 @@ const update = <K extends keyof MetadataForm>(key: K, val: MetadataForm[K]): voi
   color: var(--accent-primary);
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color-light);
-}
 .text-danger {
   color: var(--danger);
 }

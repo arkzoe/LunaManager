@@ -273,9 +273,9 @@ const handlePickSavePath = async (): Promise<void> => {
             <h2 class="dialog-title">导入游戏</h2>
             <button class="dialog-close" @click="handleClose">&times;</button>
           </div>
-          <div class="dialog-body">
-            <!-- Step 1: Select Folder -->
-            <div v-if="!scanResult" class="folder-pick-area">
+          <!-- Step 1: Select Folder -->
+          <div v-if="!scanResult" class="dialog-body">
+            <div class="folder-pick-area">
               <button class="btn-primary" :disabled="isLoading" @click="handlePickFolder">
                 <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
                   <path
@@ -285,25 +285,31 @@ const handlePickSavePath = async (): Promise<void> => {
                 {{ isLoading ? '扫描中...' : '选择游戏文件夹' }}
               </button>
             </div>
-            <!-- Step 2: Metadata Form -->
-            <GameMetadataForm
-              v-else
-              :scan-result="scanResult"
-              :form="form"
-              :cover-url="coverUrl"
-              :searching="searching"
-              :search-no-results="searchNoResults"
-              :metadata-filled="metadataFilled"
-              :search-source="searchSource"
-              :is-loading="isLoading"
-              :error="error"
-              @update:form="form = $event"
-              @search="handleSearch"
-              @pick-save-path="handlePickSavePath"
-              @confirm="handleConfirm"
-              @cancel="handleClose"
-            />
           </div>
+          <!-- Step 2: Metadata Form + Fixed Actions -->
+          <template v-else>
+            <div class="dialog-body">
+              <GameMetadataForm
+                :scan-result="scanResult"
+                :form="form"
+                :cover-url="coverUrl"
+                :searching="searching"
+                :search-no-results="searchNoResults"
+                :metadata-filled="metadataFilled"
+                :search-source="searchSource"
+                :error="error"
+                @update:form="form = $event"
+                @search="handleSearch"
+                @pick-save-path="handlePickSavePath"
+              />
+            </div>
+            <div class="dialog-footer">
+              <button class="btn-ghost" :disabled="isLoading" @click="handleClose">取消</button>
+              <button class="btn-primary" :disabled="isLoading" @click="handleConfirm">
+                {{ isLoading ? '导入中...' : '确认导入' }}
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </Transition>
@@ -330,7 +336,6 @@ const handlePickSavePath = async (): Promise<void> => {
   width: 520px;
   max-width: 90vw;
   max-height: 85vh;
-  overflow-y: auto;
   border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
 }

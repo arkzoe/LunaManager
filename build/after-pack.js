@@ -6,7 +6,7 @@ exports.default = async function (context) {
 
   const localesDir = path.join(appOutDir, 'locales')
   if (fs.existsSync(localesDir)) {
-    const keep = new Set(['en-US.pak', 'zh-CN.pak'])
+    const keep = new Set(['zh-CN.pak'])
     for (const file of fs.readdirSync(localesDir)) {
       if (!keep.has(file)) {
         const filePath = path.join(localesDir, file)
