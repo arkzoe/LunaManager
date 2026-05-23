@@ -213,11 +213,9 @@ const scrollToSection = (id: string): void => {
         :auto-start="settings.autoStart"
         :track-playtime="settings.trackPlaytime"
         :record-history="settings.recordHistory"
-        :language="settings.language"
         @update:auto-start="settings.autoStart = $event"
         @update:track-playtime="settings.trackPlaytime = $event"
         @update:record-history="settings.recordHistory = $event"
-        @update:language="settings.language = $event as 'zh-CN' | 'en-US'"
       />
 
       <SettingAppearance :section-ref="setSectionRef('appearance')" />

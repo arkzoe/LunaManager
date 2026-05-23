@@ -13,7 +13,6 @@ export function useSettings() {
   const settings = reactive<AppSettings>({
     autoStart: false,
     autoUpdate: true,
-    language: 'zh-CN',
     vndbApiKey: '',
     bangumiToken: '',
     magpiePath: '',
@@ -40,7 +39,7 @@ export function useSettings() {
     const dirty = new Set<keyof AppSettings>()
 
     const watchedKeys = [
-      'autoStart', 'autoUpdate', 'language', 'vndbApiKey', 'bangumiToken',
+      'autoStart', 'autoUpdate', 'vndbApiKey', 'bangumiToken',
       'magpiePath', 'magpieHotkey', 'autoLaunchMagpie', 'magpieDelay',
       'backupDir', 'trackPlaytime', 'recordHistory', 'autoSyncMetadata', 'metadataSource'
     ] as const

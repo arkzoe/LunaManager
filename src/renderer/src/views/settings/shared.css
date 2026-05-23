@@ -187,27 +187,6 @@
   border-color: var(--border-color-medium);
 }
 
-.setting-disabled {
-  opacity: 0.5;
-  pointer-events: none;
-  user-select: none;
-}
-
-.setting-disabled-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.coming-soon-badge {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  background: var(--bg-secondary);
-  padding: 2px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
 .disabled-hint {
   font-size: 12px;
   color: var(--text-tertiary);

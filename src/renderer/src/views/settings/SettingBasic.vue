@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import SelectDropdown from '../../shared/SelectDropdown.vue'
-
 defineProps<{
   autoStart: boolean
   trackPlaytime: boolean
   recordHistory: boolean
-  language: string
   sectionRef?: (el: unknown) => void
 }>()
 
@@ -13,7 +10,6 @@ const emit = defineEmits<{
   'update:autoStart': [value: boolean]
   'update:trackPlaytime': [value: boolean]
   'update:recordHistory': [value: boolean]
-  'update:language': [value: string]
 }>()
 </script>
 
@@ -62,25 +58,6 @@ const emit = defineEmits<{
           />
           <span class="toggle-slider"></span>
         </label>
-      </div>
-      <div class="setting-row setting-disabled">
-        <div class="setting-info">
-          <span class="setting-label">语言</span>
-          <span class="setting-desc">选择界面显示语言</span>
-        </div>
-        <div class="setting-disabled-wrap">
-          <SelectDropdown
-            :model-value="language"
-            :options="[
-              { value: 'zh-CN', label: '简体中文' },
-              { value: 'en-US', label: 'English' }
-            ]"
-            class="sselect"
-            disabled
-            @update:model-value="emit('update:language', $event as string)"
-          />
-          <span class="coming-soon-badge">即将支持</span>
-        </div>
       </div>
     </div>
   </section>

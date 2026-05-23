@@ -5,7 +5,6 @@ import type { AppConfig } from '../../../shared/types'
 export interface AppSettings {
   autoStart: boolean
   autoUpdate: boolean
-  language: 'zh-CN' | 'en-US'
   vndbApiKey: string
   bangumiToken: string
   magpiePath: string
@@ -22,7 +21,6 @@ export interface AppSettings {
 const defaultSettings: AppSettings = {
   autoStart: false,
   autoUpdate: true,
-  language: 'zh-CN',
   vndbApiKey: '',
   bangumiToken: '',
   magpiePath: '',
@@ -39,7 +37,6 @@ const defaultSettings: AppSettings = {
 const configKeyMap: Record<keyof AppSettings, keyof AppConfig> = {
   autoStart: 'autoStart',
   autoUpdate: 'autoUpdate',
-  language: 'language',
   vndbApiKey: 'vndbApiKey',
   bangumiToken: 'bangumiToken',
   magpiePath: 'magpiePath',
@@ -58,7 +55,6 @@ export const useSettingsStore = defineStore('settings', () => {
   const isLoading = ref(false)
 
   const allSettings = computed(() => settings.value)
-  const currentLanguage = computed(() => settings.value.language)
 
   const initSettings = async (): Promise<void> => {
     isLoading.value = true
@@ -110,7 +106,6 @@ export const useSettingsStore = defineStore('settings', () => {
     settings,
     isLoading,
     allSettings,
-    currentLanguage,
     initSettings,
     updateSetting,
     updateSettings
