@@ -9,6 +9,8 @@ import type { LaunchMode } from '../../shared/types'
 
 const activeProcesses = new Map<string, ChildProcess>()
 const launchLocks = new Map<string, Promise<void>>()
+const activeSessions = new Map<string, { sessionId: string; gameId: string }>()
+let magpieProcess: ChildProcess | null = null
 
 export function isGameRunning(gameId: string): boolean {
   const proc = activeProcesses.get(gameId)
@@ -114,11 +116,14 @@ export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<v
       if (autoLaunchMagpie) {
         const running = await isProcessRunning('Magpie.exe')
         if (!running) {
-          const magpieProc = spawn(magpiePath, ['-t'], {
+          magpieProcess = spawn(magpiePath, ['-t'], {
             detached: true,
             stdio: 'ignore'
           })
-          magpieProc.unref()
+          magpieProcess.unref()
+          magpieProcess.on('exit', () => {
+            magpieProcess = null
+          })
         }
       }
     }
@@ -128,8 +133,10 @@ export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<v
     const db = getDatabase()
     const initTxn = db.transaction(() => {
       if (trackPlaytime) {
+        sessionOps.endActiveSessionsForGame(gameId)
         const session = sessionOps.start(gameId)
         sessionId = session.id
+        activeSessions.set(gameId, { sessionId: session.id, gameId })
       }
       gameOps.update(gameId, { last_launch_method: modes.join(',') })
     })
@@ -157,6 +164,7 @@ export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<v
 
     proc.on('close', () => {
       activeProcesses.delete(gameId)
+      activeSessions.delete(gameId)
 
       if (sessionId && trackPlaytime) {
         sessionOps.end(sessionId)
@@ -206,4 +214,30 @@ export function stopGame(gameId: string): Promise<void> {
       else resolve()
     })
   })
+}
+
+export async function endAllActiveSessions(): Promise<void> {
+  for (const [, entry] of activeSessions) {
+    sessionOps.end(entry.sessionId)
+    const totalDurationMs = sessionOps.getTotalPlaytime(entry.gameId)
+    const totalSeconds = Math.floor(totalDurationMs / 1000)
+    gameOps.update(entry.gameId, {
+      playtime_seconds: totalSeconds,
+      last_played: new Date().toISOString()
+    })
+  }
+  activeSessions.clear()
+}
+
+export function killMagpieIfLaunched(): Promise<void> {
+  const proc = magpieProcess
+  if (proc && proc.pid) {
+    return new Promise((resolve) => {
+      execFile('taskkill', ['/F', '/T', '/PID', String(proc.pid)], () => {
+        magpieProcess = null
+        resolve()
+      })
+    })
+  }
+  return Promise.resolve()
 }

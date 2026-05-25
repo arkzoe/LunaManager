@@ -69,6 +69,16 @@ export const sessionOps = {
     return r.total
   },
 
+  endActiveSessionsForGame: (gameId: string): void => {
+    invalidateStatsCache()
+    const now = Date.now()
+    getDatabase()
+      .prepare(
+        'UPDATE play_sessions SET end_time = ?, duration = ? - start_time WHERE game_id = ? AND (end_time IS NULL OR end_time = 0)'
+      )
+      .run(now, now, gameId)
+  },
+
   getTotalCount: (): number => {
     const r = getDatabase().prepare('SELECT COUNT(*) as count FROM play_sessions').get() as {
       count: number
@@ -91,6 +101,22 @@ export const sessionOps = {
       )
       .all() as AggregatedStats[]
     return statsCache
+  },
+
+  getActiveSessions: (): { id: string; game_id: string; start_time: number }[] => {
+    return getDatabase()
+      .prepare('SELECT id, game_id, start_time FROM play_sessions WHERE end_time IS NULL OR end_time = 0')
+      .all() as { id: string; game_id: string; start_time: number }[]
+  },
+
+  endAllActiveSessions: (): void => {
+    invalidateStatsCache()
+    const now = Date.now()
+    getDatabase()
+      .prepare(
+        'UPDATE play_sessions SET end_time = ?, duration = ? - start_time WHERE end_time = 0'
+      )
+      .run(now, now)
   },
 
   getAggregatedStats: (

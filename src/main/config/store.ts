@@ -20,6 +20,7 @@ const defaultConfig: AppConfig = {
   autoSyncMetadata: true,
   theme: 'light',
   language: 'zh-CN',
+  minimizeToTray: false,
   trackPlaytime: true,
   recordHistory: true,
   dbPath: '',

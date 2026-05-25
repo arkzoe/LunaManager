@@ -80,7 +80,18 @@ const api: IElectronAPI = {
     const handler = (_e, game) => callback(game)
     ipcRenderer.on('game:updated', handler)
     return () => ipcRenderer.removeListener('game:updated', handler)
-  }
+  },
+
+  requestQuit: () => ipcRenderer.invoke('app:requestQuit'),
+  confirmQuit: () => ipcRenderer.invoke('app:confirmQuit'),
+  cancelQuit: () => ipcRenderer.invoke('app:cancelQuit'),
+  minimizeToTray: () => ipcRenderer.invoke('app:minimizeToTray'),
+  onQuitDialog: (callback) => {
+    ipcRenderer.on('app:show-quit-dialog', (_e, games) => callback(games))
+  },
+  onRequestQuitFlow: (callback) => {
+    ipcRenderer.on('app:request-quit-flow', () => callback())
+  },
 }
 
 if (process.contextIsolated) {
