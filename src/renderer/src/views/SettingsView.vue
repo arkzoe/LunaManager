@@ -211,9 +211,11 @@ const scrollToSection = (id: string): void => {
       <SettingBasic
         :section-ref="setSectionRef('basic')"
         :auto-start="settings.autoStart"
+        :minimize-to-tray="settings.minimizeToTray"
         :track-playtime="settings.trackPlaytime"
         :record-history="settings.recordHistory"
         @update:auto-start="settings.autoStart = $event"
+        @update:minimize-to-tray="settings.minimizeToTray = $event"
         @update:track-playtime="settings.trackPlaytime = $event"
         @update:record-history="settings.recordHistory = $event"
       />

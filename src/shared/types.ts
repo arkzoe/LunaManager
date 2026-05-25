@@ -133,6 +133,7 @@ export interface AppConfig {
   windowBounds: { width: number; height: number; x?: number; y?: number }
   autoStart: boolean
   autoUpdate: boolean
+  minimizeToTray: boolean
   metadataSource: 'vndb' | 'bangumi'
   autoSyncMetadata: boolean
   theme: Theme
@@ -243,4 +244,14 @@ export interface IElectronAPI {
   closeWindow: () => Promise<void>
   isMaximized: () => Promise<boolean>
   onMaximizeChange: (callback: (maximized: boolean) => void) => () => void
+
+  requestQuit: () => Promise<{
+    hasActiveGames: boolean
+    games: { gameId: string; title: string; startTime: number }[]
+  }>
+  confirmQuit: () => Promise<void>
+  cancelQuit: () => Promise<void>
+  minimizeToTray: () => Promise<void>
+  onQuitDialog: (callback: (games: { gameId: string; title: string; startTime: number }[]) => void) => void
+  onRequestQuitFlow: (callback: () => void) => void
 }

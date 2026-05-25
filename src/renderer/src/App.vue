@@ -4,6 +4,7 @@ import TitleBar from './layout/TitleBar.vue'
 import Sidebar from './layout/Sidebar.vue'
 import MainContent from './layout/MainContent.vue'
 import UpdateDialog from './shared/UpdateDialog.vue'
+import ConfirmDialog from './shared/ConfirmDialog.vue'
 import { useGameStore, useThemeStore } from './stores'
 
 const activeTab = ref('home')
@@ -42,6 +43,30 @@ function handleUpdateClose(): void {
     errorMessage: '',
     progress: 0
   }
+}
+
+// --- Quit confirmation dialog ---
+const quitDialogVisible = ref(false)
+const quitGames = ref<{ gameId: string; title: string; startTime: number }[]>([])
+
+async function handleQuit(): Promise<void> {
+  const result = await window.api.requestQuit()
+  if (result.hasActiveGames) {
+    quitGames.value = result.games
+    quitDialogVisible.value = true
+  } else {
+    await window.api.confirmQuit()
+  }
+}
+
+async function confirmQuit(): Promise<void> {
+  quitDialogVisible.value = false
+  await window.api.confirmQuit()
+}
+
+function cancelQuit(): void {
+  quitDialogVisible.value = false
+  window.api.cancelQuit()
 }
 
 // Provide actions so child views (e.g. SettingsView) can trigger download/install
@@ -87,6 +112,17 @@ onMounted(() => {
   const gameStore = useGameStore()
   themeStore.initTheme()
   themeStore.startWatchingSystemTheme()
+
+  // Listen for quit dialog trigger from tray menu
+  window.api.onQuitDialog((games) => {
+    quitGames.value = games
+    quitDialogVisible.value = true
+  })
+
+  // Listen for quit flow triggered by window close (when tray is disabled)
+  window.api.onRequestQuitFlow(() => {
+    handleQuit()
+  })
 
   // Listen for update status events (downloading, downloaded, etc.)
   cleanupUpdateStatus = window.api.onUpdateStatus((status, data) => {
@@ -140,6 +176,17 @@ onUnmounted(() => {
       @close="handleUpdateClose"
       @download="handleDownload"
       @install="handleInstall"
+    />
+
+    <ConfirmDialog
+      :show="quitDialogVisible"
+      title="确认退出"
+      :message="`还有 ${quitGames.length} 个游戏正在运行：\n${quitGames.map((g) => g.title).join('\n')}\n\n确定要退出吗？退出后将自动保存当前的游戏时长记录。`"
+      confirm-text="确定退出"
+      cancel-text="取消"
+      danger
+      @confirm="confirmQuit"
+      @cancel="cancelQuit"
     />
   </div>
 </template>

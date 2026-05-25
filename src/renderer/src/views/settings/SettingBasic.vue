@@ -1,6 +1,7 @@
 <script setup lang="ts">
 defineProps<{
   autoStart: boolean
+  minimizeToTray: boolean
   trackPlaytime: boolean
   recordHistory: boolean
   sectionRef?: (el: unknown) => void
@@ -8,6 +9,7 @@ defineProps<{
 
 const emit = defineEmits<{
   'update:autoStart': [value: boolean]
+  'update:minimizeToTray': [value: boolean]
   'update:trackPlaytime': [value: boolean]
   'update:recordHistory': [value: boolean]
 }>()
@@ -27,6 +29,20 @@ const emit = defineEmits<{
             type="checkbox"
             :checked="autoStart"
             @change="emit('update:autoStart', ($event.target as HTMLInputElement).checked)"
+          />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">最小化到托盘</span>
+          <span class="setting-desc">关闭窗口时最小化到系统托盘而非退出</span>
+        </div>
+        <label class="toggle">
+          <input
+            type="checkbox"
+            :checked="minimizeToTray"
+            @change="emit('update:minimizeToTray', ($event.target as HTMLInputElement).checked)"
           />
           <span class="toggle-slider"></span>
         </label>

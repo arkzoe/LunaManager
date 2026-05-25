@@ -1,8 +1,8 @@
-import { app, shell, BrowserWindow, ipcMain, protocol, net, dialog } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, protocol, net, dialog, Tray, Menu, nativeImage } from 'electron'
 import { join } from 'path'
 import { existsSync, createReadStream, rmSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import iconPath from '../../resources/icon.png?asset'
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 function debounceSetBounds(mainWindow: BrowserWindow): void {
@@ -24,6 +24,8 @@ import {
 import { getConfig, setConfig, getAllConfig, setAllConfig } from './config/store'
 
 let mainWindow: BrowserWindow | null = null
+let tray: Tray | null = null
+let isQuitting = false
 
 function createWindow(): void {
   const bounds = getConfig('windowBounds')
@@ -37,7 +39,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     frame: false,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform === 'linux' ? { icon: iconPath } : {}),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -47,6 +49,17 @@ function createWindow(): void {
   })
 
   mainWindow!.on('ready-to-show', () => mainWindow!.show())
+
+  mainWindow!.on('close', (event) => {
+    if (isQuitting) return
+    if (getConfig('minimizeToTray')) {
+      event.preventDefault()
+      mainWindow!.hide()
+      return
+    }
+    event.preventDefault()
+    mainWindow!.webContents.send('app:request-quit-flow')
+  })
 
   mainWindow!.on('resize', () => debounceSetBounds(mainWindow!))
   mainWindow!.on('move', () => debounceSetBounds(mainWindow!))
@@ -64,6 +77,57 @@ function createWindow(): void {
   } else {
     mainWindow!.loadFile(join(__dirname, '../renderer/index.html'))
   }
+}
+
+function createTray(mainWindow: BrowserWindow): void {
+  const icon = nativeImage.createFromPath(iconPath)
+  tray = new Tray(icon.resize({ width: 16, height: 16 }))
+  tray.setToolTip('LunaManager')
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: '显示窗口',
+      click: () => {
+        mainWindow.show()
+        mainWindow.focus()
+      }
+    },
+    { type: 'separator' },
+    {
+      label: '退出',
+      click: () => handleQuit(mainWindow)
+    }
+  ])
+  tray.setContextMenu(contextMenu)
+
+  tray.on('click', () => {
+    mainWindow.show()
+    mainWindow.focus()
+  })
+}
+
+async function handleQuit(win: BrowserWindow): Promise<void> {
+  try {
+    const result = await win.webContents.executeJavaScript(
+      'window.api.requestQuit()',
+      true
+    )
+    if (result.hasActiveGames) {
+      win.webContents.send('app:show-quit-dialog', result.games)
+    } else {
+      await endAllActiveSessionsAndQuit()
+    }
+  } catch {
+    await endAllActiveSessionsAndQuit()
+  }
+}
+
+async function endAllActiveSessionsAndQuit(): Promise<void> {
+  isQuitting = true
+  await endAllActiveSessions()
+  await killMagpieIfLaunched()
+  closeDatabase()
+  app.quit()
 }
 
 function setupIpcHandlers(): void {
@@ -246,6 +310,37 @@ function setupIpcHandlers(): void {
   ipcMain.handle('window:isMaximized', () => {
     return mainWindow?.isMaximized() ?? false
   })
+
+  // ===== Tray / Quit =====
+  ipcMain.handle('app:minimizeToTray', () => {
+    mainWindow?.hide()
+  })
+
+  ipcMain.handle('app:requestQuit', () => {
+    const activeSessionsData = sessionOps.getActiveSessions()
+    if (activeSessionsData.length === 0) {
+      return { hasActiveGames: false, games: [] }
+    }
+    const games = activeSessionsData.map((s) => {
+      const game = gameOps.getById(s.game_id)
+      return {
+        gameId: s.game_id,
+        title: game?.title || '未知游戏',
+        startTime: s.start_time
+      }
+    })
+    return { hasActiveGames: true, games }
+  })
+
+  ipcMain.handle('app:confirmQuit', async () => {
+    isQuitting = true
+    await endAllActiveSessions()
+    await killMagpieIfLaunched()
+    closeDatabase()
+    app.quit()
+  })
+
+  ipcMain.handle('app:cancelQuit', () => {})
 }
 
 import type { AppConfig } from '../shared/types'
@@ -254,7 +349,7 @@ import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
 import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 import { getSnapshotDir } from './config/paths'
-import { launchGame, stopGame, isGameRunning } from './services/game-launcher'
+import { launchGame, stopGame, isGameRunning, endAllActiveSessions, killMagpieIfLaunched } from './services/game-launcher'
 import { backupSave, restoreSave, getSnapshotDirPath, autoMatchSaveDir } from './services/backup'
 import {
   setupUpdater,
@@ -273,6 +368,7 @@ if (!gotLock) {
     const win = BrowserWindow.getAllWindows()[0]
     if (win) {
       if (win.isMinimized()) win.restore()
+      if (!win.isVisible()) win.show()
       win.focus()
     }
   })
@@ -305,17 +401,25 @@ if (!gotLock) {
     setupUpdater()
     app.setLoginItemSettings({ openAtLogin: getConfig('autoStart') })
     createWindow()
+    if (mainWindow) {
+      createTray(mainWindow)
+    }
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
   })
 
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
+    if (process.platform !== 'darwin' && !getConfig('minimizeToTray')) {
       closeDatabase()
-      app.quit()
     }
   })
 
-  app.on('before-quit', () => closeDatabase())
+  app.on('before-quit', () => {
+    closeDatabase()
+    if (tray) {
+      tray.destroy()
+      tray = null
+    }
+  })
 }
