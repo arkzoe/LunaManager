@@ -42,7 +42,7 @@ const sectionDelays = computed(() => {
 })
 
 const homeData = computed(() => {
-  const all = store.allGames
+  const all = store.games
   const total = all.length
   const totalMinutes = all.reduce((sum, g) => sum + Math.floor((g.playtime_seconds || 0) / 60), 0)
   const totalHours = Math.floor(totalMinutes / 60) || 0

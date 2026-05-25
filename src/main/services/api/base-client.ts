@@ -49,11 +49,19 @@ function normalizeError(err: unknown): ApiError {
   return { code: 'NETWORK', message: '未知网络错误' }
 }
 
+const FETCH_TIMEOUT_MS = 15_000
+
 export async function safeFetch<T>(fn: () => Promise<Response>): Promise<T> {
   let resp: Response
   try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
     resp = await fn()
+    clearTimeout(timeoutId)
   } catch (err) {
+    if ((err as any)?.name === 'AbortError') {
+      throw apiError('TIMEOUT', '请求超时，请稍后重试')
+    }
     throw normalizeError(err)
   }
 
@@ -86,7 +94,7 @@ const RETRYABLE_CODES = new Set(['TIMEOUT', 'RATE_LIMITED', 'SERVER_ERROR', 'NET
 export async function safeFetchWithRetry<T>(
   fn: () => Promise<Response>,
   maxRetries = 2,
-  delayMs = 1000
+  baseDelayMs = 1000
 ): Promise<T> {
   let lastErr: unknown
   for (let i = 0; i < maxRetries; i++) {
@@ -96,7 +104,8 @@ export async function safeFetchWithRetry<T>(
       lastErr = err
       const code = err && typeof err === 'object' && 'code' in err ? (err as any).code : ''
       if (RETRYABLE_CODES.has(code) && i < maxRetries - 1) {
-        await new Promise((r) => setTimeout(r, delayMs))
+        const delay = baseDelayMs * Math.pow(2, i) + Math.random() * 500
+        await new Promise((r) => setTimeout(r, delay))
         continue
       }
       throw err

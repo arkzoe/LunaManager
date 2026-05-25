@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import GameCard from '../../shared/GameCard.vue'
 import type { GameRecord } from '../../../../shared/types'
 
-defineProps<{
+const props = defineProps<{
   filteredGames: GameRecord[]
   batchMode: boolean
   selectedIds: Set<string>
@@ -13,12 +14,46 @@ const emit = defineEmits<{
   (e: 'toggleSelectGame', id: string): void
   (e: 'contextMenu', ev: MouseEvent, game: GameRecord): void
 }>()
+
+const RENDER_BATCH = 40
+const renderedCount = ref(RENDER_BATCH)
+
+const visibleGames = computed(() => props.filteredGames.slice(0, renderedCount.value))
+
+const sentinel = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && renderedCount.value < props.filteredGames.length) {
+        renderedCount.value = Math.min(
+          renderedCount.value + RENDER_BATCH,
+          props.filteredGames.length
+        )
+      }
+    },
+    { rootMargin: '200px' }
+  )
+  if (sentinel.value) observer.observe(sentinel.value)
+})
+
+onUnmounted(() => {
+  observer?.disconnect()
+})
+
+watch(
+  () => props.filteredGames.length,
+  () => {
+    renderedCount.value = RENDER_BATCH
+  }
+)
 </script>
 
 <template>
   <div class="game-grid">
     <div
-      v-for="(game, idx) in filteredGames"
+      v-for="(game, idx) in visibleGames"
       :key="game.id"
       class="grid-item"
       :class="{ 'batch-active': batchMode }"
@@ -36,6 +71,7 @@ const emit = defineEmits<{
       </label>
       <GameCard :game="game" :selected="batchMode && selectedIds.has(game.id)" />
     </div>
+    <div ref="sentinel" class="grid-sentinel" />
   </div>
 </template>
 
@@ -98,5 +134,10 @@ const emit = defineEmits<{
 
 .grid-cb {
   accent-color: var(--accent-primary);
+}
+
+.grid-sentinel {
+  width: 100%;
+  height: 1px;
 }
 </style>

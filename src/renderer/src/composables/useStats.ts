@@ -68,11 +68,11 @@ export function useStats() {
   const allSessions = shallowRef<PlaySession[]>([])
 
   const libraryStats = computed<LibraryStats>(() => {
-    const totalGames = store.allGames.length
+    const totalGames = store.games.length
     let totalMs = 0
     for (const s of allStats.value) totalMs += s.total_duration
     const totalHours = Math.floor(totalMs / 3600000) || 0
-    const completedGames = store.allGames.filter((g) => g.status === 'played').length
+    const completedGames = store.games.filter((g) => g.status === 'played').length
     return {
       totalGames,
       totalHours,
@@ -82,7 +82,7 @@ export function useStats() {
   })
 
   const rankings = computed<RankingItem[]>(() => {
-    const gameMap = new Map(store.allGames.map((g) => [g.id, g]))
+    const gameMap = new Map(store.games.map((g) => [g.id, g]))
     const ranked = allStats.value
       .filter((s) => s.total_duration > 0)
       .slice(0, 10)

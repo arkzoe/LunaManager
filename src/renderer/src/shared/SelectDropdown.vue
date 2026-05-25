@@ -47,8 +47,15 @@ const updateMenuPosition = (): void => {
   }
 }
 
-const handleResize = (): void => {
-  if (isOpen.value) updateMenuPosition()
+let tick = false
+const throttledHandleResize = (): void => {
+  if (!tick) {
+    tick = true
+    requestAnimationFrame(() => {
+      if (isOpen.value) updateMenuPosition()
+      tick = false
+    })
+  }
 }
 
 const open = (): void => {
@@ -80,24 +87,44 @@ const handleKeydown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') close()
 }
 
+// 模块级单例：所有 SelectDropdown 实例共享全局 scroll/resize 监听
+const globalCallbacks = new Set<() => void>()
+let globalListenersAttached = false
+
+function registerGlobalListener(cb: () => void): void {
+  globalCallbacks.add(cb)
+  if (!globalListenersAttached) {
+    window.addEventListener('scroll', cb, true)
+    window.addEventListener('resize', cb)
+    globalListenersAttached = true
+  }
+}
+
+function unregisterGlobalListener(cb: () => void): void {
+  globalCallbacks.delete(cb)
+  if (globalCallbacks.size === 0) {
+    window.removeEventListener('scroll', cb, true)
+    window.removeEventListener('resize', cb)
+    globalListenersAttached = false
+  }
+}
+
 let resizeObserver: ResizeObserver | null = null
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
+  registerGlobalListener(throttledHandleResize)
 
   if (triggerRef.value) {
-    resizeObserver = new ResizeObserver(handleResize)
+    resizeObserver = new ResizeObserver(throttledHandleResize)
     resizeObserver.observe(triggerRef.value)
   }
-  window.addEventListener('scroll', handleResize, true)
-  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  unregisterGlobalListener(throttledHandleResize)
   if (resizeObserver) resizeObserver.disconnect()
-  window.removeEventListener('scroll', handleResize, true)
-  window.removeEventListener('resize', handleResize)
 })
 </script>
 

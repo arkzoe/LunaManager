@@ -25,7 +25,7 @@ async function handleSelectFolder(): Promise<void> {
   const dir = await window.api.pickDirectory()
   if (!dir) return
   await window.api.updateGame(props.game.id, { save_path: dir } as Partial<GameRecord>)
-  const g = store.allGames.find((x) => x.id === props.game.id)
+  const g = store.games.find((x) => x.id === props.game.id)
   if (g) g.save_path = dir
 }
 
@@ -78,7 +78,7 @@ async function handleAutoMatchSaveDir(): Promise<void> {
     return
   }
   await window.api.updateGame(props.game.id, { save_path: dir } as Partial<GameRecord>)
-  const g = store.allGames.find((x) => x.id === props.game.id)
+  const g = store.games.find((x) => x.id === props.game.id)
   if (g) g.save_path = dir
 }
 

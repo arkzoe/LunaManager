@@ -23,7 +23,7 @@ const emit = defineEmits<{
     </div>
     <div
       v-for="(act, idx) in activities"
-      :key="idx"
+      :key="'act-' + act.game.id + '-' + act.time"
       class="tl-item"
       :style="{ animationDelay: idx * 0.06 + 's' }"
       @click="emit('selectGame', act.game)"

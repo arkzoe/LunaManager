@@ -284,7 +284,12 @@ onMounted(async () => {
   pollTimer = setInterval(async () => {
     if (unmounted || document.hidden) return
     try {
-      isRunning.value = await window.api.isGameRunning(props.game.id)
+      const running = await window.api.isGameRunning(props.game.id)
+      isRunning.value = running
+      if (!running && pollTimer) {
+        clearInterval(pollTimer)
+        pollTimer = null
+      }
     } catch {
       /* ignore */
     }

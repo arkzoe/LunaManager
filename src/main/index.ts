@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, protocol, net, dialog, Tray, Menu, nativeImage } from 'electron'
 import { join } from 'path'
-import { existsSync, createReadStream, rmSync } from 'fs'
+import { existsSync, createReadStream } from 'fs'
+import { rm } from 'fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import iconPath from '../../resources/icon.png?asset'
 
@@ -136,15 +137,15 @@ function setupIpcHandlers(): void {
   ipcMain.handle('db:getGameById', (_, id: string) => gameOps.getById(id) || null)
   ipcMain.handle('db:createGame', (_, game) => gameOps.create(game))
   ipcMain.handle('db:updateGame', (_, id: string, updates) => gameOps.update(id, updates))
-  ipcMain.handle('db:deleteGame', (_, id: string) => {
+  ipcMain.handle('db:deleteGame', async (_, id: string) => {
     const game = gameOps.getById(id)
     if (game) {
       if (game.cover && game.cover.startsWith('cover://')) {
         const coverPath = resolveCoverPath(game.cover)
-        if (existsSync(coverPath)) rmSync(coverPath)
+        if (existsSync(coverPath)) await rm(coverPath).catch(() => {})
       }
       const snapDir = getSnapshotDir(id)
-      if (existsSync(snapDir)) rmSync(snapDir, { recursive: true })
+      if (existsSync(snapDir)) await rm(snapDir, { recursive: true }).catch(() => {})
     }
     return gameOps.delete(id)
   })
@@ -387,7 +388,12 @@ if (!gotLock) {
             : filePath.endsWith('.gif')
               ? 'image/gif'
               : 'image/jpeg'
-        return new Response(createReadStream(filePath) as unknown as ReadableStream, {
+        const stream = createReadStream(filePath)
+        stream.on('error', () => {})
+        request.signal.addEventListener('abort', () => {
+          stream.destroy()
+        })
+        return new Response(stream as unknown as ReadableStream, {
           headers: { 'content-type': mimeType }
         })
       } catch {

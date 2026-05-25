@@ -23,7 +23,7 @@ const cutoffMap: Record<string, number> = {
 
 const filteredRankings = computed(() => {
   const cutoff = cutoffMap[rankRange.value] ? Date.now() - cutoffMap[rankRange.value] : 0
-  return computeRankings(allSessions.value, gameStore.allGames, cutoff)
+  return computeRankings(allSessions.value, gameStore.games, cutoff)
 })
 
 const filteredTopGame = computed(() => filteredRankings.value[0])

@@ -5,6 +5,21 @@ import type { ScanResult, BatchScanResult, ScanOptions } from '../../shared/type
 
 const IO_CONCURRENCY = 50
 
+// 全局信号量防止递归并发爆炸
+let activeOps = 0
+const MAX_TOTAL_OPS = 200
+async function withGlobalLimit<T>(fn: () => Promise<T>): Promise<T> {
+  while (activeOps >= MAX_TOTAL_OPS) {
+    await new Promise((r) => setTimeout(r, 10))
+  }
+  activeOps++
+  try {
+    return await fn()
+  } finally {
+    activeOps--
+  }
+}
+
 /** 并发控制：同时最多执行 limit 个异步任务 */
 async function limitedPool<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
   const results: T[] = new Array(tasks.length)
@@ -12,7 +27,7 @@ async function limitedPool<T>(tasks: (() => Promise<T>)[], limit: number): Promi
   async function worker(): Promise<void> {
     while (cursor < tasks.length) {
       const i = cursor++
-      results[i] = await tasks[i]()
+      results[i] = await withGlobalLimit(tasks[i])
     }
   }
   const workers = Array.from({ length: Math.min(limit, tasks.length) }, () => worker())
@@ -142,6 +157,8 @@ export async function pickFolderAndScan(options?: ScanOptions): Promise<ScanResu
   return scanDirectory(result.filePaths[0], options)
 }
 
+const BATCH_CONCURRENCY = 4
+
 export async function scanBatchDirectory(
   parentPath: string,
   options?: ScanOptions
@@ -149,18 +166,23 @@ export async function scanBatchDirectory(
   try {
     const entries = await readdir(parentPath, { withFileTypes: true })
     const dirs = entries.filter((e) => e.isDirectory())
-    const results = await Promise.all(
-      dirs.map(async (entry) => {
-        const folderPath = join(parentPath, entry.name)
-        const result = await scanDirectory(folderPath, options)
-        return {
-          folderPath: result.folderPath,
-          folderName: result.folderName,
-          executables: result.executables,
-          totalSize: result.totalSize
-        }
-      })
-    )
+    const results: BatchScanResult['items'] = []
+    for (let i = 0; i < dirs.length; i += BATCH_CONCURRENCY) {
+      const batch = dirs.slice(i, i + BATCH_CONCURRENCY)
+      const batchResults = await Promise.all(
+        batch.map(async (entry) => {
+          const folderPath = join(parentPath, entry.name)
+          const result = await scanDirectory(folderPath, options)
+          return {
+            folderPath: result.folderPath,
+            folderName: result.folderName,
+            executables: result.executables,
+            totalSize: result.totalSize
+          }
+        })
+      )
+      results.push(...batchResults)
+    }
     return { items: results }
   } catch {
     return { items: [] }

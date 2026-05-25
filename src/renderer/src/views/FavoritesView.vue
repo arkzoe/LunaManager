@@ -18,7 +18,7 @@ const emit = defineEmits<{ (e: 'selectGame', game: GameRecord): void }>()
 
 const { collections, loadCollections, createCollection, renameCollection, deleteCollection } =
   useCollections()
-const effectiveGames = computed(() => props.games || store.allGames)
+const effectiveGames = computed(() => props.games || store.games)
 const collectionGames = ref<Map<string, GameRecord[]>>(new Map())
 
 // View mode

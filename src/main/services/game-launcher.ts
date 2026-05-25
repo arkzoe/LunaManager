@@ -5,11 +5,11 @@ import { BrowserWindow } from 'electron'
 import { getConfig } from '../config/store'
 import { getLeProcPath } from '../config/paths'
 import { sessionOps, gameOps, getDatabase } from '../database'
-import type { LaunchMode } from '../../shared/types'
+import type { LaunchMode, GameRecord } from '../../shared/types'
 
 const activeProcesses = new Map<string, ChildProcess>()
 const launchLocks = new Map<string, Promise<void>>()
-const activeSessions = new Map<string, { sessionId: string; gameId: string }>()
+const activeSessions = new Map<string, { sessionId: string; gameId: string; startTime: number }>()
 let magpieProcess: ChildProcess | null = null
 
 export function isGameRunning(gameId: string): boolean {
@@ -136,7 +136,7 @@ export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<v
         sessionOps.endActiveSessionsForGame(gameId)
         const session = sessionOps.start(gameId)
         sessionId = session.id
-        activeSessions.set(gameId, { sessionId: session.id, gameId })
+        activeSessions.set(gameId, { sessionId: session.id, gameId, startTime: session.start_time })
       }
       gameOps.update(gameId, { last_launch_method: modes.join(',') })
     })
@@ -164,27 +164,39 @@ export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<v
 
     proc.on('close', () => {
       activeProcesses.delete(gameId)
+
+      const sessionEntry = activeSessions.get(gameId)
       activeSessions.delete(gameId)
 
       if (sessionId && trackPlaytime) {
         sessionOps.end(sessionId)
-        const totalDurationMs = sessionOps.getTotalPlaytime(gameId)
-        const totalSeconds = Math.floor(totalDurationMs / 1000)
+        const game = gameOps.getById(gameId)
+        const sessionDuration = sessionEntry?.startTime
+          ? Math.floor((Date.now() - sessionEntry.startTime) / 1000)
+          : 0
+        const totalSeconds = (game?.playtime_seconds || 0) + sessionDuration
         gameOps.update(gameId, {
           playtime_seconds: totalSeconds,
           last_played: new Date().toISOString()
         })
+        const wins = BrowserWindow.getAllWindows()
+        if (wins.length > 0 && game) {
+          wins[0].webContents.send('game:updated', {
+            ...game,
+            playtime_seconds: totalSeconds,
+            last_played: new Date().toISOString()
+          } as GameRecord)
+        }
       } else {
         gameOps.update(gameId, {
           last_played: new Date().toISOString()
         })
-      }
-
-      const wins = BrowserWindow.getAllWindows()
-      if (wins.length > 0) {
-        const updated = gameOps.getById(gameId)
-        if (updated) {
-          wins[0].webContents.send('game:updated', updated)
+        const wins = BrowserWindow.getAllWindows()
+        if (wins.length > 0) {
+          const updated = gameOps.getById(gameId)
+          if (updated) {
+            wins[0].webContents.send('game:updated', updated)
+          }
         }
       }
     })
@@ -217,10 +229,12 @@ export function stopGame(gameId: string): Promise<void> {
 }
 
 export async function endAllActiveSessions(): Promise<void> {
+  const now = Date.now()
   for (const [, entry] of activeSessions) {
     sessionOps.end(entry.sessionId)
-    const totalDurationMs = sessionOps.getTotalPlaytime(entry.gameId)
-    const totalSeconds = Math.floor(totalDurationMs / 1000)
+    const sessionDuration = Math.floor((now - entry.startTime) / 1000)
+    const game = gameOps.getById(entry.gameId)
+    const totalSeconds = (game?.playtime_seconds || 0) + sessionDuration
     gameOps.update(entry.gameId, {
       playtime_seconds: totalSeconds,
       last_played: new Date().toISOString()

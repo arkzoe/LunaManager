@@ -44,6 +44,7 @@ watch(
         :alt="game.title_cn || game.title"
         class="cover-img"
         :class="{ loaded: imageLoaded }"
+        loading="lazy"
         @load="handleImageLoad"
       />
       <div v-else class="cover-placeholder">

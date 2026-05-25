@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
 import { useToast } from '../composables/useToast'
@@ -23,6 +23,8 @@ const emit = defineEmits<{ (e: 'selectGame', game: GameRecord): void }>()
 
 const store = useGameStore()
 const searchQuery = ref('')
+const debouncedSearch = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 const activeFilter = ref<GameStatus | 'all'>('all')
 const viewMode = ref<'grid' | 'list'>('grid')
 
@@ -141,7 +143,7 @@ const handleBatchStatus = async (status: GameStatus): Promise<void> => {
   const results = await Promise.allSettled(
     ids.map(async (id) => {
       await window.api.updateGame(id, { status } as Partial<GameRecord>)
-      const g = store.allGames.find((x) => x.id === id)
+      const g = store.games.find((x) => x.id === id)
       if (g) g.status = status
     })
   )
@@ -228,6 +230,17 @@ onMounted(() => {
   if (store.games.length === 0) store.loadGames()
 })
 
+onUnmounted(() => {
+  if (searchTimer) clearTimeout(searchTimer)
+})
+
+watch(searchQuery, (val) => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    debouncedSearch.value = val
+  }, 200)
+})
+
 const filters: { id: GameStatus | 'all'; label: string }[] = [
   { id: 'all', label: '全部' },
   { id: 'want', label: '想玩' },
@@ -242,12 +255,12 @@ const statusFilters = computed(() =>
 )
 
 const filteredGames = computed(() => {
-  let list = store.allGames
+  let list = store.games
   if (activeFilter.value !== 'all') {
     list = list.filter((g) => g.status === activeFilter.value)
   }
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase()
+  if (debouncedSearch.value.trim()) {
+    const q = debouncedSearch.value.toLowerCase()
     list = list.filter(
       (g) =>
         g.title.toLowerCase().includes(q) || (g.title_cn && g.title_cn.toLowerCase().includes(q))
@@ -307,7 +320,7 @@ const statusLabels: Record<GameStatus, string> = {
 const handleStatusChange = async (game: GameRecord, status: GameStatus): Promise<void> => {
   try {
     await window.api.updateGame(game.id, { status })
-    const g = store.allGames.find((x) => x.id === game.id)
+    const g = store.games.find((x) => x.id === game.id)
     if (g) g.status = status
   } catch {
     // fallback silently

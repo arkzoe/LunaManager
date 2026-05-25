@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { GameRecord } from '../../../shared/types'
 
@@ -6,8 +6,6 @@ export const useGameStore = defineStore('games', () => {
   const games = ref<GameRecord[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
-
-  const allGames = computed(() => games.value)
 
   const loadGames = async (): Promise<void> => {
     isLoading.value = true
@@ -41,7 +39,6 @@ export const useGameStore = defineStore('games', () => {
     games,
     isLoading,
     error,
-    allGames,
     loadGames,
     updateGame,
     refreshGame,

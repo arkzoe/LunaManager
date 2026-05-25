@@ -111,6 +111,8 @@ export const initDatabase = (): Database.Database => {
     CREATE INDEX IF NOT EXISTS idx_collections_sort ON collections(sort_order);
     CREATE INDEX IF NOT EXISTS idx_save_snapshots_game ON save_snapshots(game_id);
     CREATE INDEX IF NOT EXISTS idx_game_collections_col ON game_collections(collection_id);
+    CREATE INDEX IF NOT EXISTS idx_games_executable_path ON games(executable_path);
+    CREATE INDEX IF NOT EXISTS idx_games_created_at ON games(created_at);
 
     CREATE VIRTUAL TABLE IF NOT EXISTS games_fts USING fts5(
       title, title_cn, developer, content='games', content_rowid='rowid'
