@@ -11,9 +11,7 @@ const settingsStore = useSettingsStore()
 const gameStore = useGameStore()
 const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
 const rankRange = ref<'week' | 'month' | 'all'>('all')
-const showLibraryOverview = ref(true)
-
-const { totalSessionCount, libraryStats, loadStats, allSessions } = useStats()
+const { libraryStats, loadStats, allSessions } = useStats()
 const { chartData, chartOptions } = useStatsChart(allSessions, timeRange)
 
 const cutoffMap: Record<string, number> = {
@@ -87,40 +85,6 @@ const timeRanges = [
         </div>
         <div class="ov-num">{{ libraryStats.avgPerDay }}<span class="ov-u">h</span></div>
         <div class="ov-lbl">日均</div>
-      </div>
-    </div>
-
-    <!-- 库概览折叠面板 -->
-    <div class="panel">
-      <div class="panel-header" @click="showLibraryOverview = !showLibraryOverview">
-        <span>库概览</span>
-        <svg
-          viewBox="0 0 24 24"
-          class="w-4 h-4 fill-text-tertiary transition-transform duration-300"
-          :class="{ 'rotate-180': showLibraryOverview }"
-        >
-          <path d="M7 10l5 5 5-5z" />
-        </svg>
-      </div>
-      <div class="panel-collapse" :class="{ open: showLibraryOverview }">
-        <div class="panel-body overview-grid">
-          <div class="og-item">
-            <div class="og-val">{{ libraryStats.totalGames }}</div>
-            <div class="og-lbl">库中所有游戏</div>
-          </div>
-          <div class="og-item">
-            <div class="og-val">{{ totalSessionCount || '-' }}</div>
-            <div class="og-lbl">总游玩次数</div>
-          </div>
-          <div class="og-item">
-            <div class="og-val">{{ libraryStats.totalHours }}h</div>
-            <div class="og-lbl">总游玩时长</div>
-          </div>
-          <div class="og-item">
-            <div class="og-val">{{ libraryStats.completedGames }}</div>
-            <div class="og-lbl">通关游戏数</div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -287,46 +251,7 @@ const timeRanges = [
   padding: 18px;
   border-top: 1px solid var(--border-color-light);
 }
-.panel-collapse {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition:
-    max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.25s ease;
-}
-.panel-collapse.open {
-  max-height: 200px;
-  opacity: 1;
-}
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  text-align: center;
-}
-@media (max-width: 899px) {
-  .overview-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-}
-@media (max-width: 599px) {
-  .overview-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-}
-.og-val {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-.og-lbl {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
+
 .time-toggle {
   display: flex;
   gap: 2px;
