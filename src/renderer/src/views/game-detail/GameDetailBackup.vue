@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import type { GameRecord, SaveSnapshot } from '../../../../shared/types'
 import { formatDate, formatFileSize } from '../../utils/format'
 import { useGameStore } from '../../stores/useGameStore'
+import SaveDirPicker from '../../shared/SaveDirPicker.vue'
 
 const props = defineProps<{ game: GameRecord }>()
 const store = useGameStore()
@@ -11,6 +12,8 @@ const snapshots = ref<SaveSnapshot[]>([])
 const backingUp = ref(false)
 const restoring = ref<string | null>(null)
 const error = ref('')
+const showSaveDirPicker = ref(false)
+const saveDirCandidates = ref<string[]>([])
 
 let _unmounted = false
 onUnmounted(() => {
@@ -72,14 +75,28 @@ async function handleAutoMatchSaveDir(): Promise<void> {
     error.value = '未设置可执行文件路径'
     return
   }
-  const dir = await window.api.autoMatchSaveDir(props.game.executable_path)
-  if (!dir) {
+  const dirs = await window.api.autoMatchSaveDir(props.game.executable_path)
+  if (dirs.length === 0) {
     error.value = '未找到存档目录'
     return
   }
+  if (dirs.length === 1) {
+    await setSaveDir(dirs[0])
+    return
+  }
+  saveDirCandidates.value = dirs
+  showSaveDirPicker.value = true
+}
+
+async function setSaveDir(dir: string): Promise<void> {
   await window.api.updateGame(props.game.id, { save_path: dir } as Partial<GameRecord>)
   const g = store.games.find((x) => x.id === props.game.id)
   if (g) g.save_path = dir
+}
+
+function handleSaveDirSelect(dir: string): void {
+  showSaveDirPicker.value = false
+  setSaveDir(dir)
 }
 
 async function handleOpenPath(path: string): Promise<void> {
@@ -161,6 +178,13 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <SaveDirPicker
+    :show="showSaveDirPicker"
+    :dirs="saveDirCandidates"
+    @select="handleSaveDirSelect"
+    @close="showSaveDirPicker = false"
+  />
 </template>
 
 <style scoped>

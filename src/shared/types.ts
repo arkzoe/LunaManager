@@ -198,7 +198,7 @@ export interface IElectronAPI {
   backupSnapshot: (gameId: string) => Promise<string>
   restoreSnapshotInPlace: (snapshotId: string) => Promise<void>
   getBackupDir: (gameId: string) => Promise<string>
-  autoMatchSaveDir: (executablePath: string) => Promise<string | null>
+  autoMatchSaveDir: (executablePath: string) => Promise<string[]>
 
   pickImportFolder: (options?: ScanOptions) => Promise<ScanResult | null>
   pickBatchImportFolder: (options?: ScanOptions) => Promise<BatchScanResult | null>

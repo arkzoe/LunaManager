@@ -141,20 +141,17 @@ export async function restoreSave(snapshotId: string): Promise<void> {
   }
 }
 
-export async function autoMatchSaveDir(executablePath: string): Promise<string | null> {
-  if (!executablePath) return null
+export async function autoMatchSaveDir(executablePath: string): Promise<string[]> {
+  if (!executablePath) return []
   const dir = path.dirname(executablePath)
-  const candidates = ['save', 'savedata']
-  for (const name of candidates) {
-    const fullPath = path.join(dir, name)
-    try {
-      const s = await fsp.stat(fullPath)
-      if (s.isDirectory()) return fullPath
-    } catch {
-      /* not found */
+  const entries = await fsp.readdir(dir, { withFileTypes: true })
+  const matched: string[] = []
+  for (const entry of entries) {
+    if (entry.isDirectory() && /save/i.test(entry.name)) {
+      matched.push(path.join(dir, entry.name))
     }
   }
-  return null
+  return matched
 }
 
 export async function getSnapshotDirPath(gameId: string): Promise<string> {
