@@ -471,6 +471,7 @@ const handleCloseModal = (): void => {
 <style scoped>
 .h-full {
   animation: fade-in-up 0.4s ease;
+  padding-top: 16px;
 }
 
 .view-fade-enter-active,

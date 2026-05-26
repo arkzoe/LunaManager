@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
@@ -375,58 +375,62 @@ const handleBatchImported = (result: ImportResult): void => {
 
 <template>
   <div class="library">
-    <!-- 顶部工具栏 -->
-    <LibraryToolbar
-      :search-query="searchQuery"
-      :view-mode="viewMode"
-      :show-import-menu="showImportMenu"
-      :batch-mode="batchMode"
-      @update:search-query="searchQuery = $event"
-      @update:view-mode="viewMode = $event"
-      @toggle-import-menu="toggleImportMenu"
-      @manual-import="handleManualImport"
-      @batch-import="handleBatchImport"
-      @toggle-batch-mode="toggleBatchMode"
-    />
-
-    <!-- 状态筛选 -->
-    <LibraryFilterBar
-      :filters="filters"
-      :active-filter="activeFilter"
-      @update:active-filter="activeFilter = $event"
-    />
-
-    <!-- 批量操作栏 -->
-    <div class="batch-bar-stage" :class="{ 'batch-open': batchMode }">
-      <LibraryBatchBar
-        :batch-count="batchCount"
-        :all-filtered-selected="allFilteredSelected"
-        :status-filters="statusFilters"
-        :show-batch-status-menu="showBatchStatusMenu"
-        @toggle-select-all="toggleSelectAll"
-        @toggle-batch-status="showBatchStatusMenu = !showBatchStatusMenu"
-        @handle-batch-status="handleBatchStatus"
-        @open-collection-picker="openCollectionPicker"
-        @open-delete-confirm="openDeleteConfirm"
-        @close-batch-status-menu="closeBatchStatusMenu"
+    <div class="sticky-header">
+      <!-- 顶部工具栏 -->
+      <LibraryToolbar
+        :search-query="searchQuery"
+        :view-mode="viewMode"
+        :show-import-menu="showImportMenu"
+        :batch-mode="batchMode"
+        @update:search-query="searchQuery = $event"
+        @update:view-mode="viewMode = $event"
+        @toggle-import-menu="toggleImportMenu"
+        @manual-import="handleManualImport"
+        @batch-import="handleBatchImport"
+        @toggle-batch-mode="toggleBatchMode"
       />
-    </div>
 
-    <!-- 排序栏 -->
-    <div class="sort-bar">
-      <span class="sort-label">排序</span>
-      <button
-        v-for="opt in sortOptions"
-        :key="opt.key"
-        class="sort-btn"
-        :class="{ active: sortKey === opt.key }"
-        @click="toggleSort(opt.key)"
-      >
-        {{ opt.label }}
-        <span v-if="sortKey === opt.key" class="sort-arrow">{{
-          sortDir === 'asc' ? '↑' : '↓'
-        }}</span>
-      </button>
+      <div class="filter-sort-row">
+        <!-- 状态筛选 -->
+        <LibraryFilterBar
+          :filters="filters"
+          :active-filter="activeFilter"
+          @update:active-filter="activeFilter = $event"
+        />
+
+        <!-- 排序栏 -->
+        <div class="sort-bar">
+          <span class="sort-label">排序</span>
+          <button
+            v-for="opt in sortOptions"
+            :key="opt.key"
+            class="sort-btn"
+            :class="{ active: sortKey === opt.key }"
+            @click="toggleSort(opt.key)"
+          >
+            {{ opt.label }}
+            <span v-if="sortKey === opt.key" class="sort-arrow">{{
+              sortDir === 'asc' ? '↑' : '↓'
+            }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 批量操作栏 -->
+      <div class="batch-bar-stage" :class="{ 'batch-open': batchMode }">
+        <LibraryBatchBar
+          :batch-count="batchCount"
+          :all-filtered-selected="allFilteredSelected"
+          :status-filters="statusFilters"
+          :show-batch-status-menu="showBatchStatusMenu"
+          @toggle-select-all="toggleSelectAll"
+          @toggle-batch-status="showBatchStatusMenu = !showBatchStatusMenu"
+          @handle-batch-status="handleBatchStatus"
+          @open-collection-picker="openCollectionPicker"
+          @open-delete-confirm="openDeleteConfirm"
+          @close-batch-status-menu="closeBatchStatusMenu"
+        />
+      </div>
     </div>
 
     <!-- 错误提示 -->
@@ -555,6 +559,14 @@ const handleBatchImported = (result: ImportResult): void => {
   animation: fade-in-up 0.4s ease;
 }
 
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-base);
+  padding: 16px 0 0px;
+}
+
 /* ===== 错误提示 ===== */
 .error-banner {
   display: flex;
@@ -589,12 +601,20 @@ const handleBatchImported = (result: ImportResult): void => {
   animation: shimmer 1.5s infinite;
 }
 
+/* ===== 筛选 + 排序同行 ===== */
+.filter-sort-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 /* ===== 排序栏 ===== */
 .sort-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-left: auto;
 }
 
 .sort-label {

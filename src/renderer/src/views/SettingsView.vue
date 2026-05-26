@@ -273,6 +273,7 @@ const scrollToSection = (id: string): void => {
   display: flex;
   height: 100%;
   gap: 0;
+  padding-top: 16px;
 }
 
 .settings-nav {

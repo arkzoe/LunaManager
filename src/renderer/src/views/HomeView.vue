@@ -192,6 +192,7 @@ const homeData = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding-top: 16px;
 }
 
 /* ===== 空状态 ===== */

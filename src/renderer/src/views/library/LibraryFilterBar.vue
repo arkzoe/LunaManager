@@ -29,7 +29,6 @@ const emit = defineEmits<{
 .filters-bar {
   display: flex;
   gap: 6px;
-  margin-bottom: 16px;
 }
 
 .filter-btn {

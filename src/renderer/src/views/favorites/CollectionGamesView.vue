@@ -117,7 +117,6 @@ const emit = defineEmits<{
     box-shadow 200ms ease;
 }
 .back-btn:hover {
-  background: var(--bg-secondary);
   color: var(--text-primary);
 }
 

@@ -143,6 +143,7 @@ const timeRanges = [
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-top: 16px;
 }
 .overview-row {
   display: grid;
