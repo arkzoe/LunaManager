@@ -116,6 +116,7 @@ export function useBatchMatch(
       }
 
       let matchFailedCount = 0
+      let sourceFailedOnce = false
 
       const processOne = async (row: ImportRowState): Promise<void> => {
         if (signal.aborted) return
@@ -128,8 +129,14 @@ export function useBatchMatch(
             const tasks: Promise<SearchResult[]>[] = []
             if (vndbToken) tasks.push(window.api.searchMetadata(query, 'vndb', vndbToken || undefined))
             if (bangumiToken) tasks.push(window.api.searchMetadata(query, 'bangumi', bangumiToken || undefined))
-            const resultsArr = await Promise.all(tasks)
-            allResults = resultsArr.flat()
+            const settledResults = await Promise.allSettled(tasks)
+            settledResults.forEach((r) => {
+              if (r.status === 'fulfilled') {
+                allResults.push(...r.value)
+              } else {
+                sourceFailedOnce = true
+              }
+            })
           } else {
             allResults = await window.api.searchMetadata(query, source as 'vndb' | 'bangumi', token || undefined)
           }
@@ -184,8 +191,11 @@ export function useBatchMatch(
       }
       await Promise.allSettled(workers)
 
-      if (matchFailedCount > 0 && !signal.aborted) {
-        error.value = `${matchFailedCount} 个游戏匹配失败，可手动搜索`
+      if ((matchFailedCount > 0 || sourceFailedOnce) && !signal.aborted) {
+        const msgs: string[] = []
+        if (sourceFailedOnce) msgs.push('部分数据源请求失败，已自动使用可用的数据源')
+        if (matchFailedCount > 0) msgs.push(`${matchFailedCount} 个游戏匹配失败，可手动搜索`)
+        error.value = msgs.join('；')
       }
     } finally {
       isMatchingAll.value = false

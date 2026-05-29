@@ -58,11 +58,28 @@ const handleSearch = async (): Promise<void> => {
         return
       }
       const tasks: Promise<SearchResult[]>[] = []
-      if (vndbToken) tasks.push(window.api.searchMetadata(q, 'vndb', vndbToken || undefined))
-      if (bangumiToken)
+      const sourceNames: string[] = []
+      if (vndbToken) {
+        tasks.push(window.api.searchMetadata(q, 'vndb', vndbToken || undefined))
+        sourceNames.push('VNDB')
+      }
+      if (bangumiToken) {
         tasks.push(window.api.searchMetadata(q, 'bangumi', bangumiToken || undefined))
-      const resultsArr = await Promise.all(tasks)
-      const allResults = resultsArr.flat()
+        sourceNames.push('Bangumi')
+      }
+      const settledResults = await Promise.allSettled(tasks)
+      const allResults: SearchResult[] = []
+      const failedSources: string[] = []
+      settledResults.forEach((r, i) => {
+        if (r.status === 'fulfilled') {
+          allResults.push(...r.value)
+        } else {
+          failedSources.push(sourceNames[i])
+        }
+      })
+      if (failedSources.length > 0) {
+        error.value = `${failedSources.join('、')} 搜索失败，已使用其他源的结果`
+      }
       results.value = sortByMatch(q, allResults)
     } else {
       const token = source.value === 'bangumi' ? bangumiToken : vndbToken
