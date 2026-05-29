@@ -161,6 +161,10 @@ const applySearchResult = async (result: SearchResult): Promise<void> => {
   form.value.title = result.titleCn || result.title || form.value.title
   form.value.titleCn = result.titleCn || ''
   if (result.id) {
+    // 先从搜索结果设置 ID，避免详情获取失败时丢失
+    if (result.source === 'vndb') vndbId.value = result.id
+    if (result.source === 'bangumi') bangumiId.value = result.id
+
     try {
       const { token } = await ensureTokenCache()
       const detail = await window.api.fetchMetadataDetail(
