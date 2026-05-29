@@ -10,7 +10,6 @@ interface TestResult {
 
 defineProps<{
   metadataSource: string
-  autoSyncMetadata: boolean
   vndbApiKey: string
   bangumiToken: string
   testResult: TestResult | null
@@ -19,7 +18,6 @@ defineProps<{
 
 const emit = defineEmits<{
   'update:metadataSource': [value: string]
-  'update:autoSyncMetadata': [value: boolean]
   'update:vndbApiKey': [value: string]
   'update:bangumiToken': [value: string]
   testBangumi: []
@@ -45,20 +43,6 @@ const emit = defineEmits<{
           class="sselect"
           @update:model-value="emit('update:metadataSource', $event as string)"
         />
-      </div>
-      <div class="setting-row">
-        <div class="setting-info">
-          <span class="setting-label">自动同步元数据</span>
-          <span class="setting-desc">导入游戏时自动从数据源获取信息</span>
-        </div>
-        <label class="toggle">
-          <input
-            type="checkbox"
-            :checked="autoSyncMetadata"
-            @change="emit('update:autoSyncMetadata', ($event.target as HTMLInputElement).checked)"
-          />
-          <span class="toggle-slider"></span>
-        </label>
       </div>
       <div class="setting-row">
         <div class="setting-info">

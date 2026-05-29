@@ -15,7 +15,6 @@ export interface AppSettings {
   backupDir: string
   trackPlaytime: boolean
   recordHistory: boolean
-  autoSyncMetadata: boolean
   metadataSource: 'vndb' | 'bangumi'
 }
 
@@ -32,7 +31,6 @@ const defaultSettings: AppSettings = {
   backupDir: '',
   trackPlaytime: true,
   recordHistory: true,
-  autoSyncMetadata: false,
   metadataSource: 'bangumi'
 }
 
@@ -49,7 +47,6 @@ const configKeyMap: Record<keyof AppSettings, keyof AppConfig> = {
   backupDir: 'backupDir',
   trackPlaytime: 'trackPlaytime',
   recordHistory: 'recordHistory',
-  autoSyncMetadata: 'autoSyncMetadata',
   metadataSource: 'metadataSource'
 }
 

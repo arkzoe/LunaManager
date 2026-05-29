@@ -17,7 +17,6 @@ const defaultConfig: AppConfig = {
   autoStart: false,
   autoUpdate: true,
   metadataSource: 'bangumi',
-  autoSyncMetadata: true,
   theme: 'light',
   language: 'zh-CN',
   minimizeToTray: false,

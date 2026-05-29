@@ -135,7 +135,6 @@ export interface AppConfig {
   autoUpdate: boolean
   minimizeToTray: boolean
   metadataSource: 'vndb' | 'bangumi'
-  autoSyncMetadata: boolean
   theme: Theme
   language: 'zh-CN' | 'en-US'
   trackPlaytime: boolean

@@ -23,7 +23,6 @@ export function useSettings() {
     backupDir: '',
     trackPlaytime: true,
     recordHistory: true,
-    autoSyncMetadata: false,
     metadataSource: 'bangumi'
   })
 
@@ -42,7 +41,7 @@ export function useSettings() {
     const watchedKeys = [
       'autoStart', 'autoUpdate', 'minimizeToTray', 'vndbApiKey', 'bangumiToken',
       'magpiePath', 'magpieHotkey', 'autoLaunchMagpie', 'magpieDelay',
-      'backupDir', 'trackPlaytime', 'recordHistory', 'autoSyncMetadata', 'metadataSource'
+      'backupDir', 'trackPlaytime', 'recordHistory', 'metadataSource'
     ] as const
 
     watch(

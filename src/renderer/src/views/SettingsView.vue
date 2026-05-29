@@ -225,12 +225,10 @@ const scrollToSection = (id: string): void => {
       <SettingDatasource
         :section-ref="setSectionRef('datasource')"
         :metadata-source="settings.metadataSource"
-        :auto-sync-metadata="settings.autoSyncMetadata"
         :vndb-api-key="settings.vndbApiKey"
         :bangumi-token="settings.bangumiToken"
         :test-result="testResult"
         @update:metadata-source="settings.metadataSource = $event as 'vndb' | 'bangumi'"
-        @update:auto-sync-metadata="settings.autoSyncMetadata = $event"
         @update:vndb-api-key="settings.vndbApiKey = $event"
         @update:bangumi-token="settings.bangumiToken = $event"
         @test-bangumi="handleTestBangumi"
