@@ -17,7 +17,9 @@ export async function downloadCover(gameId: string, remoteUrl: string): Promise<
   try {
     const dir = await ensureCoverDirOnce()
     const urlPath = new URL(remoteUrl).pathname
-    const ext = urlPath.endsWith('.png') ? 'png' : 'jpg'
+    const ext = urlPath.endsWith('.png') ? 'png'
+      : urlPath.endsWith('.webp') ? 'webp'
+      : 'jpg'
     const filename = `${gameId}.${ext}`
     const localPath = join(dir, filename)
 
@@ -30,7 +32,8 @@ export async function downloadCover(gameId: string, remoteUrl: string): Promise<
     if (!resp.ok) return null
     await writeFile(localPath, Buffer.from(await resp.arrayBuffer()))
     return `cover://${filename}?t=${Date.now()}`
-  } catch {
+  } catch (err) {
+    console.error('下载封面失败:', err, 'URL:', remoteUrl)
     return null
   }
 }
