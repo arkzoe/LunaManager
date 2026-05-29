@@ -228,7 +228,7 @@ const scrollToSection = (id: string): void => {
         :vndb-api-key="settings.vndbApiKey"
         :bangumi-token="settings.bangumiToken"
         :test-result="testResult"
-        @update:metadata-source="settings.metadataSource = $event as 'vndb' | 'bangumi'"
+        @update:metadata-source="settings.metadataSource = $event as 'vndb' | 'bangumi' | 'mixed'"
         @update:vndb-api-key="settings.vndbApiKey = $event"
         @update:bangumi-token="settings.bangumiToken = $event"
         @test-bangumi="handleTestBangumi"

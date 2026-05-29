@@ -6,7 +6,7 @@ const props = defineProps<{
   show: boolean
   results: SearchResult[]
   loading: boolean
-  source: 'vndb' | 'bangumi'
+  source: string
 }>()
 
 const emit = defineEmits<{
@@ -16,7 +16,9 @@ const emit = defineEmits<{
 
 const selectedId = ref<string | null>(null)
 
-const sourceLabel = props.source === 'vndb' ? 'VNDB' : 'Bangumi'
+const sourceLabel = props.source === 'vndb' ? 'VNDB' : props.source === 'bangumi' ? 'Bangumi' : ''
+
+const sourceBadge = (s: string): string => (s === 'vndb' ? 'VNDB' : 'Bangumi')
 
 const handleSelect = (): void => {
   const found = props.results.find((r) => r.id === selectedId.value)
@@ -30,7 +32,9 @@ const handleSelect = (): void => {
       <div v-if="show" class="dialog-overlay" @keydown.esc="emit('close')">
         <div class="dialog-card">
           <div class="dialog-header">
-            <h2 class="dialog-title">选择 {{ sourceLabel }} 条目</h2>
+            <h2 class="dialog-title">
+              {{ sourceLabel ? `选择 ${sourceLabel} 条目` : '选择条目' }}
+            </h2>
             <button class="dialog-close" @click="emit('close')">&times;</button>
           </div>
 
@@ -52,6 +56,9 @@ const handleSelect = (): void => {
                 :class="{ selected: selectedId === item.id }"
               >
                 <input v-model="selectedId" type="radio" :value="item.id" class="picker-radio" />
+                <span class="source-badge" :class="`source-${item.source}`">{{
+                  sourceBadge(item.source)
+                }}</span>
                 <div class="picker-info">
                   <div class="picker-title">{{ item.title }}</div>
                   <div v-if="item.titleCn && item.titleCn !== item.title" class="picker-subtitle">
@@ -188,6 +195,27 @@ const handleSelect = (): void => {
 .picker-rating {
   color: #f59e0b;
   font-weight: 600;
+}
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.source-badge.source-vndb {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+}
+
+.source-badge.source-bangumi {
+  background: rgba(236, 72, 153, 0.12);
+  color: #ec4899;
 }
 
 .spin {

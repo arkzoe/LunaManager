@@ -6,14 +6,14 @@ import { pickBestMatch, REJECT_THRESHOLD } from '../utils/matcher'
 
 export interface UseBatchMatchReturn {
   searchingRow: Ref<string>
-  searchSource: Ref<'vndb' | 'bangumi'>
+  searchSource: Ref<string>
   showSearchInput: Ref<boolean>
   searchInputFolder: Ref<string>
   searchInputQuery: Ref<string>
   isMatchingAll: Ref<boolean>
   unmatchedCount: Ref<number>
   invalidateTokenCache: () => void
-  ensureTokenCache: () => Promise<{ source: 'vndb' | 'bangumi'; token: string | null }>
+  ensureTokenCache: () => Promise<{ source: string; token: string | null; vndbToken: string | null; bangumiToken: string | null }>
   handleSearchRow: (folderPath: string) => void
   handleSearchInputSelect: (result: SearchResult) => Promise<void>
   handleSearchInputClose: () => void
@@ -29,7 +29,7 @@ export function useBatchMatch(
   const { ensureTokenCache, invalidateTokenCache } = useTokenCache()
 
   const searchingRow = ref('')
-  const searchSource = ref<'vndb' | 'bangumi'>('bangumi')
+  const searchSource = ref<string>('bangumi')
   const showSearchInput = ref(false)
   const searchInputFolder = ref('')
   const searchInputQuery = ref('')
@@ -102,10 +102,15 @@ export function useBatchMatch(
     const { signal } = matchAllAbortController
 
     try {
-      const { source, token } = await ensureTokenCache()
+      const { source, token, vndbToken, bangumiToken } = await ensureTokenCache()
       searchSource.value = source
 
-      if (source === 'bangumi' && !token) {
+      if (source === 'mixed') {
+        if (!bangumiToken && !vndbToken) {
+          error.value = '请先在「设置 → 数据源」中配置至少一个数据源的 Token'
+          return
+        }
+      } else if (source === 'bangumi' && !token) {
         error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
         return
       }
@@ -118,8 +123,18 @@ export function useBatchMatch(
         row.matchStatus = 'searching'
 
         try {
-          const results = await window.api.searchMetadata(query, source, token || undefined)
-          const best = pickBestMatch(query, results, REJECT_THRESHOLD)
+          let allResults: SearchResult[] = []
+          if (source === 'mixed') {
+            const tasks: Promise<SearchResult[]>[] = []
+            if (vndbToken) tasks.push(window.api.searchMetadata(query, 'vndb', vndbToken || undefined))
+            if (bangumiToken) tasks.push(window.api.searchMetadata(query, 'bangumi', bangumiToken || undefined))
+            const resultsArr = await Promise.all(tasks)
+            allResults = resultsArr.flat()
+          } else {
+            allResults = await window.api.searchMetadata(query, source as 'vndb' | 'bangumi', token || undefined)
+          }
+
+          const best = pickBestMatch(query, allResults, REJECT_THRESHOLD)
           if (best) {
             row.title = best.titleCn || best.title || row.title
             if (best.source === 'vndb') row.vndbId = best.id
@@ -129,10 +144,12 @@ export function useBatchMatch(
 
             if (best.id) {
               try {
+                const fetchToken =
+                  best.source === 'bangumi' ? bangumiToken || token : vndbToken || token
                 const detail = await window.api.fetchMetadataDetail(
                   best.id,
                   best.source,
-                  token || undefined,
+                  fetchToken || undefined,
                   undefined
                 )
                 fillGameFromDetail(detail, row)

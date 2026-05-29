@@ -32,13 +32,14 @@ const emit = defineEmits<{
       <div class="setting-row">
         <div class="setting-info">
           <span class="setting-label">默认数据源</span>
-          <span class="setting-desc">元数据刮削的首选数据源</span>
+          <span class="setting-desc">元数据刮削的数据源，选择「混合」将从多个来源获取</span>
         </div>
         <SelectDropdown
           :model-value="metadataSource"
           :options="[
             { value: 'vndb', label: 'VNDB' },
-            { value: 'bangumi', label: 'Bangumi' }
+            { value: 'bangumi', label: 'Bangumi' },
+            { value: 'mixed', label: '混合' }
           ]"
           class="sselect"
           @update:model-value="emit('update:metadataSource', $event as string)"

@@ -15,7 +15,7 @@ export interface AppSettings {
   backupDir: string
   trackPlaytime: boolean
   recordHistory: boolean
-  metadataSource: 'vndb' | 'bangumi'
+  metadataSource: 'vndb' | 'bangumi' | 'mixed'
 }
 
 const defaultSettings: AppSettings = {

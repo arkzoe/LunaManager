@@ -22,7 +22,7 @@ const props = defineProps<{
   searching: boolean
   searchNoResults: boolean
   metadataFilled: boolean
-  searchSource: 'vndb' | 'bangumi'
+  searchSource: string
   error: string
 }>()
 

@@ -23,7 +23,7 @@ const error = ref('')
 const searching = ref(false)
 const searchResults = ref<SearchResult[]>([])
 const showSearchPicker = ref(false)
-const searchSource = ref<'vndb' | 'bangumi'>('bangumi')
+const searchSource = ref<string>('bangumi')
 const metadataFilled = ref(false)
 const searchNoResults = ref(false)
 
@@ -132,23 +132,47 @@ const handleSearch = async (): Promise<void> => {
   searchNoResults.value = false
   error.value = ''
   try {
-    const { source, token } = await ensureTokenCache()
+    const { source, token, vndbToken, bangumiToken } = await ensureTokenCache()
     searchSource.value = source
-    if (source === 'bangumi' && !token) {
-      error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
-      return
-    }
-    const results = await window.api.searchMetadata(query, source, token || undefined)
-    searchResults.value = results
-    if (results.length > 0) {
-      const best = pickBestMatch(query, results, AUTO_MATCH_THRESHOLD)
-      if (best) {
-        applySearchResult(best)
-      } else {
+
+    if (source === 'mixed') {
+      if (!bangumiToken && !vndbToken) {
+        error.value = '请先在「设置 → 数据源」中配置至少一个数据源的 Token'
+        return
+      }
+      const tasks: Promise<SearchResult[]>[] = []
+      if (vndbToken) tasks.push(window.api.searchMetadata(query, 'vndb', vndbToken || undefined))
+      if (bangumiToken)
+        tasks.push(window.api.searchMetadata(query, 'bangumi', bangumiToken || undefined))
+      const resultsArr = await Promise.all(tasks)
+      const allResults = resultsArr.flat()
+      searchResults.value = allResults
+      if (allResults.length > 0) {
         showSearchPicker.value = true
+      } else {
+        searchNoResults.value = true
       }
     } else {
-      searchNoResults.value = true
+      if (source === 'bangumi' && !token) {
+        error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
+        return
+      }
+      const results = await window.api.searchMetadata(
+        query,
+        source as 'vndb' | 'bangumi',
+        token || undefined
+      )
+      searchResults.value = results
+      if (results.length > 0) {
+        const best = pickBestMatch(query, results, AUTO_MATCH_THRESHOLD)
+        if (best) {
+          applySearchResult(best)
+        } else {
+          showSearchPicker.value = true
+        }
+      } else {
+        searchNoResults.value = true
+      }
     }
   } catch (err: unknown) {
     error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
@@ -158,6 +182,7 @@ const handleSearch = async (): Promise<void> => {
 }
 
 const applySearchResult = async (result: SearchResult): Promise<void> => {
+  searchSource.value = result.source
   form.value.title = result.titleCn || result.title || form.value.title
   form.value.titleCn = result.titleCn || ''
   if (result.id) {

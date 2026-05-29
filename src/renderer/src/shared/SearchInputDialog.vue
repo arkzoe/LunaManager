@@ -12,11 +12,11 @@ const emit = defineEmits<{
 const props = defineProps<{
   show: boolean
   initialQuery?: string
-  initialSource?: 'vndb' | 'bangumi'
+  initialSource?: string
 }>()
 
 const query = ref(props.initialQuery || '')
-const source = ref<'vndb' | 'bangumi'>(props.initialSource || 'bangumi')
+const source = ref<string>(props.initialSource || 'bangumi')
 const searching = ref(false)
 const results = ref<SearchResult[]>([])
 const searched = ref(false)
@@ -49,20 +49,38 @@ const handleSearch = async (): Promise<void> => {
   selectedId.value = null
 
   try {
-    const token =
-      source.value === 'bangumi'
-        ? await window.api.getConfig('bangumiToken')
-        : await window.api.getConfig('vndbApiKey')
+    const vndbToken = await window.api.getConfig('vndbApiKey')
+    const bangumiToken = await window.api.getConfig('bangumiToken')
 
-    if (source.value === 'bangumi' && !token) {
-      error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
-      return
+    if (source.value === 'mixed') {
+      if (!bangumiToken && !vndbToken) {
+        error.value = '请先在「设置 → 数据源」中配置至少一个数据源的 Token'
+        return
+      }
+      const tasks: Promise<SearchResult[]>[] = []
+      if (vndbToken) tasks.push(window.api.searchMetadata(q, 'vndb', vndbToken || undefined))
+      if (bangumiToken)
+        tasks.push(window.api.searchMetadata(q, 'bangumi', bangumiToken || undefined))
+      const resultsArr = await Promise.all(tasks)
+      const allResults = resultsArr.flat()
+      results.value = sortByMatch(q, allResults)
+    } else {
+      const token = source.value === 'bangumi' ? bangumiToken : vndbToken
+
+      if (source.value === 'bangumi' && !token) {
+        error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
+        return
+      }
+
+      const raw = await window.api.searchMetadata(
+        q,
+        source.value as 'vndb' | 'bangumi',
+        token || undefined
+      )
+      results.value = sortByMatch(q, raw)
+      const best = pickBestMatch(q, raw, AUTO_MATCH_THRESHOLD)
+      if (best) selectedId.value = best.id
     }
-
-    const raw = await window.api.searchMetadata(q, source.value, token || undefined)
-    results.value = sortByMatch(q, raw)
-    const best = pickBestMatch(q, raw, AUTO_MATCH_THRESHOLD)
-    if (best) selectedId.value = best.id
   } catch (err: unknown) {
     error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
   } finally {
@@ -96,7 +114,8 @@ const handleSelect = (): void => {
                   v-model="source"
                   :options="[
                     { value: 'vndb', label: 'VNDB' },
-                    { value: 'bangumi', label: 'Bangumi' }
+                    { value: 'bangumi', label: 'Bangumi' },
+                    { value: 'mixed', label: '混合' }
                   ]"
                   :disabled="searching"
                   class="sf-select"
