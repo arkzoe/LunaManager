@@ -70,19 +70,36 @@ export function useBatchScan(): UseBatchScanReturn {
     }
   }
 
-  const selectedCount = computed(
-    () => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length
-  )
-  const skipCount = computed(() => rows.value.filter((r) => r.isDuplicate).length)
-  const totalCount = computed(() => rows.value.length)
-  const allSelectableCount = computed(
-    () => rows.value.filter((r) => r.selectedExe && !r.isDuplicate).length
-  )
-  const selectedSelectableCount = computed(
-    () => rows.value.filter((r) => r.selected && r.selectedExe && !r.isDuplicate).length
-  )
+  const stats = computed(() => {
+    let selected = 0
+    let skipped = 0
+    let selectable = 0
+    let selectedSelectable = 0
+    const rowsArr = rows.value
+    for (let i = 0; i < rowsArr.length; i++) {
+      const r = rowsArr[i]
+      if (r.isDuplicate) {
+        skipped++
+        continue
+      }
+      if (r.selectedExe) {
+        selectable++
+        if (r.selected) selectedSelectable++
+      }
+      if (r.selected && r.selectedExe) {
+        selected++
+      }
+    }
+    return { selected, skipped, total: rowsArr.length, selectable, selectedSelectable }
+  })
+
+  const selectedCount = computed(() => stats.value.selected)
+  const skipCount = computed(() => stats.value.skipped)
+  const totalCount = computed(() => stats.value.total)
+  const allSelectableCount = computed(() => stats.value.selectable)
+  const selectedSelectableCount = computed(() => stats.value.selectedSelectable)
   const isAllSelected = computed(
-    () => allSelectableCount.value > 0 && selectedSelectableCount.value === allSelectableCount.value
+    () => stats.value.selectable > 0 && stats.value.selectedSelectable === stats.value.selectable
   )
 
   const handleSelectAll = (checked: boolean): void => {

@@ -1,4 +1,4 @@
-import Fuse from 'fuse.js'
+import Fuse, { type IFuseOptions } from 'fuse.js'
 import type { SearchResult } from '../../../shared/types'
 
 const RE_VERSION_TAG = /[[(][^)\]]*?(?:v[\d.]+|ver[\s.]?[\d.]+|version)[^)\]]*?[\])]/gi
@@ -18,6 +18,29 @@ function cleanQuery(query: string): string {
 export const AUTO_MATCH_THRESHOLD = 0.35
 export const REJECT_THRESHOLD = 0.5
 
+const FUSE_OPTIONS: IFuseOptions<SearchResult> = {
+  keys: [
+    { name: 'title', weight: 2 },
+    { name: 'titleCn', weight: 1 }
+  ],
+  includeScore: true,
+  threshold: 0.4,
+  minMatchCharLength: 2,
+  distance: 100
+}
+
+let fuseCache: { key: string; fuse: Fuse<SearchResult> } | null = null
+
+function getFuse(results: SearchResult[]): Fuse<SearchResult> {
+  const key = results.map((r) => r.id).join(',')
+  if (fuseCache && fuseCache.key === key) {
+    return fuseCache.fuse
+  }
+  const fuse = new Fuse(results, FUSE_OPTIONS)
+  fuseCache = { key, fuse }
+  return fuse
+}
+
 export function pickBestMatch(
   query: string,
   results: SearchResult[],
@@ -28,17 +51,7 @@ export function pickBestMatch(
 
   if (results.length === 1) return results[0]
 
-  const fuse = new Fuse(results, {
-    keys: [
-      { name: 'title', weight: 2 },
-      { name: 'titleCn', weight: 1 }
-    ],
-    includeScore: true,
-    threshold: 0.4,
-    minMatchCharLength: 2,
-    distance: 100
-  })
-
+  const fuse = getFuse(results)
   const scored = fuse.search(cleaned)
   if (scored.length === 0) return null
 
@@ -54,16 +67,6 @@ export function sortByMatch(query: string, results: SearchResult[]): SearchResul
   const cleaned = cleanQuery(query)
   if (!cleaned || results.length <= 1) return results
 
-  const fuse = new Fuse(results, {
-    keys: [
-      { name: 'title', weight: 2 },
-      { name: 'titleCn', weight: 1 }
-    ],
-    includeScore: true,
-    threshold: 0.4,
-    minMatchCharLength: 2,
-    distance: 100
-  })
-
+  const fuse = getFuse(results)
   return fuse.search(cleaned).map((r) => r.item)
 }

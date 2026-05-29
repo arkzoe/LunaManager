@@ -157,7 +157,7 @@ export async function pickFolderAndScan(options?: ScanOptions): Promise<ScanResu
   return scanDirectory(result.filePaths[0], options)
 }
 
-const BATCH_CONCURRENCY = 4
+const BATCH_CONCURRENCY = 8
 
 export async function scanBatchDirectory(
   parentPath: string,
@@ -166,24 +166,44 @@ export async function scanBatchDirectory(
   try {
     const entries = await readdir(parentPath, { withFileTypes: true })
     const dirs = entries.filter((e) => e.isDirectory())
-    const results: BatchScanResult['items'] = []
-    for (let i = 0; i < dirs.length; i += BATCH_CONCURRENCY) {
-      const batch = dirs.slice(i, i + BATCH_CONCURRENCY)
-      const batchResults = await Promise.all(
-        batch.map(async (entry) => {
-          const folderPath = join(parentPath, entry.name)
-          const result = await scanDirectory(folderPath, options)
-          return {
+    // 跳过 size 计算，大幅加快扫描速度
+    const scanOptions: ScanOptions = { ...options, skipSize: true }
+
+    const results: BatchScanResult['items'] = new Array(dirs.length)
+    let cursor = 0
+
+    const worker = async (): Promise<void> => {
+      while (cursor < dirs.length) {
+        const i = cursor++
+        const entry = dirs[i]
+        const folderPath = join(parentPath, entry.name)
+        try {
+          const result = await scanDirectory(folderPath, scanOptions)
+          results[i] = {
             folderPath: result.folderPath,
             folderName: result.folderName,
             executables: result.executables,
             totalSize: result.totalSize
           }
-        })
-      )
-      results.push(...batchResults)
+        } catch {
+          results[i] = {
+            folderPath,
+            folderName: entry.name,
+            executables: [],
+            totalSize: '未知'
+          }
+        }
+      }
     }
-    return { items: results }
+
+    const poolSize = Math.min(BATCH_CONCURRENCY, dirs.length)
+    const workers: Promise<void>[] = []
+    for (let i = 0; i < poolSize; i++) {
+      workers.push(worker())
+    }
+    await Promise.all(workers)
+
+    return { items: results.filter(Boolean) }
   } catch {
     return { items: [] }
   }
