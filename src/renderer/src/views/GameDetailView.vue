@@ -130,7 +130,6 @@ const handleLaunch = async (): Promise<void> => {
   const modes = selectedLaunchModes.value.length > 0 ? [...selectedLaunchModes.value] : ['normal']
   try {
     await window.api.launchGame(props.game.id, modes as LaunchMode[])
-    isRunning.value = true
     showToastMsg('游戏已启动', 'success')
     const updated = await window.api.getGameById(props.game.id)
     if (updated) emit('updated', updated)
@@ -159,7 +158,9 @@ const handleRatingChange = async (val: number): Promise<void> => {
       await window.api.updateGame(props.game.id, { personal_rating: val })
       const idx = store.games.findIndex((g) => g.id === props.game.id)
       if (idx !== -1) {
-        store.games[idx] = { ...store.games[idx], personal_rating: val }
+        const copy = [...store.games]
+        copy[idx] = { ...copy[idx], personal_rating: val }
+        store.games = copy
       }
       emit('updated', { ...props.game, personal_rating: val })
     } catch {
@@ -192,9 +193,11 @@ const handleSave = async (extraUpdates?: Partial<GameRecord>): Promise<void> => 
     await window.api.updateGame(props.game.id, updates)
 
     // Update store and notify parent
-    const idx = store.games.findIndex((g) => g.id === props.game.id)
-    if (idx !== -1) {
-      store.games[idx] = { ...store.games[idx], ...updates }
+    const gIdx = store.games.findIndex((g) => g.id === props.game.id)
+    if (gIdx !== -1) {
+      const copy = [...store.games]
+      copy[gIdx] = { ...copy[gIdx], ...updates }
+      store.games = copy
     }
     emit('updated', { ...props.game, ...updates })
     showToastMsg('保存成功', 'success')
@@ -257,7 +260,12 @@ const handleDeleteGame = async (): Promise<void> => {
   showDeleteConfirm.value = false
   try {
     await window.api.deleteGame(props.game.id)
-    store.games = store.games.filter((g) => g.id !== props.game.id)
+    const gIdx = store.games.findIndex((g) => g.id === props.game.id)
+    if (gIdx !== -1) {
+      const copy = [...store.games]
+      copy.splice(gIdx, 1)
+      store.games = copy
+    }
     emit('back')
   } catch (err: unknown) {
     showToastMsg((err instanceof Error ? err.message : String(err)) || '删除失败', 'error')
@@ -265,11 +273,13 @@ const handleDeleteGame = async (): Promise<void> => {
 }
 
 let unmounted = false
-let pollTimer: ReturnType<typeof setInterval> | null = null
+let cleanupGameUpdated: (() => void) | null = null
+let cleanupGameStarted: (() => void) | null = null
 
 onUnmounted(() => {
   unmounted = true
-  if (pollTimer) clearInterval(pollTimer)
+  cleanupGameUpdated?.()
+  cleanupGameStarted?.()
   if (ratingTimer) clearTimeout(ratingTimer)
 })
 
@@ -281,19 +291,23 @@ onMounted(async () => {
   } catch {
     /* ignore */
   }
-  pollTimer = setInterval(async () => {
-    if (unmounted || document.hidden) return
-    try {
-      const running = await window.api.isGameRunning(props.game.id)
-      isRunning.value = running
-      if (!running && pollTimer) {
-        clearInterval(pollTimer)
-        pollTimer = null
-      }
-    } catch {
-      /* ignore */
-    }
-  }, 5000)
+
+  // 监听后端推送的游戏启动事件，即时更新运行状态
+  cleanupGameStarted = window.api.onGameRunningStarted((gameId) => {
+    if (unmounted || gameId !== props.game.id) return
+    isRunning.value = true
+  })
+
+  // 监听游戏数据更新事件（进程退出时后端推送），主动检查 running 状态
+  cleanupGameUpdated = window.api.onGameUpdated((updated) => {
+    if (unmounted || updated.id !== props.game.id) return
+    window.api
+      .isGameRunning(props.game.id)
+      .then((running) => {
+        if (!unmounted) isRunning.value = running
+      })
+      .catch(() => {})
+  })
 })
 
 const handleClickOutside = (): void => {

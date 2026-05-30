@@ -146,6 +146,8 @@ watch(
   () => effectiveGames.value.filter((g) => g.favorite).map((g) => g.id),
   async (favIds) => {
     if (favSyncTimer) clearTimeout(favSyncTimer)
+    // collections 未加载完成时不触发同步
+    if (collections.value.length === 0) return
     favSyncTimer = setTimeout(async () => {
       const def = defaultCollection.value
       if (!def) return

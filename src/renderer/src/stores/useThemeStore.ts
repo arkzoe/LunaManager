@@ -30,23 +30,31 @@ export const useThemeStore = defineStore('theme', () => {
     if (saved === 'light' || saved === 'dark') {
       currentTheme.value = saved
       applyTheme(currentTheme.value)
-    } else {
+      // 后台同步 IPC，不阻塞 UI
       window.api
         .getConfig('theme')
         .then((t) => {
-          if (t === 'light' || t === 'dark') {
-            currentTheme.value = t
-          } else {
-            currentTheme.value = getSystemTheme()
+          if (t !== saved) {
+            localStorage.setItem('lunamanager-theme', t)
           }
-          applyTheme(currentTheme.value)
-          localStorage.setItem('lunamanager-theme', currentTheme.value)
         })
-        .catch(() => {
-          currentTheme.value = getSystemTheme()
-          applyTheme(currentTheme.value)
-          localStorage.setItem('lunamanager-theme', getSystemTheme())
+        .catch(() => {})
+    } else {
+      // 直接使用系统主题，同时后台同步 IPC
+      const systemTheme = getSystemTheme()
+      currentTheme.value = systemTheme
+      applyTheme(systemTheme)
+      localStorage.setItem('lunamanager-theme', systemTheme)
+      window.api
+        .getConfig('theme')
+        .then((t) => {
+          if ((t === 'light' || t === 'dark') && t !== systemTheme) {
+            currentTheme.value = t
+            applyTheme(t)
+            localStorage.setItem('lunamanager-theme', t)
+          }
         })
+        .catch(() => {})
     }
   }
 

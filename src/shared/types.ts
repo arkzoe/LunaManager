@@ -238,6 +238,7 @@ export interface IElectronAPI {
   getAppVersion: () => Promise<string>
 
   onGameUpdated: (callback: (game: GameRecord) => void) => () => void
+  onGameRunningStarted: (callback: (gameId: string) => void) => () => void
 
   minimizeWindow: () => Promise<void>
   toggleMaximizeWindow: () => Promise<void>

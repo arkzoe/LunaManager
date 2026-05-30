@@ -61,6 +61,7 @@ export function useBatchMatch(
     showSearchInput.value = false
     const row = rows.value.find((r) => r.folderPath === searchInputFolder.value)
     if (!row) return
+    const { bangumiToken, vndbToken } = await ensureTokenCache()
 
     row.matchStatus = 'matched'
     row.title = result.titleCn || result.title || row.title
@@ -71,10 +72,7 @@ export function useBatchMatch(
     searchSource.value = result.source
 
     if (result.id) {
-      const fetchToken =
-        result.source === 'bangumi'
-          ? await window.api.getConfig('bangumiToken')
-          : await window.api.getConfig('vndbApiKey')
+      const fetchToken = result.source === 'bangumi' ? bangumiToken : vndbToken
       try {
         const detail = await window.api.fetchMetadataDetail(
           result.id,

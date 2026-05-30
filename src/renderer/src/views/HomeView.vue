@@ -50,15 +50,19 @@ const homeData = computed(() => {
   const overview = { totalGames: total, totalHours, monthlyHours: 0, avgPerDay }
 
   const withPlayed = all.filter((g) => g.last_played)
-  const sortedByPlayed = [...withPlayed].sort((a, b) =>
-    (b.last_played || '').localeCompare(a.last_played || '')
-  )
-  const sortedByAdded = [...all].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+  // 复用 all 的单次拷贝，避免 [...all] 重复 spread
+  const allArray = [...all]
+  allArray.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+  const sortedByAdded = allArray.slice(0, 10)
+  // 对 withPlayed 子集排序，提前截断减少排序长度
+  const sortedByPlayed = [...withPlayed]
+    .sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
+    .slice(0, 10)
 
   return {
     overview,
-    recentGames: sortedByPlayed.slice(0, 10),
-    recentAdded: sortedByAdded.slice(0, 10),
+    recentGames: sortedByPlayed,
+    recentAdded: sortedByAdded,
     playedActs: sortedByPlayed.slice(0, 5).map((g) => ({
       type: 'played' as const,
       game: g,

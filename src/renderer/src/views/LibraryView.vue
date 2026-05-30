@@ -100,7 +100,9 @@ const loadCollections = async (): Promise<void> => {
 const batchCount = computed(() => selectedIds.value.size)
 const allFilteredSelected = computed(
   () =>
-    filteredGames.value.length > 0 && filteredGames.value.every((g) => selectedIds.value.has(g.id))
+    filteredGames.value.length > 0 &&
+    selectedIds.value.size >= filteredGames.value.length &&
+    filteredGames.value.every((g) => selectedIds.value.has(g.id))
 )
 
 const handleGameClick = (game: GameRecord): void => {
@@ -140,18 +142,25 @@ const closeBatchStatusMenu = (): void => {
 const handleBatchStatus = async (status: GameStatus): Promise<void> => {
   showBatchStatusMenu.value = false
   const ids = [...selectedIds.value]
+  const gameMap = new Map(store.games.map((g) => [g.id, g]))
   const results = await Promise.allSettled(
-    ids.map(async (id) => {
-      await window.api.updateGame(id, { status } as Partial<GameRecord>)
-      const g = store.games.find((x) => x.id === id)
-      if (g) g.status = status
-    })
+    ids.map(async (id) => window.api.updateGame(id, { status } as Partial<GameRecord>))
   )
   const failed = ids.filter((_, i) => results[i].status === 'rejected')
   if (failed.length > 0) {
     selectedIds.value = new Set(failed)
     showToastMsg(`${failed.length}/${ids.length} 个操作失败`, 'error')
   } else {
+    // 单次批量更新 store
+    const copy = [...store.games]
+    for (const id of ids) {
+      const g = gameMap.get(id)
+      if (g) {
+        const idx = copy.findIndex((x) => x.id === id)
+        if (idx !== -1) copy[idx] = { ...copy[idx], status }
+      }
+    }
+    store.games = copy
     showToastMsg(`已将 ${ids.length} 个游戏改为「${statusLabels[status]}」`, 'success')
     selectedIds.value = new Set()
     batchMode.value = false
@@ -196,17 +205,14 @@ const closeDeleteConfirm = (): void => {
 const confirmBatchDelete = async (): Promise<void> => {
   showDeleteConfirm.value = false
   const ids = [...selectedIds.value]
-  const results = await Promise.allSettled(
-    ids.map(async (id) => {
-      await window.api.deleteGame(id)
-      store.games = store.games.filter((g) => g.id !== id)
-    })
-  )
+  const deleteSet = new Set(ids)
+  const results = await Promise.allSettled(ids.map(async (id) => window.api.deleteGame(id)))
   const failed = ids.filter((_, i) => results[i].status === 'rejected')
   if (failed.length > 0) {
     selectedIds.value = new Set(failed)
     showToastMsg(`${failed.length}/${ids.length} 个删除失败`, 'error')
   } else {
+    store.games = store.games.filter((g) => !deleteSet.has(g.id))
     showToastMsg(`已删除 ${ids.length} 个游戏`, 'success')
     selectedIds.value = new Set()
     batchMode.value = false
@@ -218,7 +224,12 @@ const confirmSingleDelete = async (): Promise<void> => {
   showSingleDeleteConfirm.value = false
   try {
     await window.api.deleteGame(singleDeleteGame.value.id)
-    store.games = store.games.filter((g) => g.id !== singleDeleteGame.value!.id)
+    const idx = store.games.findIndex((g) => g.id === singleDeleteGame.value!.id)
+    if (idx !== -1) {
+      const copy = [...store.games]
+      copy.splice(idx, 1)
+      store.games = copy
+    }
     showToastMsg(`已删除「${singleDeleteGame.value.title}」`, 'success')
   } catch {
     showToastMsg('删除失败', 'error')
@@ -320,8 +331,12 @@ const statusLabels: Record<GameStatus, string> = {
 const handleStatusChange = async (game: GameRecord, status: GameStatus): Promise<void> => {
   try {
     await window.api.updateGame(game.id, { status })
-    const g = store.games.find((x) => x.id === game.id)
-    if (g) g.status = status
+    const idx = store.games.findIndex((x) => x.id === game.id)
+    if (idx !== -1) {
+      const copy = [...store.games]
+      copy[idx] = { ...copy[idx], status }
+      store.games = copy
+    }
   } catch {
     // fallback silently
   }

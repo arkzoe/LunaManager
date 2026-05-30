@@ -82,6 +82,11 @@ const api: IElectronAPI = {
     ipcRenderer.on('game:updated', handler)
     return () => ipcRenderer.removeListener('game:updated', handler)
   },
+  onGameRunningStarted: (callback) => {
+    const handler = (_e, gameId) => callback(gameId)
+    ipcRenderer.on('game:running-started', handler)
+    return () => ipcRenderer.removeListener('game:running-started', handler)
+  },
 
   requestQuit: () => ipcRenderer.invoke('app:requestQuit'),
   confirmQuit: () => ipcRenderer.invoke('app:confirmQuit'),
