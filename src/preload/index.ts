@@ -42,6 +42,7 @@ const api: IElectronAPI = {
   autoMatchSaveDir: (executablePath) => ipcRenderer.invoke('snap:autoMatchSaveDir', executablePath),
 
   pickImportFolder: (options?) => ipcRenderer.invoke('import:pickFolder', options),
+  getDirSizes: (dirPaths) => ipcRenderer.invoke('import:getDirSizes', dirPaths),
   pickBatchImportFolder: (options?) => ipcRenderer.invoke('import:pickBatchFolder', options),
 
   pickFile: (filters) => ipcRenderer.invoke('import:pickFile', filters),

@@ -13,7 +13,12 @@ export interface UseBatchMatchReturn {
   isMatchingAll: Ref<boolean>
   unmatchedCount: Ref<number>
   invalidateTokenCache: () => void
-  ensureTokenCache: () => Promise<{ source: string; token: string | null; vndbToken: string | null; bangumiToken: string | null }>
+  ensureTokenCache: () => Promise<{
+    source: string
+    token: string | null
+    vndbToken: string | null
+    bangumiToken: string | null
+  }>
   handleSearchRow: (folderPath: string) => void
   handleSearchInputSelect: (result: SearchResult) => Promise<void>
   handleSearchInputClose: () => void
@@ -127,9 +132,15 @@ export function useBatchMatch(
           let allResults: SearchResult[] = []
           if (source === 'mixed') {
             const tasks: Promise<SearchResult[]>[] = []
-            if (vndbToken) tasks.push(window.api.searchMetadata(query, 'vndb', vndbToken || undefined))
-            if (bangumiToken) tasks.push(window.api.searchMetadata(query, 'bangumi', bangumiToken || undefined))
+            if (vndbToken)
+              tasks.push(window.api.searchMetadata(query, 'vndb', vndbToken || undefined))
+            if (bangumiToken)
+              tasks.push(window.api.searchMetadata(query, 'bangumi', bangumiToken || undefined))
             const settledResults = await Promise.allSettled(tasks)
+
+            // 中断检查点：搜索完成后立即检查
+            if (signal.aborted) return
+
             settledResults.forEach((r) => {
               if (r.status === 'fulfilled') {
                 allResults.push(...r.value)
@@ -138,7 +149,14 @@ export function useBatchMatch(
               }
             })
           } else {
-            allResults = await window.api.searchMetadata(query, source as 'vndb' | 'bangumi', token || undefined)
+            allResults = await window.api.searchMetadata(
+              query,
+              source as 'vndb' | 'bangumi',
+              token || undefined
+            )
+
+            // 中断检查点：搜索完成后立即检查
+            if (signal.aborted) return
           }
 
           const best = pickBestMatch(query, allResults, REJECT_THRESHOLD)
@@ -159,6 +177,10 @@ export function useBatchMatch(
                   fetchToken || undefined,
                   undefined
                 )
+
+                // 中断检查点：详情获取完成后立即检查
+                if (signal.aborted) return
+
                 fillGameFromDetail(detail, row)
               } catch {
                 matchFailedCount++
@@ -170,6 +192,7 @@ export function useBatchMatch(
             matchFailedCount++
           }
         } catch {
+          if (signal.aborted) return
           row.matchStatus = 'noresult'
           matchFailedCount++
         }

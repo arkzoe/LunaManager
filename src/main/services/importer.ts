@@ -1,22 +1,27 @@
-import { dialog } from 'electron'
+﻿import { dialog } from 'electron'
 import { readdir, stat } from 'fs/promises'
 import { join, basename } from 'path'
 import type { ScanResult, BatchScanResult, ScanOptions } from '../../shared/types'
 
 const IO_CONCURRENCY = 50
 
-// 全局信号量防止递归并发爆炸
+// 基于 Promise 等待队列的信号量，避免自旋轮询
 let activeOps = 0
 const MAX_TOTAL_OPS = 200
+const waitQueue: (() => void)[] = []
+
 async function withGlobalLimit<T>(fn: () => Promise<T>): Promise<T> {
   while (activeOps >= MAX_TOTAL_OPS) {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise<void>((resolve) => {
+      waitQueue.push(resolve)
+    })
   }
   activeOps++
   try {
     return await fn()
   } finally {
     activeOps--
+    waitQueue.shift()?.()
   }
 }
 
@@ -36,25 +41,43 @@ async function limitedPool<T>(tasks: (() => Promise<T>)[], limit: number): Promi
 }
 
 async function getDirSize(dirPath: string): Promise<number> {
-  try {
-    const entries = await readdir(dirPath, { withFileTypes: true })
-    const sizes = await limitedPool(
-      entries.map((entry) => async () => {
-        const fullPath = join(dirPath, entry.name)
-        try {
-          if (entry.isDirectory()) return await getDirSize(fullPath)
-          if (entry.isFile()) return (await stat(fullPath)).size
-        } catch {
-          /* skip inaccessible file/dir */
+  let totalSize = 0
+  let currentDirs: string[] = [dirPath]
+
+  // BFS 按层遍历，避免递归创建大量 worker 导致全局信号量耗尽
+  while (currentDirs.length > 0) {
+    const tasks = currentDirs.map((path) => async () => {
+      try {
+        const entries = await readdir(path, { withFileTypes: true })
+        let size = 0
+        const subdirs: string[] = []
+        for (const entry of entries) {
+          const fullPath = join(path, entry.name)
+          try {
+            if (entry.isDirectory()) {
+              subdirs.push(fullPath)
+            } else if (entry.isFile()) {
+              size += (await stat(fullPath)).size
+            }
+          } catch {
+            /* skip inaccessible file/dir */
+          }
         }
-        return 0
-      }),
-      IO_CONCURRENCY
-    )
-    return sizes.reduce((sum, s) => sum + s, 0)
-  } catch {
-    return 0
+        return { size, subdirs }
+      } catch {
+        return { size: 0, subdirs: [] as string[] }
+      }
+    })
+
+    const results = await limitedPool(tasks, IO_CONCURRENCY)
+    currentDirs = []
+    for (const r of results) {
+      totalSize += r.size
+      currentDirs.push(...r.subdirs)
+    }
   }
+
+  return totalSize
 }
 
 const SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB']
@@ -68,27 +91,41 @@ function formatSize(bytes: number): string {
   return `${size} ${SIZE_UNITS[i]}`
 }
 
-async function scanExeFiles(dirPath: string, depth = 0, maxDepth = 3): Promise<string[]> {
-  if (depth > maxDepth) return []
-  try {
-    const entries = await readdir(dirPath, { withFileTypes: true })
-    const results = await limitedPool(
-      entries.map((entry) => async () => {
-        const fullPath = join(dirPath, entry.name)
-        if (entry.isDirectory() && depth < maxDepth) {
-          return scanExeFiles(fullPath, depth + 1, maxDepth)
+async function scanExeFiles(dirPath: string, maxDepth = 3): Promise<string[]> {
+  const result: string[] = []
+  type WorkItem = { path: string; depth: number }
+  let currentBatch: WorkItem[] = [{ path: dirPath, depth: 0 }]
+
+  // BFS 按层遍历，每层共享一个 limitedPool，避免递归创建大量 worker
+  while (currentBatch.length > 0) {
+    const tasks = currentBatch.map(({ path, depth }) => async () => {
+      try {
+        const entries = await readdir(path, { withFileTypes: true })
+        const exes: string[] = []
+        const subdirs: WorkItem[] = []
+        for (const entry of entries) {
+          const fullPath = join(path, entry.name)
+          if (entry.isDirectory() && depth < maxDepth) {
+            subdirs.push({ path: fullPath, depth: depth + 1 })
+          } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.exe')) {
+            exes.push(fullPath)
+          }
         }
-        if (entry.isFile() && entry.name.toLowerCase().endsWith('.exe')) {
-          return [fullPath]
-        }
-        return []
-      }),
-      IO_CONCURRENCY
-    )
-    return results.flat()
-  } catch {
-    return []
+        return { exes, subdirs }
+      } catch {
+        return { exes: [] as string[], subdirs: [] as WorkItem[] }
+      }
+    })
+
+    const results = await limitedPool(tasks, IO_CONCURRENCY)
+    currentBatch = []
+    for (const r of results) {
+      result.push(...r.exes)
+      currentBatch.push(...r.subdirs)
+    }
   }
+
+  return result
 }
 
 const EXACT_EXCLUDES = new Set([
@@ -119,7 +156,7 @@ export async function scanDirectory(
   const { maxDepth = 3, skipSize = false } = options
   const folderName = basename(folderPath)
   const [rawExes, dirSize] = await Promise.all([
-    scanExeFiles(folderPath, 0, maxDepth),
+    scanExeFiles(folderPath, maxDepth),
     skipSize ? Promise.resolve(0) : getDirSize(folderPath)
   ])
 
@@ -169,46 +206,43 @@ export async function scanBatchDirectory(
     // 跳过 size 计算，大幅加快扫描速度
     const scanOptions: ScanOptions = { ...options, skipSize: true }
 
-    const results: BatchScanResult['items'] = new Array(dirs.length)
-    let cursor = 0
-
-    const worker = async (): Promise<void> => {
-      while (cursor < dirs.length) {
-        const i = cursor++
-        const entry = dirs[i]
-        const folderPath = join(parentPath, entry.name)
-        try {
-          const result = await scanDirectory(folderPath, scanOptions)
-          results[i] = {
-            folderPath: result.folderPath,
-            folderName: result.folderName,
-            executables: result.executables,
-            totalSize: result.totalSize
-          }
-        } catch {
-          results[i] = {
-            folderPath,
-            folderName: entry.name,
-            executables: [],
-            totalSize: '未知'
-          }
+    const tasks = dirs.map((entry) => async () => {
+      const folderPath = join(parentPath, entry.name)
+      try {
+        const result = await scanDirectory(folderPath, scanOptions)
+        return {
+          folderPath: result.folderPath,
+          folderName: result.folderName,
+          executables: result.executables,
+          totalSize: result.totalSize
+        }
+      } catch {
+        return {
+          folderPath,
+          folderName: entry.name,
+          executables: [] as { name: string; fullPath: string }[],
+          totalSize: '未知'
         }
       }
-    }
+    })
 
-    const poolSize = Math.min(BATCH_CONCURRENCY, dirs.length)
-    const workers: Promise<void>[] = []
-    for (let i = 0; i < poolSize; i++) {
-      workers.push(worker())
-    }
-    await Promise.all(workers)
-
-    return { items: results.filter(Boolean) }
+    const results = await limitedPool(tasks, BATCH_CONCURRENCY)
+    return { items: results }
   } catch {
     return { items: [] }
   }
 }
 
+/** 批量计算多个目录的磁盘占用大小（后台执行，不阻塞主流程） */
+export async function getDirectorySizes(dirPaths: string[]): Promise<Record<string, string>> {
+  const result: Record<string, string> = {}
+  const tasks = dirPaths.map((dirPath) => async () => {
+    const bytes = await getDirSize(dirPath)
+    result[dirPath] = formatSize(bytes)
+  })
+  await limitedPool(tasks, BATCH_CONCURRENCY)
+  return result
+}
 export async function pickBatchFolderAndScan(
   options?: ScanOptions
 ): Promise<BatchScanResult | null> {

@@ -29,15 +29,28 @@ const FUSE_OPTIONS: IFuseOptions<SearchResult> = {
   distance: 100
 }
 
-let fuseCache: { key: string; fuse: Fuse<SearchResult> } | null = null
+const FUSE_CACHE_MAX = 3
+const fuseCache = new Map<string, Fuse<SearchResult>>()
 
 function getFuse(results: SearchResult[]): Fuse<SearchResult> {
   const key = results.map((r) => r.id).join(',')
-  if (fuseCache && fuseCache.key === key) {
-    return fuseCache.fuse
+  const cached = fuseCache.get(key)
+  if (cached) {
+    // LRU: move to end by re-inserting
+    fuseCache.delete(key)
+    fuseCache.set(key, cached)
+    return cached
   }
+
   const fuse = new Fuse(results, FUSE_OPTIONS)
-  fuseCache = { key, fuse }
+  fuseCache.set(key, fuse)
+
+  // Evict oldest if over capacity
+  if (fuseCache.size > FUSE_CACHE_MAX) {
+    const firstKey = fuseCache.keys().next().value
+    if (firstKey) fuseCache.delete(firstKey)
+  }
+
   return fuse
 }
 

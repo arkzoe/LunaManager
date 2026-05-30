@@ -201,6 +201,7 @@ export interface IElectronAPI {
 
   pickImportFolder: (options?: ScanOptions) => Promise<ScanResult | null>
   pickBatchImportFolder: (options?: ScanOptions) => Promise<BatchScanResult | null>
+  getDirSizes: (dirPaths: string[]) => Promise<Record<string, string>>
 
   pickFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>
   pickDirectory: () => Promise<string | null>

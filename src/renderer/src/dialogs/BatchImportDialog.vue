@@ -54,6 +54,16 @@ const handleImportAll = async (): Promise<void> => {
   const resultItems: ImportResultItem[] = []
   const CONCURRENCY = 3
 
+  // 预构建查找表，避免每行 O(n) 全库扫描重复检测
+  const exePathMap = new Map<string, GameRecord>()
+  const vndbIdMap = new Map<string, GameRecord>()
+  const bangumiIdMap = new Map<string, GameRecord>()
+  for (const g of store.games) {
+    if (g.executable_path) exePathMap.set(g.executable_path, g)
+    if (g.vndb_id) vndbIdMap.set(g.vndb_id, g)
+    if (g.bangumi_id) bangumiIdMap.set(g.bangumi_id, g)
+  }
+
   try {
     for (let i = 0; i < toImport.length; i += CONCURRENCY) {
       if (signal.aborted) break
@@ -66,12 +76,10 @@ const handleImportAll = async (): Promise<void> => {
           try {
             const gameId = `id-${crypto.randomUUID()}`
 
-            const existing = store.games.find(
-              (g) =>
-                g.executable_path === row.selectedExe ||
-                (row.vndbId && g.vndb_id === row.vndbId) ||
-                (row.bangumiId && g.bangumi_id === row.bangumiId)
-            )
+            const existing =
+              exePathMap.get(row.selectedExe) ||
+              (row.vndbId ? vndbIdMap.get(row.vndbId) : undefined) ||
+              (row.bangumiId ? bangumiIdMap.get(row.bangumiId) : undefined)
             if (existing) {
               row.importStatus = 'skipped'
               row.importMessage = `与已有游戏 "${existing.title}" 重复`

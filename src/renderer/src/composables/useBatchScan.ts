@@ -123,10 +123,10 @@ export function useBatchScan(): UseBatchScanReturn {
       }
       scanResult.value = result
       const paths = existingPaths.value
-      const EXCLUDE_EXE = ['update', 'unitycrashhandler', 'custom']
+      const EXCLUDE_EXE = new Set(['update', 'unitycrashhandler', 'custom'])
       rows.value = result.items.map((item) => {
         const filtered = item.executables.filter(
-          (e) => !EXCLUDE_EXE.includes(e.name.toLowerCase().replace(/\.exe$/i, ''))
+          (e) => !EXCLUDE_EXE.has(e.name.toLowerCase().replace(/\.exe$/i, ''))
         )
         const hasDuplicate = filtered.some((e) => paths.has(e.fullPath))
         return {
@@ -149,6 +149,17 @@ export function useBatchScan(): UseBatchScanReturn {
           importMessage: ''
         }
       })
+      // 后台异步计算各目录大小
+      if (rows.value.length > 0) {
+        const folderPaths = rows.value.map((r) => r.folderPath)
+        window.api.getDirSizes(folderPaths).then((sizes) => {
+          for (const row of rows.value) {
+            if (sizes[row.folderPath]) {
+              row.totalSize = sizes[row.folderPath]
+            }
+          }
+        })
+      }
     } catch (e: unknown) {
       error.value = (e instanceof Error ? e.message : String(e)) || '选择文件夹失败'
     } finally {

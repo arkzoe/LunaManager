@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, protocol, net, dialog, Tray, Menu, nativeImage } from 'electron'
+﻿import { app, shell, BrowserWindow, ipcMain, protocol, net, dialog, Tray, Menu, nativeImage } from 'electron'
 import { join } from 'path'
 import { existsSync, createReadStream } from 'fs'
 import { rm } from 'fs/promises'
@@ -229,6 +229,7 @@ function setupIpcHandlers(): void {
   // ===== Import =====
   ipcMain.handle('import:pickFolder', (_e, options?) => pickFolderAndScan(options))
   ipcMain.handle('import:pickBatchFolder', (_e, options?) => pickBatchFolderAndScan(options))
+  ipcMain.handle('import:getDirSizes', (_e, dirPaths: string[]) => getDirectorySizes(dirPaths))
 
   // ===== File Picker =====
   ipcMain.handle(
@@ -346,7 +347,7 @@ function setupIpcHandlers(): void {
 
 import type { AppConfig } from '../shared/types'
 import type { LaunchMode } from '../shared/types'
-import { pickFolderAndScan, pickBatchFolderAndScan } from './services/importer'
+import { pickFolderAndScan, pickBatchFolderAndScan, getDirectorySizes } from './services/importer'
 import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 import { getSnapshotDir } from './config/paths'

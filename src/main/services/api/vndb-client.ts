@@ -1,4 +1,4 @@
-import { buildUserAgent, safeFetch, apiError } from './base-client'
+import { buildUserAgent, safeFetch, safeFetchWithRetry, apiError } from './base-client'
 import type { GameRecord, SearchResult } from '../../../shared/types'
 
 const VNDB_API = 'https://api.vndb.org/kana'
@@ -81,7 +81,7 @@ export class VndbApiClient {
   }
 
   async getVNDetail(vndbId: string): Promise<Partial<GameRecord>> {
-    const data = await safeFetch<any>(() =>
+    const data = await safeFetchWithRetry<any>(() =>
       fetch(`${VNDB_API}/vn`, {
         method: 'POST',
         headers: this.headers(),
