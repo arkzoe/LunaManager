@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { PlaySession, RankingItem, ChartDataResult } from '../../shared/types'
 import { getDatabase } from './init'
-import { gameOps } from './games'
 
 type AggregatedStats = {
   game_id: string
@@ -186,9 +185,23 @@ export function getRankings(cutoff?: number, limit = 10): RankingItem[] {
       .all(limit) as { game_id: string; total_duration: number }[]
   }
 
+  const gameIds = rows.map((s) => s.game_id)
+  const gamesMap = new Map<string, { title: string; title_cn: string; cover: string }>()
+  if (gameIds.length > 0) {
+    const placeholders = gameIds.map(() => '?').join(',')
+    const games = db
+      .prepare(
+        `SELECT id, title, title_cn, cover FROM games WHERE id IN (${placeholders})`
+      )
+      .all(...gameIds) as { id: string; title: string; title_cn: string; cover: string }[]
+    for (const g of games) {
+      gamesMap.set(g.id, g)
+    }
+  }
+
   const ranked = rows
     .map((s, idx) => {
-      const game = gameOps.getById(s.game_id)
+      const game = gamesMap.get(s.game_id)
       return {
         rank: idx + 1,
         gameId: s.game_id,
