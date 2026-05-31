@@ -4,6 +4,17 @@ import { getConfig } from '../config/store'
 
 let db: Database.Database | null = null
 
+const SCHEMA_VERSION = 1
+
+function getSchemaVersion(): number {
+  const r = db!.prepare('PRAGMA user_version').get() as { user_version: number }
+  return r.user_version
+}
+
+function setSchemaVersion(v: number): void {
+  db!.exec(`PRAGMA user_version = ${v}`)
+}
+
 function columnExists(table: string, col: string): boolean {
   const r = db!.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
   return r.some((c) => c.name === col)
@@ -119,11 +130,14 @@ export const initDatabase = (): Database.Database => {
     );
   `)
 
-  const ftsSql = (
-    db!.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='games_fts'").get() as
-      | { sql: string }
-      | undefined
-  )?.sql
+  const currentVersion = getSchemaVersion()
+
+  if (currentVersion < SCHEMA_VERSION) {
+    const ftsSql = (
+      db!.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='games_fts'").get() as
+        | { sql: string }
+        | undefined
+    )?.sql
 
   if (ftsSql && !ftsSql.includes("tokenize='trigram'")) {
     db!.exec('DROP TRIGGER IF EXISTS games_fts_insert')
@@ -181,6 +195,9 @@ export const initDatabase = (): Database.Database => {
     }
   }
 
+    setSchemaVersion(SCHEMA_VERSION)
+  }
+
   console.log('Database initialized at:', dbPath)
   return db
 }
@@ -192,6 +209,11 @@ export const getDatabase = (): Database.Database => {
 
 export const closeDatabase = (): void => {
   if (db) {
+    try {
+      db.pragma('wal_checkpoint(TRUNCATE)')
+    } catch {
+      /* ignore checkpoint errors */
+    }
     db.close()
     db = null
     console.log('Database closed')
