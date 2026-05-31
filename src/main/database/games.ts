@@ -159,7 +159,9 @@ export function getFilteredGames(query: GameQuery): PaginatedResult<GameRecord> 
 
   // 数据
   const items = db
-    .prepare(`SELECT * FROM games ${whereClause} ${orderClause} LIMIT ? OFFSET ?`)
+    .prepare(
+      `SELECT id, title, title_cn, cover, size, favorite, status, personal_rating, last_played, developer, release_date, playtime_seconds, executable_path, save_path, vndb_id, bangumi_id, last_launch_method, created_at, updated_at FROM games ${whereClause} ${orderClause} LIMIT ? OFFSET ?`
+    )
     .all(...params, limit, offset) as GameRecord[]
 
   return {
