@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import type { GameRecord, GameStatus, LaunchMode } from '../../../shared/types'
+import { STATUS_OPTIONS } from '../utils/constants'
 import { useGameStore } from '../stores/useGameStore'
 import { useToast } from '../composables/useToast'
 import ToastNotification from '../shared/ToastNotification.vue'
@@ -80,13 +81,10 @@ const tabs = [
   { id: 'backup' as const, label: '存档备份', icon: 'backup' }
 ]
 
-const statuses: { id: GameStatus; label: string }[] = [
-  { id: 'want', label: '想玩' },
-  { id: 'playing', label: '在玩' },
-  { id: 'played', label: '已玩' },
-  { id: 'shelved', label: '搁置' },
-  { id: 'abandoned', label: '抛弃' }
-]
+const statuses: { id: GameStatus; label: string }[] = STATUS_OPTIONS.map((o) => ({
+  id: o.value as GameStatus,
+  label: o.label
+}))
 
 interface LaunchModeItem {
   id: LaunchMode | 'le' | 'magpie'

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, shallowRef, defineAsyncComponent } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
+import { STATUS_LABELS, STATUS_OPTIONS } from '../utils/constants'
 import { useToast } from '../composables/useToast'
 import type { UICollection } from '../composables/useCollections'
 import LibraryToolbar from './library/LibraryToolbar.vue'
@@ -161,7 +162,7 @@ const handleBatchStatus = async (status: GameStatus): Promise<void> => {
       }
     }
     store.games = copy
-    showToastMsg(`已将 ${ids.length} 个游戏改为「${statusLabels[status]}」`, 'success')
+    showToastMsg(`已将 ${ids.length} 个游戏改为「${STATUS_LABELS[status]}」`, 'success')
     selectedIds.value = new Set()
     batchMode.value = false
   }
@@ -251,11 +252,7 @@ watch(searchQuery, (val) => {
 
 const filters: { id: GameStatus | 'all'; label: string }[] = [
   { id: 'all', label: '全部' },
-  { id: 'want', label: '想玩' },
-  { id: 'playing', label: '在玩' },
-  { id: 'played', label: '已玩' },
-  { id: 'shelved', label: '搁置' },
-  { id: 'abandoned', label: '抛弃' }
+  ...STATUS_OPTIONS.map((o) => ({ id: o.value as GameStatus, label: o.label }))
 ]
 
 const statusFilters = computed(() =>
@@ -331,14 +328,6 @@ const handleContextAddToCollection = async (): Promise<void> => {
 const handleViewDetail = (): void => {
   if (ctxMenu.value) emit('selectGame', ctxMenu.value.game)
   closeContextMenu()
-}
-
-const statusLabels: Record<GameStatus, string> = {
-  want: '想玩',
-  playing: '在玩',
-  played: '已玩',
-  shelved: '搁置',
-  abandoned: '抛弃'
 }
 
 const handleStatusChange = async (game: GameRecord, status: GameStatus): Promise<void> => {
@@ -493,7 +482,7 @@ const handleBatchImported = (result: ImportResult): void => {
         :batch-mode="batchMode"
         :selected-ids="selectedIds"
         :all-filtered-selected="allFilteredSelected"
-        :status-labels="statusLabels"
+        :status-labels="STATUS_LABELS"
         @select-game="handleGameClick"
         @toggle-select-game="toggleSelectGame"
         @toggle-select-all="toggleSelectAll"
