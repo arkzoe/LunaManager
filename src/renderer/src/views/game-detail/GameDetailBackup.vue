@@ -4,6 +4,7 @@ import type { GameRecord, SaveSnapshot } from '../../../../shared/types'
 import { formatDate, formatFileSize } from '../../utils/format'
 import { useGameStore } from '../../stores/useGameStore'
 import SaveDirPicker from '../../shared/SaveDirPicker.vue'
+import ConfirmDialog from '../../shared/ConfirmDialog.vue'
 
 const props = defineProps<{ game: GameRecord }>()
 const store = useGameStore()
@@ -14,6 +15,10 @@ const restoring = ref<string | null>(null)
 const error = ref('')
 const showSaveDirPicker = ref(false)
 const saveDirCandidates = ref<string[]>([])
+const showRestoreConfirm = ref(false)
+const restoreTargetId = ref<string | null>(null)
+const showDeleteSnapshotConfirm = ref(false)
+const deleteTargetId = ref<string | null>(null)
 
 let _unmounted = false
 onUnmounted(() => {
@@ -46,22 +51,36 @@ async function handleBackup(): Promise<void> {
 }
 
 async function handleRestore(snapshotId: string): Promise<void> {
-  if (!confirm('还原将覆盖当前存档，确定继续？')) return
+  restoreTargetId.value = snapshotId
+  showRestoreConfirm.value = true
+}
+
+async function confirmRestore(): Promise<void> {
+  if (!restoreTargetId.value) return
+  showRestoreConfirm.value = false
   error.value = ''
-  restoring.value = snapshotId
+  restoring.value = restoreTargetId.value
   try {
-    await window.api.restoreSnapshotInPlace(snapshotId)
+    await window.api.restoreSnapshotInPlace(restoreTargetId.value)
   } catch (e: unknown) {
     error.value = (e instanceof Error ? e.message : String(e)) || '还原失败'
   } finally {
     restoring.value = null
+    restoreTargetId.value = null
   }
 }
 
 async function handleDelete(snapshotId: string): Promise<void> {
-  if (!confirm('确定删除此快照？')) return
-  await window.api.deleteSnapshot(snapshotId)
+  deleteTargetId.value = snapshotId
+  showDeleteSnapshotConfirm.value = true
+}
+
+async function confirmDeleteSnapshot(): Promise<void> {
+  if (!deleteTargetId.value) return
+  showDeleteSnapshotConfirm.value = false
+  await window.api.deleteSnapshot(deleteTargetId.value)
   await loadSnapshots()
+  deleteTargetId.value = null
 }
 
 async function handleOpenBackupDir(): Promise<void> {
@@ -178,6 +197,26 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <ConfirmDialog
+    :show="showRestoreConfirm"
+    title="确认还原"
+    message="还原将覆盖当前存档，确定继续？"
+    confirm-text="还原"
+    danger
+    @confirm="confirmRestore"
+    @cancel="showRestoreConfirm = false"
+  />
+
+  <ConfirmDialog
+    :show="showDeleteSnapshotConfirm"
+    title="确认删除"
+    message="确定删除此快照？"
+    confirm-text="删除"
+    danger
+    @confirm="confirmDeleteSnapshot"
+    @cancel="showDeleteSnapshotConfirm = false"
+  />
 
   <SaveDirPicker
     :show="showSaveDirPicker"
