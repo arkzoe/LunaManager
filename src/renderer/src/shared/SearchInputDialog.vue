@@ -2,7 +2,6 @@
 import { ref, watch } from 'vue'
 import type { SearchResult } from '../../../shared/types'
 import SelectDropdown from './SelectDropdown.vue'
-import { sortByMatch, pickBestMatch, AUTO_MATCH_THRESHOLD } from '../utils/matcher'
 
 const emit = defineEmits<{
   (e: 'select', result: SearchResult): void
@@ -38,6 +37,8 @@ watch(
   }
 )
 
+const AUTO_MATCH_THRESHOLD = 0.35
+
 const handleSearch = async (): Promise<void> => {
   const q = query.value.trim()
   if (!q) return
@@ -57,47 +58,29 @@ const handleSearch = async (): Promise<void> => {
         error.value = '请先在「设置 → 数据源」中配置至少一个数据源的 Token'
         return
       }
-      const tasks: Promise<SearchResult[]>[] = []
-      const sourceNames: string[] = []
-      if (vndbToken) {
-        tasks.push(window.api.searchMetadata(q, 'vndb', vndbToken || undefined))
-        sourceNames.push('VNDB')
-      }
-      if (bangumiToken) {
-        tasks.push(window.api.searchMetadata(q, 'bangumi', bangumiToken || undefined))
-        sourceNames.push('Bangumi')
-      }
-      const settledResults = await Promise.allSettled(tasks)
-      const allResults: SearchResult[] = []
-      const failedSources: string[] = []
-      settledResults.forEach((r, i) => {
-        if (r.status === 'fulfilled') {
-          allResults.push(...r.value)
-        } else {
-          failedSources.push(sourceNames[i])
-        }
-      })
-      if (failedSources.length > 0) {
-        error.value = `${failedSources.join('、')} 搜索失败，已使用其他源的结果`
-      }
-      results.value = sortByMatch(q, allResults)
     } else {
       const token = source.value === 'bangumi' ? bangumiToken : vndbToken
-
       if (source.value === 'bangumi' && !token) {
         error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
         return
       }
-
-      const raw = await window.api.searchMetadata(
-        q,
-        source.value as 'vndb' | 'bangumi',
-        token || undefined
-      )
-      results.value = sortByMatch(q, raw)
-      const best = pickBestMatch(q, raw, AUTO_MATCH_THRESHOLD)
-      if (best) selectedId.value = best.id
     }
+
+    const apiKey = source.value === 'bangumi' ? bangumiToken || undefined : vndbToken || undefined
+    const response = await window.api.searchMetadata(
+      q,
+      source.value as 'vndb' | 'bangumi' | 'mixed',
+      apiKey,
+      {
+        pickBest: true,
+        threshold: AUTO_MATCH_THRESHOLD,
+        bangumiToken: bangumiToken || undefined
+      }
+    )
+
+    results.value = response.results
+    if (response.warning) error.value = response.warning
+    if (response.bestMatchId) selectedId.value = response.bestMatchId
   } catch (err: unknown) {
     error.value = (err instanceof Error ? err.message : String(err)) || '搜索失败'
   } finally {

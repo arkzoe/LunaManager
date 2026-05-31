@@ -51,8 +51,8 @@ const api: IElectronAPI = {
   openPath: (path) => ipcRenderer.invoke('shell:openPath', path),
 
   testApiConnection: (source, token?) => ipcRenderer.invoke('metadata:test', { source, token }),
-  searchMetadata: (query, source, apiKey?) =>
-    ipcRenderer.invoke('metadata:search', { query, source, apiKey }),
+  searchMetadata: (query, source, apiKey?, options?) =>
+    ipcRenderer.invoke('metadata:search', { query, source, apiKey, ...options }),
   fetchMetadataDetail: (sourceId, source, apiKey?, gameId?) =>
     ipcRenderer.invoke('metadata:fetch-detail', { sourceId, source, apiKey, gameId }),
   downloadCover: (gameId, url) => ipcRenderer.invoke('cover:download', { gameId, url }),
@@ -98,6 +98,17 @@ const api: IElectronAPI = {
   onRequestQuitFlow: (callback) => {
     ipcRenderer.on('app:request-quit-flow', () => callback())
   },
+
+  // 统计排行
+  getRankings: (params) => ipcRenderer.invoke('stats:getRankings', params),
+  getChartData: (params) => ipcRenderer.invoke('stats:getChartData', params),
+  getHomeData: () => ipcRenderer.invoke('stats:getHomeData'),
+
+  // 批量匹配
+  batchMatch: (request) => ipcRenderer.invoke('metadata:batchMatch', request),
+
+  // 服务端过滤排序
+  getFilteredGames: (query) => ipcRenderer.invoke('db:getFilteredGames', query),
 }
 
 if (process.contextIsolated) {

@@ -4,7 +4,7 @@ import type { GameRecord, PlaySession } from '../../../../shared/types'
 import { formatPlaytime, formatRelativeTime } from '../../utils/format'
 import { useThemeStore } from '../../stores/useThemeStore'
 import { useSettingsStore } from '../../stores/useSettingsStore'
-import { useStatsChart } from '../../composables/useStatsChart'
+import { chartOptions as chartOpts } from '../../composables/useStatsChart'
 import { Line } from '../../utils/chart'
 
 const props = defineProps<{ game: GameRecord }>()
@@ -37,8 +37,66 @@ const timeRangeOptions = [
 ]
 
 const accentColor = computed(() => (theme.isDark ? '#60a5fa' : '#3b82f6'))
+const chartOptions = chartOpts()
 
-const { chartData, chartOptions } = useStatsChart(sessions, timeRange, accentColor)
+// 按游戏图表数据：数据量小，本地聚合；也可使用 getChartData IPC（传入 gameId）
+const chartData = computed(() => {
+  if (sessions.value.length === 0) return null
+  const rangeMs: Record<string, number> = {
+    week: 7 * 86400000,
+    month: 30 * 86400000,
+    all: 0
+  }
+  const range = timeRange.value
+  const cutoff = rangeMs[range] ? Date.now() - rangeMs[range] : 0
+
+  const grouped = new Map<string, number>()
+  const keyMap = new Map<string, number>()
+
+  for (const s of sessions.value) {
+    if (cutoff && s.start_time < cutoff) continue
+    if (!s.duration || s.duration <= 0) continue
+    const d = new Date(s.start_time)
+    let key: string
+    let sortKey: number
+    if (range === 'all') {
+      key = `${d.getFullYear()}/${d.getMonth() + 1}`
+      sortKey = d.getFullYear() * 12 + d.getMonth()
+    } else {
+      key = `${d.getMonth() + 1}/${d.getDate()}`
+      sortKey = d.getTime()
+    }
+    grouped.set(key, (grouped.get(key) || 0) + s.duration)
+    keyMap.set(key, sortKey)
+  }
+
+  if (grouped.size === 0) return null
+
+  const labels: string[] = []
+  const values: number[] = []
+  const keys = [...grouped.keys()].sort((a, b) => (keyMap.get(a) || 0) - (keyMap.get(b) || 0))
+  for (const key of keys) {
+    labels.push(key)
+    values.push(Math.round(((grouped.get(key) || 0) / 3600000) * 10) / 10)
+  }
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: '游玩时长 (小时)',
+        data: values,
+        borderColor: accentColor.value,
+        backgroundColor: `${accentColor.value}14`,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointHitRadius: 20,
+        pointBackgroundColor: accentColor.value
+      }
+    ]
+  }
+})
 
 onMounted(async () => {
   if (!settingsStore.settings.recordHistory) {

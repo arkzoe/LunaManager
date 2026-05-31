@@ -4,7 +4,6 @@ import type { ScanResult, GameRecord, SearchResult } from '../../../shared/types
 import { useGameStore } from '../stores/useGameStore'
 import { useTokenCache } from '../composables/useTokenCache'
 import { fillGameFromDetail } from '../composables/useMetadata'
-import { pickBestMatch, AUTO_MATCH_THRESHOLD } from '../utils/matcher'
 import GameMetadataForm from '../shared/GameMetadataForm.vue'
 import type { MetadataForm } from '../shared/GameMetadataForm.vue'
 import SearchResultPicker from '../shared/SearchResultPicker.vue'
@@ -124,6 +123,8 @@ const handlePickFolder = async (): Promise<void> => {
   }
 }
 
+const AUTO_MATCH_THRESHOLD = 0.35
+
 const handleSearch = async (): Promise<void> => {
   const query = form.value.title.trim() || scanResult.value?.folderName
   if (!query) return
@@ -140,31 +141,12 @@ const handleSearch = async (): Promise<void> => {
         error.value = '请先在「设置 → 数据源」中配置至少一个数据源的 Token'
         return
       }
-      const tasks: Promise<SearchResult[]>[] = []
-      const sourceNames: string[] = []
-      if (vndbToken) {
-        tasks.push(window.api.searchMetadata(query, 'vndb', vndbToken || undefined))
-        sourceNames.push('VNDB')
-      }
-      if (bangumiToken) {
-        tasks.push(window.api.searchMetadata(query, 'bangumi', bangumiToken || undefined))
-        sourceNames.push('Bangumi')
-      }
-      const settledResults = await Promise.allSettled(tasks)
-      const allResults: SearchResult[] = []
-      const failedSources: string[] = []
-      settledResults.forEach((r, i) => {
-        if (r.status === 'fulfilled') {
-          allResults.push(...r.value)
-        } else {
-          failedSources.push(sourceNames[i])
-        }
+      const response = await window.api.searchMetadata(query, 'mixed', vndbToken || undefined, {
+        bangumiToken: bangumiToken || undefined
       })
-      if (failedSources.length > 0) {
-        error.value = `${failedSources.join('、')} 搜索失败，已使用其他源的结果`
-      }
-      searchResults.value = allResults
-      if (allResults.length > 0) {
+      searchResults.value = response.results
+      if (response.warning) error.value = response.warning
+      if (response.results.length > 0) {
         showSearchPicker.value = true
       } else {
         searchNoResults.value = true
@@ -174,16 +156,17 @@ const handleSearch = async (): Promise<void> => {
         error.value = '请先在「设置 → 数据源」中配置 Bangumi Token'
         return
       }
-      const results = await window.api.searchMetadata(
+      const response = await window.api.searchMetadata(
         query,
         source as 'vndb' | 'bangumi',
-        token || undefined
+        token || undefined,
+        { pickBest: true, threshold: AUTO_MATCH_THRESHOLD }
       )
-      searchResults.value = results
-      if (results.length > 0) {
-        const best = pickBestMatch(query, results, AUTO_MATCH_THRESHOLD)
-        if (best) {
-          applySearchResult(best)
+      searchResults.value = response.results
+      if (response.results.length > 0) {
+        if (response.bestMatchId) {
+          const best = response.results.find((r) => r.id === response.bestMatchId)
+          if (best) applySearchResult(best)
         } else {
           showSearchPicker.value = true
         }

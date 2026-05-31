@@ -111,6 +111,12 @@ export interface SearchResult {
   source: 'vndb' | 'bangumi'
 }
 
+export interface SearchResponse {
+  results: SearchResult[]
+  bestMatchId?: string
+  warning?: string
+}
+
 export interface ApiError {
   code:
     | 'NETWORK'
@@ -128,6 +134,65 @@ export type LaunchMode = 'normal' | 'le' | 'magpie'
 export type ViewMode = 'grid' | 'list'
 export type TimeRange = 'week' | 'month' | 'year' | 'all'
 export type Theme = 'light' | 'dark'
+
+// 统计排行（从 renderer/composables/useStats.ts 迁移至 shared）
+export interface RankingItem {
+  rank: number
+  gameId: string
+  title: string
+  playtime: string
+  cover: string
+}
+
+export interface ChartDataResult {
+  labels: string[]
+  values: number[]
+}
+
+export interface HomeData {
+  totalGames: number
+  totalHours: number
+  completedGames: number
+  avgPerDay: number
+  recentGames: GameRecord[]
+  recentAdded: GameRecord[]
+}
+
+// 服务端过滤排序
+export interface GameQuery {
+  status?: GameStatus | 'all'
+  search?: string
+  sortKey?: 'name' | 'playtime' | 'rating' | 'last_played'
+  sortDir?: 'asc' | 'desc'
+  limit?: number
+  offset?: number
+}
+
+export interface PaginatedResult<T> {
+  items: T[]
+  total: number
+  hasMore: boolean
+}
+
+// 批量匹配
+export interface BatchMatchRequest {
+  rows: { query: string; title?: string; folderName?: string }[]
+  source: string
+  vndbToken?: string
+  bangumiToken?: string
+}
+
+export interface MatchedRow {
+  query: string
+  title: string
+  bangumiId?: string
+  vndbId?: string
+  cover?: string
+  releaseDate?: string
+  developer?: string
+  description?: string
+  customTags?: string
+}
 
 export interface AppConfig {
   windowBounds: { width: number; height: number; x?: number; y?: number }
@@ -214,9 +279,10 @@ export interface IElectronAPI {
   ) => Promise<{ ok: boolean; message: string }>
   searchMetadata: (
     query: string,
-    source: 'vndb' | 'bangumi',
-    apiKey?: string
-  ) => Promise<SearchResult[]>
+    source: 'vndb' | 'bangumi' | 'mixed',
+    apiKey?: string,
+    options?: { pickBest?: boolean; threshold?: number; bangumiToken?: string }
+  ) => Promise<SearchResponse>
   fetchMetadataDetail: (
     sourceId: string,
     source: 'vndb' | 'bangumi',
@@ -255,4 +321,15 @@ export interface IElectronAPI {
   minimizeToTray: () => Promise<void>
   onQuitDialog: (callback: (games: { gameId: string; title: string; startTime: number }[]) => void) => void
   onRequestQuitFlow: (callback: () => void) => void
+
+  // 统计排行
+  getRankings: (params: { cutoff?: number; limit?: number }) => Promise<RankingItem[]>
+  getChartData: (params: { gameId?: string; range: TimeRange }) => Promise<ChartDataResult>
+  getHomeData: () => Promise<HomeData>
+
+  // 批量匹配
+  batchMatch: (request: BatchMatchRequest) => Promise<MatchedRow[]>
+
+  // 服务端过滤排序
+  getFilteredGames: (query: GameQuery) => Promise<PaginatedResult<GameRecord>>
 }

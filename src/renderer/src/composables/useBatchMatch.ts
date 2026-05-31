@@ -2,7 +2,6 @@ import { ref, computed, type Ref } from 'vue'
 import type { SearchResult, ImportRowState } from '../../../shared/types'
 import { useTokenCache } from './useTokenCache'
 import { fillGameFromDetail } from './useMetadata'
-import { pickBestMatch, REJECT_THRESHOLD } from '../utils/matcher'
 
 export interface UseBatchMatchReturn {
   searchingRow: Ref<string>
@@ -93,6 +92,7 @@ export function useBatchMatch(
     if (row) row.matchStatus = 'idle'
   }
 
+  // 批量匹配改为单次 IPC 调用（主进程完成搜索 + 模糊匹配 + 详情获取）
   const handleMatchAll = async (): Promise<void> => {
     const toMatch = rows.value.filter(
       (r) => r.selected && r.selectedExe && !r.isDuplicate && !r.vndbId && !r.bangumiId
@@ -102,7 +102,6 @@ export function useBatchMatch(
     isMatchingAll.value = true
     error.value = ''
     matchAllAbortController = new AbortController()
-    const { signal } = matchAllAbortController
 
     try {
       const { source, token, vndbToken, bangumiToken } = await ensureTokenCache()
@@ -118,106 +117,51 @@ export function useBatchMatch(
         return
       }
 
+      // 标记所有行为「搜索中」
+      for (const row of toMatch) row.matchStatus = 'searching'
+
+      // 单次 IPC：主进程完成搜索 + 模糊匹配 + 详情获取
+      const queryRows = toMatch.map((r) => ({
+        query: r.title || r.folderName,
+        title: r.title,
+        folderName: r.folderName
+      }))
+      const matched = await window.api.batchMatch({
+        rows: queryRows,
+        source,
+        vndbToken: vndbToken || undefined,
+        bangumiToken: bangumiToken || undefined
+      })
+
+      // 将结果映射回 ImportRowState
+      const rowByQuery = new Map(toMatch.map((r) => [r.title || r.folderName, r]))
       let matchFailedCount = 0
-      let sourceFailedOnce = false
 
-      const processOne = async (row: ImportRowState): Promise<void> => {
-        if (signal.aborted) return
-        const query = row.title || row.folderName
-        row.matchStatus = 'searching'
+      for (const m of matched) {
+        const row = rowByQuery.get(m.query)
+        if (!row) continue
 
-        try {
-          let allResults: SearchResult[] = []
-          if (source === 'mixed') {
-            const tasks: Promise<SearchResult[]>[] = []
-            if (vndbToken)
-              tasks.push(window.api.searchMetadata(query, 'vndb', vndbToken || undefined))
-            if (bangumiToken)
-              tasks.push(window.api.searchMetadata(query, 'bangumi', bangumiToken || undefined))
-            const settledResults = await Promise.allSettled(tasks)
-
-            // 中断检查点：搜索完成后立即检查
-            if (signal.aborted) return
-
-            settledResults.forEach((r) => {
-              if (r.status === 'fulfilled') {
-                allResults.push(...r.value)
-              } else {
-                sourceFailedOnce = true
-              }
-            })
-          } else {
-            allResults = await window.api.searchMetadata(
-              query,
-              source as 'vndb' | 'bangumi',
-              token || undefined
-            )
-
-            // 中断检查点：搜索完成后立即检查
-            if (signal.aborted) return
-          }
-
-          const best = pickBestMatch(query, allResults, REJECT_THRESHOLD)
-          if (best) {
-            row.title = best.titleCn || best.title || row.title
-            if (best.source === 'vndb') row.vndbId = best.id
-            if (best.source === 'bangumi') row.bangumiId = best.id
-            if (best.cover) row.cover = best.cover
-            if (best.date) row.releaseDate = best.date
-
-            if (best.id) {
-              try {
-                const fetchToken =
-                  best.source === 'bangumi' ? bangumiToken || token : vndbToken || token
-                const detail = await window.api.fetchMetadataDetail(
-                  best.id,
-                  best.source,
-                  fetchToken || undefined,
-                  undefined
-                )
-
-                // 中断检查点：详情获取完成后立即检查
-                if (signal.aborted) return
-
-                fillGameFromDetail(detail, row)
-              } catch {
-                matchFailedCount++
-              }
-            }
-            row.matchStatus = 'matched'
-          } else {
-            row.matchStatus = 'noresult'
-            matchFailedCount++
-          }
-        } catch {
-          if (signal.aborted) return
+        if (m.bangumiId || m.vndbId) {
+          row.title = m.title || row.title
+          if (m.vndbId) row.vndbId = m.vndbId
+          if (m.bangumiId) row.bangumiId = m.bangumiId
+          if (m.cover) row.cover = m.cover
+          if (m.releaseDate) row.releaseDate = m.releaseDate
+          if (m.developer) row.developer = m.developer
+          if (m.description) row.description = m.description
+          if (m.customTags) row.customTags = m.customTags
+          row.matchStatus = 'matched'
+        } else {
           row.matchStatus = 'noresult'
           matchFailedCount++
         }
       }
 
-      // Concurrency pool of 4
-      const concurrency = 4
-      let idx = 0
-      const workers: Promise<void>[] = []
-      for (let i = 0; i < concurrency && i < toMatch.length; i++) {
-        workers.push(
-          (async () => {
-            while (idx < toMatch.length && !signal.aborted) {
-              const current = idx++
-              await processOne(toMatch[current])
-            }
-          })()
-        )
+      if (matchFailedCount > 0) {
+        error.value = `${matchFailedCount} 个游戏匹配失败，可手动搜索`
       }
-      await Promise.allSettled(workers)
-
-      if ((matchFailedCount > 0 || sourceFailedOnce) && !signal.aborted) {
-        const msgs: string[] = []
-        if (sourceFailedOnce) msgs.push('部分数据源请求失败，已自动使用可用的数据源')
-        if (matchFailedCount > 0) msgs.push(`${matchFailedCount} 个游戏匹配失败，可手动搜索`)
-        error.value = msgs.join('；')
-      }
+    } catch {
+      error.value = '批量匹配请求失败，请检查网络后重试'
     } finally {
       isMatchingAll.value = false
       matchAllAbortController = null

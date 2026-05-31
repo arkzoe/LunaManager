@@ -22,6 +22,8 @@ import {
   collectionOps,
   snapshotOps
 } from './database'
+import { getRankings, getChartData } from './database/play-sessions'
+import { getFilteredGames } from './database/games'
 import { getConfig, setConfig, getAllConfig, setAllConfig } from './config/store'
 
 let mainWindow: BrowserWindow | null = null
@@ -151,6 +153,14 @@ function setupIpcHandlers(): void {
   })
   ipcMain.handle('db:searchGames', (_, q: string) => gameOps.search(q))
 
+  // 服务端过滤排序
+  ipcMain.handle(
+    'db:getFilteredGames',
+    (_e, query: GameQuery): PaginatedResult<GameRecord> => {
+      return getFilteredGames(query)
+    }
+  )
+
   // ===== Config =====
   ipcMain.handle(
     'config:get',
@@ -180,6 +190,43 @@ function setupIpcHandlers(): void {
     sessionOps.getAggregatedStats(gameId)
   )
   ipcMain.handle('play:getAllAggregatedStats', () => sessionOps.getAllAggregatedStats())
+
+  ipcMain.handle(
+    'stats:getRankings',
+    (_, params: { cutoff?: number; limit?: number }): RankingItem[] => {
+      return getRankings(params.cutoff, params.limit ?? 10)
+    }
+  )
+
+  ipcMain.handle(
+    'stats:getChartData',
+    (_, params: { gameId?: string; range: string }): ChartDataResult => {
+      return getChartData(params.gameId, params.range)
+    }
+  )
+
+  ipcMain.handle('stats:getHomeData', (): HomeData => {
+    const allGames = gameOps.getList()
+    const total = allGames.length
+    const totalDuration =
+      (sessionOps.getAllAggregatedStats() as { total_duration: number }[]).reduce(
+        (sum, s) => sum + s.total_duration,
+        0
+      )
+    const totalHours = Math.floor(totalDuration / 3600000) || 0
+    const completedGames = allGames.filter((g: GameRecord) => g.status === 'played').length
+    const avgPerDay = total > 0 ? Math.round((totalHours / Math.max(total, 1)) * 10) / 10 : 0
+
+    const withPlayed = allGames.filter((g: GameRecord) => g.last_played)
+    const recentGames = [...withPlayed]
+      .sort((a: GameRecord, b: GameRecord) => (b.last_played || '').localeCompare(a.last_played || ''))
+      .slice(0, 10)
+    const recentAdded = [...allGames]
+      .sort((a: GameRecord, b: GameRecord) => (b.created_at || 0) - (a.created_at || 0))
+      .slice(0, 10)
+
+    return { totalGames: total, totalHours, completedGames, avgPerDay, recentGames, recentAdded }
+  })
 
   // ===== Game Launch =====
   ipcMain.handle('launch:game', async (_, gameId: string, modes: LaunchMode[]) => {
@@ -259,13 +306,72 @@ function setupIpcHandlers(): void {
     return testApiConnection(source, token)
   })
 
-  ipcMain.handle('metadata:search', async (_e, { query, source, apiKey }) => {
-    try {
-      return await searchMetadata(query, source, apiKey)
-    } catch (err: unknown) {
-      throw new Error((err instanceof Error ? err.message : String(err)) || '搜索失败')
+  ipcMain.handle(
+    'metadata:search',
+    async (
+      _e,
+      {
+        query,
+        source,
+        apiKey,
+        pickBest,
+        threshold,
+        bangumiToken
+      }: {
+        query: string
+        source: string
+        apiKey?: string
+        pickBest?: boolean
+        threshold?: number
+        bangumiToken?: string
+      }
+    ): Promise<SearchResponse> => {
+      try {
+        let allResults: SearchResult[] = []
+        let warning: string | undefined
+
+        if (source === 'mixed') {
+          const tasks: Promise<SearchResult[]>[] = []
+          const sourceNames: string[] = []
+          if (apiKey) {
+            tasks.push(searchMetadata(query, 'vndb', apiKey))
+            sourceNames.push('VNDB')
+          }
+          if (bangumiToken) {
+            tasks.push(searchMetadata(query, 'bangumi', bangumiToken))
+            sourceNames.push('Bangumi')
+          }
+          if (tasks.length === 0) {
+            throw new Error('请先在「设置 → 数据源」中配置至少一个数据源的 Token')
+          }
+          const settled = await Promise.allSettled(tasks)
+          const failedSources: string[] = []
+          settled.forEach((r, i) => {
+            if (r.status === 'fulfilled') {
+              allResults.push(...r.value)
+            } else {
+              failedSources.push(sourceNames[i])
+            }
+          })
+          if (failedSources.length > 0 && failedSources.length < sourceNames.length) {
+            warning = `${failedSources.join('、')} 搜索失败，已使用其他源的结果`
+          }
+        } else {
+          allResults = await searchMetadata(query, source as 'vndb' | 'bangumi', apiKey)
+        }
+
+        let bestMatchId: string | undefined
+        if (pickBest && allResults.length > 0) {
+          const best = pickBestMatch(query, allResults, threshold)
+          if (best) bestMatchId = best.id
+        }
+
+        return { results: allResults, bestMatchId, warning }
+      } catch (err: unknown) {
+        throw new Error((err instanceof Error ? err.message : String(err)) || '搜索失败')
+      }
     }
-  })
+  )
 
   ipcMain.handle('metadata:fetch-detail', async (_e, { sourceId, source, apiKey }) => {
     try {
@@ -274,6 +380,14 @@ function setupIpcHandlers(): void {
       throw new Error((err instanceof Error ? err.message : String(err)) || '获取元数据失败')
     }
   })
+
+  // 批量匹配（单次 IPC 完成搜索 + 模糊匹配 + 详情获取）
+  ipcMain.handle(
+    'metadata:batchMatch',
+    async (_e, request: BatchMatchRequest): Promise<MatchedRow[]> => {
+      return batchMatch(request)
+    }
+  )
 
   // ===== Cover Download =====
   ipcMain.handle('cover:download', async (_e, { gameId, url }) => {
@@ -347,8 +461,9 @@ function setupIpcHandlers(): void {
 
 import type { AppConfig } from '../shared/types'
 import type { LaunchMode } from '../shared/types'
+import type { RankingItem, ChartDataResult, HomeData, GameRecord, SearchResult, SearchResponse, BatchMatchRequest, MatchedRow, GameQuery, PaginatedResult } from '../shared/types'
 import { pickFolderAndScan, pickBatchFolderAndScan, getDirectorySizes } from './services/importer'
-import { testApiConnection, searchMetadata, fetchMetadataDetail } from './services/metadata-scraper'
+import { testApiConnection, searchMetadata, pickBestMatch, fetchMetadataDetail, batchMatch } from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 import { getSnapshotDir } from './config/paths'
 import { launchGame, stopGame, isGameRunning, endAllActiveSessions, killMagpieIfLaunched } from './services/game-launcher'

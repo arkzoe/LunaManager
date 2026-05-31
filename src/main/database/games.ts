@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { GameRecord, GameStatus } from '../../shared/types'
+import type { GameRecord, GameStatus, GameQuery, PaginatedResult } from '../../shared/types'
 import { getDatabase } from './init'
 
 export const gameOps = {
@@ -103,5 +103,68 @@ export const gameOps = {
     return getDatabase().prepare('SELECT * FROM games WHERE executable_path = ?').get(path) as
       | GameRecord
       | undefined
+  }
+}
+
+/** SQL ORDER BY 映射：将前端排序键转为 SQL 列名 */
+function mapSortKey(key: GameQuery['sortKey']): string {
+  switch (key) {
+    case 'name':
+      return "COALESCE(NULLIF(title_cn, ''), title) COLLATE NOCASE"
+    case 'playtime':
+      return 'playtime_seconds'
+    case 'rating':
+      return 'personal_rating'
+    case 'last_played':
+      return 'last_played'
+    default:
+      return 'title ASC'
+  }
+}
+
+export function getFilteredGames(query: GameQuery): PaginatedResult<GameRecord> {
+  const db = getDatabase()
+  const conditions: string[] = []
+  const params: (string | number)[] = []
+
+  // 状态过滤
+  if (query.status && query.status !== 'all') {
+    conditions.push('status = ?')
+    params.push(query.status)
+  }
+
+  // 文本搜索
+  if (query.search && query.search.trim()) {
+    const q = `%${query.search.trim().replace(/[%_]/g, '\\$&')}%`
+    conditions.push("(title LIKE ? ESCAPE '\\' OR title_cn LIKE ? ESCAPE '\\')")
+    params.push(q, q)
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  // 排序
+  const sortCol = mapSortKey(query.sortKey || 'name')
+  const dir = query.sortDir === 'desc' ? 'DESC' : 'ASC'
+  const orderClause = `ORDER BY ${sortCol} ${dir}`
+
+  // 分页
+  const limit = query.limit ?? 50
+  const offset = query.offset ?? 0
+
+  // 总数
+  const countRow = db
+    .prepare(`SELECT COUNT(*) as c FROM games ${whereClause}`)
+    .get(...params) as { c: number }
+  const total = countRow.c
+
+  // 数据
+  const items = db
+    .prepare(`SELECT * FROM games ${whereClause} ${orderClause} LIMIT ? OFFSET ?`)
+    .all(...params, limit, offset) as GameRecord[]
+
+  return {
+    items,
+    total,
+    hasMore: offset + limit < total
   }
 }

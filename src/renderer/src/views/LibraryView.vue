@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, shallowRef, defineAsyncComponent } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
 import { useToast } from '../composables/useToast'
@@ -237,12 +237,9 @@ const confirmSingleDelete = async (): Promise<void> => {
   singleDeleteGame.value = null
 }
 
-onMounted(() => {
-  if (store.games.length === 0) store.loadGames()
-})
-
-onUnmounted(() => {
-  if (searchTimer) clearTimeout(searchTimer)
+onMounted(async () => {
+  if (store.games.length === 0) await store.loadGames()
+  fetchFilteredGames()
 })
 
 watch(searchQuery, (val) => {
@@ -265,35 +262,51 @@ const statusFilters = computed(() =>
   filters.filter((f): f is { id: GameStatus; label: string } => f.id !== 'all')
 )
 
-const filteredGames = computed(() => {
-  let list = store.games
-  if (activeFilter.value !== 'all') {
-    list = list.filter((g) => g.status === activeFilter.value)
+// 服务端过滤排序（SQL WHERE + ORDER BY），渲染进程仅负责展示
+const filteredGames = shallowRef<GameRecord[]>([])
+const filteredTotal = ref(0)
+const filterLoading = ref(false)
+
+let filterFetchTimer: ReturnType<typeof setTimeout> | null = null
+const fetchFilteredGames = async (): Promise<void> => {
+  filterLoading.value = true
+  try {
+    const result = await window.api.getFilteredGames({
+      status: activeFilter.value,
+      search: debouncedSearch.value || undefined,
+      sortKey: sortKey.value,
+      sortDir: sortDir.value,
+      limit: 200
+    })
+    filteredGames.value = result.items
+    filteredTotal.value = result.total
+  } catch {
+    // IPC 不可用时回退到本地计算
+    filteredGames.value = store.games
+  } finally {
+    filterLoading.value = false
   }
-  if (debouncedSearch.value.trim()) {
-    const q = debouncedSearch.value.toLowerCase()
-    list = list.filter(
-      (g) =>
-        g.title.toLowerCase().includes(q) || (g.title_cn && g.title_cn.toLowerCase().includes(q))
-    )
-  }
-  const key = sortKey.value
-  const dir = sortDir.value === 'asc' ? 1 : -1
-  return [...list].sort((a, b) => {
-    let cmp = 0
-    if (key === 'name') {
-      const an = a.title_cn || a.title
-      const bn = b.title_cn || b.title
-      cmp = an.localeCompare(bn, 'zh-CN')
-    } else if (key === 'playtime') {
-      cmp = (a.playtime_seconds || 0) - (b.playtime_seconds || 0)
-    } else if (key === 'rating') {
-      cmp = (a.personal_rating || 0) - (b.personal_rating || 0)
-    } else if (key === 'last_played') {
-      cmp = (a.last_played || '').localeCompare(b.last_played || '')
-    }
-    return cmp * dir
-  })
+}
+
+// 监听过滤/排序/搜索条件变化 → 防抖后请求服务端过滤
+watch([activeFilter, debouncedSearch, sortKey, sortDir], () => {
+  if (filterFetchTimer) clearTimeout(filterFetchTimer)
+  filterFetchTimer = setTimeout(() => fetchFilteredGames(), 100)
+})
+
+// 当 store 数据变更时（批量操作 / 增删改），重新请求
+watch(
+  () => store.games,
+  () => {
+    if (filterFetchTimer) clearTimeout(filterFetchTimer)
+    filterFetchTimer = setTimeout(() => fetchFilteredGames(), 100)
+  },
+  { deep: false }
+)
+
+onUnmounted(() => {
+  if (searchTimer) clearTimeout(searchTimer)
+  if (filterFetchTimer) clearTimeout(filterFetchTimer)
 })
 
 const handleContextMenu = (e: MouseEvent, game: GameRecord): void => {

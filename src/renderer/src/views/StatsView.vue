@@ -1,34 +1,67 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch, shallowRef } from 'vue'
+import type { TimeRange, RankingItem } from '../../../shared/types'
 import { Line } from '../utils/chart'
-import { useGameStore } from '../stores/useGameStore'
-import { useStats, computeRankings } from '../composables/useStats'
-import { useStatsChart } from '../composables/useStatsChart'
+import { useStats } from '../composables/useStats'
+import { buildChartData, chartOptions as chartOpts } from '../composables/useStatsChart'
 import { useSettingsStore } from '../stores/useSettingsStore'
 import StatsRanking from './stats/StatsRanking.vue'
 
 const settingsStore = useSettingsStore()
-const gameStore = useGameStore()
-const timeRange = ref<'week' | 'month' | 'year' | 'all'>('week')
+const timeRange = ref<TimeRange>('week')
 const rankRange = ref<'week' | 'month' | 'all'>('all')
-const { libraryStats, loadStats, allSessions } = useStats()
-const { chartData, chartOptions } = useStatsChart(allSessions, timeRange)
+const { libraryStats, loadStats } = useStats()
+const chartOptions = chartOpts()
+
+// 排行：通过 IPC getRankings 获取（后端 SQL 聚合）
+const rankings = shallowRef<RankingItem[]>([])
+const rankLoading = ref(false)
 
 const cutoffMap: Record<string, number> = {
   week: 7 * 24 * 60 * 60 * 1000,
   month: 30 * 24 * 60 * 60 * 1000
 }
 
-const filteredRankings = computed(() => {
-  const cutoff = cutoffMap[rankRange.value] ? Date.now() - cutoffMap[rankRange.value] : 0
-  return computeRankings(allSessions.value, gameStore.games, cutoff)
-})
+const loadRankings = async (): Promise<void> => {
+  rankLoading.value = true
+  try {
+    const cutoffMs = rankRange.value === 'all' ? undefined : Date.now() - cutoffMap[rankRange.value]
+    rankings.value = await window.api.getRankings({ cutoff: cutoffMs, limit: 10 })
+  } catch {
+    rankings.value = []
+  } finally {
+    rankLoading.value = false
+  }
+}
 
-const filteredTopGame = computed(() => filteredRankings.value[0])
+// 图表：通过 IPC getChartData 获取（后端 SQL 聚合）
+const chartData = shallowRef<ReturnType<typeof buildChartData>>(null)
+const chartLoading = ref(false)
+
+const loadChartData = async (): Promise<void> => {
+  chartLoading.value = true
+  try {
+    const result = await window.api.getChartData({ range: timeRange.value })
+    chartData.value = buildChartData(result)
+  } catch {
+    chartData.value = null
+  } finally {
+    chartLoading.value = false
+  }
+}
+
+const filteredTopGame = computed(() => rankings.value[0])
 
 const recordHistory = computed(() => settingsStore.settings.recordHistory)
 
-onMounted(() => loadStats(recordHistory.value))
+onMounted(() => {
+  loadStats(recordHistory.value)
+  loadRankings()
+  loadChartData()
+})
+
+watch(rankRange, () => loadRankings())
+watch(timeRange, () => loadChartData())
 
 const timeRanges = [
   { id: 'week' as const, label: '周' },
@@ -91,7 +124,7 @@ const timeRanges = [
     <StatsRanking
       v-if="recordHistory"
       v-model:rank-range="rankRange"
-      :rankings="filteredRankings"
+      :rankings="rankings"
       :top-game="filteredTopGame"
     />
 

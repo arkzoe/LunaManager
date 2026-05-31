@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, shallowRef } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
-import type { GameRecord } from '../../../shared/types'
+import type { GameRecord, HomeData } from '../../../shared/types'
 import GameCard from '../shared/GameCard.vue'
 import { formatRelativeTime } from '../utils/format'
 import HomeOverviewCards from './home/HomeOverviewCards.vue'
@@ -14,8 +14,14 @@ const emit = defineEmits<{
   (e: 'navigateLibrary'): void
 }>()
 
-onMounted(() => {
-  if (store.games.length === 0) store.loadGames()
+onMounted(async () => {
+  if (store.games.length === 0) await store.loadGames()
+  try {
+    const data = await window.api.getHomeData()
+    homeData.value = data
+  } catch {
+    // IPC 不可用时回退到本地计算
+  }
 })
 
 function onWheelScroll(e: WheelEvent): void {
@@ -27,11 +33,11 @@ function onWheelScroll(e: WheelEvent): void {
 
 // section 交错动画索引
 const sectionDelays = computed(() => {
-  const d = homeData.value
+  const d = homeDataComputed.value
   const visible = [
     d.recentGames.length > 0,
     d.recentAdded.length > 0,
-    d.playedActs.length > 0 || d.addedActs.length > 0
+    d.recentGames.length > 0 || d.recentAdded.length > 0
   ]
   let i = 0
   return {
@@ -41,40 +47,71 @@ const sectionDelays = computed(() => {
   }
 })
 
-const homeData = computed(() => {
+const homeData = shallowRef<HomeData>({
+  totalGames: 0,
+  totalHours: 0,
+  completedGames: 0,
+  avgPerDay: 0,
+  recentGames: [],
+  recentAdded: []
+})
+
+// 回退计算：当 store 有数据但 IPC 未填充时使用
+const homeDataComputed = computed(() => {
+  const d = homeData.value
+  if (d.recentGames.length > 0 || d.recentAdded.length > 0) return d
+
+  // 本地计算回退
   const all = store.games
   const total = all.length
   const totalMinutes = all.reduce((sum, g) => sum + Math.floor((g.playtime_seconds || 0) / 60), 0)
   const totalHours = Math.floor(totalMinutes / 60) || 0
   const avgPerDay = total > 0 ? Math.round((totalHours / Math.max(total, 1)) * 10) / 10 : 0
-  const overview = { totalGames: total, totalHours, monthlyHours: 0, avgPerDay }
+  const completedGames = all.filter((g) => g.status === 'played').length
 
   const withPlayed = all.filter((g) => g.last_played)
-  // 复用 all 的单次拷贝，避免 [...all] 重复 spread
   const allArray = [...all]
   allArray.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
   const sortedByAdded = allArray.slice(0, 10)
-  // 对 withPlayed 子集排序，提前截断减少排序长度
   const sortedByPlayed = [...withPlayed]
     .sort((a, b) => (b.last_played || '').localeCompare(a.last_played || ''))
     .slice(0, 10)
 
   return {
-    overview,
+    totalGames: total,
+    totalHours,
+    completedGames,
+    avgPerDay,
     recentGames: sortedByPlayed,
-    recentAdded: sortedByAdded,
-    playedActs: sortedByPlayed.slice(0, 5).map((g) => ({
-      type: 'played' as const,
-      game: g,
-      time: formatRelativeTime(g.last_played || '')
-    })),
-    addedActs: sortedByAdded.slice(0, 5).map((g) => ({
-      type: 'added' as const,
-      game: g,
-      time: formatRelativeTime(g.created_at)
-    }))
+    recentAdded: sortedByAdded
   }
 })
+
+// 衍生数据（供模板使用）
+const recentGames = computed(() => homeDataComputed.value.recentGames)
+const recentAdded = computed(() => homeDataComputed.value.recentAdded)
+
+const overviewData = computed(() => ({
+  totalGames: homeDataComputed.value.totalGames,
+  totalHours: homeDataComputed.value.totalHours,
+  monthlyHours: 0,
+  avgPerDay: homeDataComputed.value.avgPerDay
+}))
+
+const playedActs = computed(() =>
+  recentGames.value.slice(0, 5).map((g) => ({
+    type: 'played' as const,
+    game: g,
+    time: formatRelativeTime(g.last_played || '')
+  }))
+)
+const addedActs = computed(() =>
+  recentAdded.value.slice(0, 5).map((g) => ({
+    type: 'added' as const,
+    game: g,
+    time: formatRelativeTime(g.created_at)
+  }))
+)
 </script>
 
 <template>
@@ -100,11 +137,11 @@ const homeData = computed(() => {
       >
     </div>
 
-    <HomeOverviewCards v-else-if="!store.isLoading" :overview="homeData.overview" />
+    <HomeOverviewCards v-else-if="!store.isLoading" :overview="overviewData" />
 
     <!-- 空状态 -->
     <div
-      v-if="!store.isLoading && !store.error && homeData.overview.totalGames === 0"
+      v-if="!store.isLoading && !store.error && overviewData.totalGames === 0"
       class="empty-state"
     >
       <div class="empty-icon">
@@ -122,7 +159,7 @@ const homeData = computed(() => {
     <template v-else-if="!store.error">
       <!-- 最近游玩 — 横滑列表 -->
       <section
-        v-if="homeData.recentGames.length > 0"
+        v-if="recentGames.length > 0"
         class="section-block"
         :style="{ animationDelay: sectionDelays.recentGames + 's' }"
       >
@@ -132,7 +169,7 @@ const homeData = computed(() => {
         </div>
         <div class="h-scroll" @wheel="onWheelScroll">
           <div
-            v-for="game in homeData.recentGames"
+            v-for="game in recentGames"
             :key="game.id"
             class="scroll-card"
             @click="emit('selectGame', game)"
@@ -144,7 +181,7 @@ const homeData = computed(() => {
 
       <!-- 最近添加 — 横滑列表 -->
       <section
-        v-if="homeData.recentAdded.length > 0"
+        v-if="recentAdded.length > 0"
         class="section-block"
         :style="{ animationDelay: sectionDelays.recentAdded + 's' }"
       >
@@ -154,7 +191,7 @@ const homeData = computed(() => {
         </div>
         <div class="h-scroll" @wheel="onWheelScroll">
           <div
-            v-for="game in homeData.recentAdded"
+            v-for="game in recentAdded"
             :key="game.id"
             class="scroll-card"
             @click="emit('selectGame', game)"
@@ -166,7 +203,7 @@ const homeData = computed(() => {
 
       <!-- 最近动态 — 左：游玩信息 / 右：新入库 -->
       <section
-        v-if="homeData.playedActs.length > 0 || homeData.addedActs.length > 0"
+        v-if="playedActs.length > 0 || addedActs.length > 0"
         class="section-block"
         :style="{ animationDelay: sectionDelays.activity + 's' }"
       >
@@ -175,12 +212,12 @@ const homeData = computed(() => {
         </div>
         <div class="activity-split">
           <HomeActivityTimeline
-            :activities="homeData.playedActs"
+            :activities="playedActs"
             empty-text="还没有游玩记录"
             @select-game="(g) => emit('selectGame', g)"
           />
           <HomeActivityTimeline
-            :activities="homeData.addedActs"
+            :activities="addedActs"
             empty-text="还没有导入游戏"
             @select-game="(g) => emit('selectGame', g)"
           />
