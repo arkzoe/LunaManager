@@ -275,7 +275,7 @@ const handleConfirm = async (): Promise<void> => {
       last_launch_method: 'normal'
     }
     const game = await window.api.createGame(gameData)
-    store.games.unshift(game)
+    store.games = [game, ...store.games]
     emit('imported', game)
   } catch (e: unknown) {
     error.value = (e instanceof Error ? e.message : String(e)) || '导入失败'

@@ -121,7 +121,7 @@ const handleImportAll = async (): Promise<void> => {
               last_launch_method: 'normal'
             }
             const game = await window.api.createGame(gameData)
-            store.games.unshift(game)
+            store.games = [game, ...store.games]
             scan.importedCount.value++
             row.importStatus = 'success'
             resultItems.push({ title: row.title || row.folderName, id: gameId, status: 'success' })
