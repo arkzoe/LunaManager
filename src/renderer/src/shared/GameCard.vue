@@ -5,6 +5,13 @@ import type { GameRecord } from '../../../shared/types'
 const props = defineProps<{ game: GameRecord; selected?: boolean }>()
 const emit = defineEmits<{ (e: 'click'): void }>()
 
+function handleKeydown(e: KeyboardEvent): void {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    emit('click')
+  }
+}
+
 const coverImg = ref<HTMLImageElement | null>(null)
 const imageLoaded = ref(false)
 
@@ -35,7 +42,14 @@ watch(
 </script>
 
 <template>
-  <div class="game-card" :class="{ selected }" @click="emit('click')">
+  <div
+    class="game-card"
+    :class="{ selected }"
+    role="button"
+    tabindex="0"
+    @click="emit('click')"
+    @keydown="handleKeydown"
+  >
     <div class="cover">
       <img
         v-if="game.cover"

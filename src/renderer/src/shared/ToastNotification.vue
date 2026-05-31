@@ -28,7 +28,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div class="toast" :class="[type, { closing }]" @animationend="onAnimationEnd">
+    <div class="toast" :class="[type, { closing }]" role="alert" aria-live="polite" @animationend="onAnimationEnd">
       <svg v-if="type === 'success'" viewBox="0 0 24 24" class="toast-icon">
         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
       </svg>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{
+import { watch, ref, onMounted, onUnmounted } from 'vue'
+
+const props = defineProps<{
   show: boolean
   title: string
   message: string
@@ -11,6 +13,26 @@ const emit = defineEmits<{
   (e: 'confirm'): void
   (e: 'cancel'): void
 }>()
+
+const confirmBtn = ref<HTMLButtonElement | null>(null)
+
+function handleEsc(e: KeyboardEvent): void {
+  if (e.key === 'Escape' && props.show) {
+    emit('cancel')
+  }
+}
+
+onMounted(() => document.addEventListener('keydown', handleEsc))
+onUnmounted(() => document.removeEventListener('keydown', handleEsc))
+
+watch(
+  () => props.show,
+  (v) => {
+    if (v) {
+      setTimeout(() => confirmBtn.value?.focus(), 50)
+    }
+  }
+)
 </script>
 
 <template>
@@ -22,7 +44,12 @@ const emit = defineEmits<{
           <p class="modal-desc">{{ message }}</p>
           <div class="modal-actions">
             <button class="btn-cancel" @click="emit('cancel')">{{ cancelText || '取消' }}</button>
-            <button class="btn-danger" :class="{ 'btn-primary': !danger }" @click="emit('confirm')">
+            <button
+              ref="confirmBtn"
+              class="btn-danger"
+              :class="{ 'btn-primary': !danger }"
+              @click="emit('confirm')"
+            >
               {{ confirmText || '确认' }}
             </button>
           </div>

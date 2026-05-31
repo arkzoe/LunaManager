@@ -20,6 +20,7 @@ const emit = defineEmits<{
 const isOpen = ref(false)
 const triggerRef = ref<HTMLElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
+const highlightIndex = ref(-1)
 
 const selectedLabel = computed(() => {
   const opt = props.options.find((o) => o.value === props.modelValue)
@@ -61,6 +62,7 @@ const throttledHandleResize = (): void => {
 const open = (): void => {
   if (props.disabled || props.options.length === 0) return
   isOpen.value = true
+  highlightIndex.value = -1
   nextTick(updateMenuPosition)
 }
 
@@ -84,7 +86,40 @@ const handleTriggerClick = (e: MouseEvent): void => {
 }
 
 const handleKeydown = (e: KeyboardEvent): void => {
-  if (e.key === 'Escape') close()
+  if (!isOpen.value) {
+    if (e.key === 'Escape') close()
+    return
+  }
+  if (e.key === 'Escape') {
+    close()
+    triggerRef.value?.focus()
+    return
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    highlightIndex.value = Math.min(highlightIndex.value + 1, props.options.length - 1)
+    return
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    highlightIndex.value = Math.max(highlightIndex.value - 1, 0)
+    return
+  }
+  if (e.key === 'Home') {
+    e.preventDefault()
+    highlightIndex.value = 0
+    return
+  }
+  if (e.key === 'End') {
+    e.preventDefault()
+    highlightIndex.value = props.options.length - 1
+    return
+  }
+  if (e.key === 'Enter' && highlightIndex.value >= 0) {
+    e.preventDefault()
+    select(props.options[highlightIndex.value].value)
+    return
+  }
 }
 
 // 模块级单例：所有 SelectDropdown 实例共享全局 scroll/resize 监听
@@ -150,10 +185,10 @@ onUnmounted(() => {
       <Transition name="sd">
         <div v-if="isOpen" class="sd-menu" :style="menuStyle">
           <div
-            v-for="opt in options"
+            v-for="(opt, idx) in options"
             :key="opt.value"
             class="sd-option"
-            :class="{ selected: modelValue === opt.value }"
+            :class="{ selected: modelValue === opt.value, highlighted: idx === highlightIndex }"
             @click.stop="select(opt.value)"
           >
             {{ opt.label }}
@@ -267,6 +302,10 @@ onUnmounted(() => {
   background: rgba(59, 130, 246, 0.08);
   color: var(--accent-primary);
   font-weight: 600;
+}
+
+.sd-option.highlighted {
+  background: var(--bg-hover);
 }
 
 /* transition */
