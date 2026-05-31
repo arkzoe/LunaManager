@@ -106,8 +106,8 @@ export async function restoreSave(snapshotId: string): Promise<void> {
     }
     try {
       await fsp.rename(savePath, backupDir)
-    } catch {
-      /* doesn't exist */
+    } catch (renameErr) {
+      throw new Error(`无法备份当前存档: ${savePath} (${(renameErr as Error).message})`)
     }
 
     const extractPath = savePath
