@@ -51,7 +51,10 @@
       "smartUnpack": true
     },
     "extraResources": [
-      { "from": "tool/Locale.Emulator", "to": "tool/Locale.Emulator" }
+      {
+        "from": "tool/Locale.Emulator",
+        "to": "tool/Locale.Emulator"
+      }
     ],
     "asarUnpack": [
       "resources/**"

@@ -39,9 +39,19 @@ export function useSettings() {
     const dirty = new Set<keyof AppSettings>()
 
     const watchedKeys = [
-      'autoStart', 'autoUpdate', 'minimizeToTray', 'vndbApiKey', 'bangumiToken',
-      'magpiePath', 'magpieHotkey', 'autoLaunchMagpie', 'magpieDelay',
-      'backupDir', 'trackPlaytime', 'recordHistory', 'metadataSource'
+      'autoStart',
+      'autoUpdate',
+      'minimizeToTray',
+      'vndbApiKey',
+      'bangumiToken',
+      'magpiePath',
+      'magpieHotkey',
+      'autoLaunchMagpie',
+      'magpieDelay',
+      'backupDir',
+      'trackPlaytime',
+      'recordHistory',
+      'metadataSource'
     ] as const
 
     watch(

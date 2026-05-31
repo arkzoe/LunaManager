@@ -24,8 +24,7 @@ export function useTokenCache() {
       if (cachedSource === 'mixed') {
         cachedToken = cachedVndbToken || cachedBangumiToken || null
       } else {
-        cachedToken =
-          cachedSource === 'bangumi' ? cachedBangumiToken : cachedVndbToken
+        cachedToken = cachedSource === 'bangumi' ? cachedBangumiToken : cachedVndbToken
       }
     }
     return {

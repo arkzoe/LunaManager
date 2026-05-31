@@ -1,4 +1,15 @@
-﻿import { app, shell, BrowserWindow, ipcMain, protocol, net, dialog, Tray, Menu, nativeImage } from 'electron'
+﻿import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  protocol,
+  net,
+  dialog,
+  Tray,
+  Menu,
+  nativeImage
+} from 'electron'
 import { join } from 'path'
 import { existsSync, createReadStream } from 'fs'
 import { rm } from 'fs/promises'
@@ -9,7 +20,10 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null
 function debounceSetBounds(win: BrowserWindow): void {
   if (debounceTimer) clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
-    if (win.isDestroyed()) { debounceTimer = null; return }
+    if (win.isDestroyed()) {
+      debounceTimer = null
+      return
+    }
     const b = win.getBounds()
     setConfig('windowBounds', { width: b.width, height: b.height, x: b.x, y: b.y })
     debounceTimer = null
@@ -72,7 +86,14 @@ function createWindow(): void {
   mainWindow!.on('unmaximize', () => mainWindow!.webContents.send('window:maximize-change', false))
 
   mainWindow!.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    try {
+      const url = new URL(details.url)
+      if (url.protocol === 'http:' || url.protocol === 'https:') {
+        shell.openExternal(details.url)
+      }
+    } catch {
+      /* invalid URL */
+    }
     return { action: 'deny' }
   })
 
@@ -87,7 +108,12 @@ function createWindow(): void {
 
 function hideToTray(win: BrowserWindow): void {
   const bounds = win.getBounds()
-  setConfig('windowBounds', { width: bounds.width, height: bounds.height, x: bounds.x, y: bounds.y })
+  setConfig('windowBounds', {
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y
+  })
   win.destroy()
   mainWindow = null
 }
@@ -173,12 +199,9 @@ function setupIpcHandlers(): void {
   ipcMain.handle('db:searchGames', (_, q: string) => gameOps.search(q))
 
   // 服务端过滤排序
-  ipcMain.handle(
-    'db:getFilteredGames',
-    (_e, query: GameQuery): PaginatedResult<GameRecord> => {
-      return getFilteredGames(query)
-    }
-  )
+  ipcMain.handle('db:getFilteredGames', (_e, query: GameQuery): PaginatedResult<GameRecord> => {
+    return getFilteredGames(query)
+  })
 
   // ===== Config =====
   ipcMain.handle(
@@ -227,18 +250,18 @@ function setupIpcHandlers(): void {
   ipcMain.handle('stats:getHomeData', (): HomeData => {
     const allGames = gameOps.getList()
     const total = allGames.length
-    const totalDuration =
-      (sessionOps.getAllAggregatedStats() as { total_duration: number }[]).reduce(
-        (sum, s) => sum + s.total_duration,
-        0
-      )
+    const totalDuration = (
+      sessionOps.getAllAggregatedStats() as { total_duration: number }[]
+    ).reduce((sum, s) => sum + s.total_duration, 0)
     const totalHours = Math.floor(totalDuration / 3600000) || 0
     const completedGames = allGames.filter((g: GameRecord) => g.status === 'played').length
     const avgPerDay = total > 0 ? Math.round((totalHours / Math.max(total, 1)) * 10) / 10 : 0
 
     const withPlayed = allGames.filter((g: GameRecord) => g.last_played)
     const recentGames = [...withPlayed]
-      .sort((a: GameRecord, b: GameRecord) => (b.last_played || '').localeCompare(a.last_played || ''))
+      .sort((a: GameRecord, b: GameRecord) =>
+        (b.last_played || '').localeCompare(a.last_played || '')
+      )
       .slice(0, 10)
     const recentAdded = [...allGames]
       .sort((a: GameRecord, b: GameRecord) => (b.created_at || 0) - (a.created_at || 0))
@@ -415,14 +438,24 @@ function setupIpcHandlers(): void {
 
   // ===== External Links =====
   ipcMain.handle('shell:openExternal', async (_e, url: string) => {
-    return shell.openExternal(url)
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return
+      await shell.openExternal(url)
+    } catch {
+      /* invalid URL, silently ignore */
+    }
   })
 
   // ===== Updates =====
   ipcMain.handle('update:check', async () => checkForUpdates(true))
   ipcMain.handle('update:download', async () => downloadUpdate())
   ipcMain.handle('update:cancelDownload', async () => cancelDownload())
-  ipcMain.handle('update:install', async () => quitAndInstall())
+  ipcMain.handle('update:install', async () => {
+    await endAllActiveSessions()
+    await killMagpieIfLaunched()
+    quitAndInstall()
+  })
 
   // ===== App Info =====
   ipcMain.handle('app:getVersion', () => app.getVersion())
@@ -480,12 +513,35 @@ function setupIpcHandlers(): void {
 
 import type { AppConfig } from '../shared/types'
 import type { LaunchMode } from '../shared/types'
-import type { RankingItem, ChartDataResult, HomeData, GameRecord, SearchResult, SearchResponse, BatchMatchRequest, MatchedRow, GameQuery, PaginatedResult } from '../shared/types'
+import type {
+  RankingItem,
+  ChartDataResult,
+  HomeData,
+  GameRecord,
+  SearchResult,
+  SearchResponse,
+  BatchMatchRequest,
+  MatchedRow,
+  GameQuery,
+  PaginatedResult
+} from '../shared/types'
 import { pickFolderAndScan, pickBatchFolderAndScan, getDirectorySizes } from './services/importer'
-import { testApiConnection, searchMetadata, pickBestMatch, fetchMetadataDetail, batchMatch } from './services/metadata-scraper'
+import {
+  testApiConnection,
+  searchMetadata,
+  pickBestMatch,
+  fetchMetadataDetail,
+  batchMatch
+} from './services/metadata-scraper'
 import { downloadCover, resolveCoverPath } from './services/cover-downloader'
 import { getSnapshotDir } from './config/paths'
-import { launchGame, stopGame, isGameRunning, endAllActiveSessions, killMagpieIfLaunched } from './services/game-launcher'
+import {
+  launchGame,
+  stopGame,
+  isGameRunning,
+  endAllActiveSessions,
+  killMagpieIfLaunched
+} from './services/game-launcher'
 import { backupSave, restoreSave, getSnapshotDirPath, autoMatchSaveDir } from './services/backup'
 import {
   setupUpdater,
@@ -503,6 +559,8 @@ if (!gotLock) {
   app.on('second-instance', () => {
     showFromTray()
   })
+
+  app.commandLine.appendSwitch('disable-background-networking')
 
   app.whenReady().then(() => {
     electronApp.setAppUserModelId('com.electron')

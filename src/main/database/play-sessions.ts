@@ -106,7 +106,9 @@ export const sessionOps = {
 
   getActiveSessions: (): { id: string; game_id: string; start_time: number }[] => {
     return getDatabase()
-      .prepare('SELECT id, game_id, start_time FROM play_sessions WHERE end_time IS NULL OR end_time = 0')
+      .prepare(
+        'SELECT id, game_id, start_time FROM play_sessions WHERE end_time IS NULL OR end_time = 0'
+      )
       .all() as { id: string; game_id: string; start_time: number }[]
   },
 
@@ -215,10 +217,7 @@ const RANGE_MS: Record<string, number> = {
   year: 365 * 24 * 60 * 60 * 1000
 }
 
-export function getChartData(
-  gameId: string | undefined,
-  range: string
-): ChartDataResult {
+export function getChartData(gameId: string | undefined, range: string): ChartDataResult {
   const cacheKey = `${gameId ?? 'all'}:${range}`
   const cached = chartCache.get(cacheKey)
   if (cached && Date.now() < cached.expiry) return cached.data

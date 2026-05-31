@@ -152,9 +152,9 @@ export function getFilteredGames(query: GameQuery): PaginatedResult<GameRecord> 
   const offset = query.offset ?? 0
 
   // 总数
-  const countRow = db
-    .prepare(`SELECT COUNT(*) as c FROM games ${whereClause}`)
-    .get(...params) as { c: number }
+  const countRow = db.prepare(`SELECT COUNT(*) as c FROM games ${whereClause}`).get(...params) as {
+    c: number
+  }
   const total = countRow.c
 
   // 数据

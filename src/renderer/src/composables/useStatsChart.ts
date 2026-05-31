@@ -10,7 +10,10 @@ function hexToRgba(hex: string, alpha: number): string {
  * 图表数据由后端 getChartData IPC 预聚合，渲染进程仅负责格式转换。
  * 将后端返回的 labels/values 组装为 Chart.js 所需的数据格式。
  */
-export function buildChartData(result: ChartDataResult, accentColor?: string): {
+export function buildChartData(
+  result: ChartDataResult,
+  accentColor?: string
+): {
   labels: string[]
   datasets: {
     label: string

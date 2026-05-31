@@ -227,10 +227,7 @@ export function sortByMatch(query: string, results: SearchResult[]): SearchResul
 /** 从 fetchMetadataDetail 返回的 detail 中提取 MatchedRow 字段 */
 function extractMatchedFields(
   detail: Partial<GameRecord>
-): Pick<
-  MatchedRow,
-  'title' | 'developer' | 'releaseDate' | 'description' | 'customTags'
-> {
+): Pick<MatchedRow, 'title' | 'developer' | 'releaseDate' | 'description' | 'customTags'> {
   return {
     title: detail.title || '',
     developer: detail.developer,

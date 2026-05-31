@@ -148,7 +148,9 @@ const handleSelect = (): void => {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.1s, border-color 0.1s;
+  transition:
+    background-color 0.1s,
+    border-color 0.1s;
 }
 
 .dir-item:hover {
@@ -199,7 +201,10 @@ const handleSelect = (): void => {
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .btn-ghost:hover {
@@ -230,22 +235,42 @@ const handleSelect = (): void => {
 }
 
 @keyframes overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes overlay-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes modal-in {
-  from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @keyframes modal-out {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.95); }
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 }
 </style>

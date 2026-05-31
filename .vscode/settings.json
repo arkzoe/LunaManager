@@ -10,7 +10,7 @@
   },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "editor.formatOnSave": "always",
+    "editor.formatOnSave": "always"
   },
   "eslint.validate": ["javascript", "javascriptreact", "vue", "html"]
 }

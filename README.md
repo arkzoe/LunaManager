@@ -16,17 +16,17 @@ A desktop game library manager built with Electron, Vue 3, and TypeScript. Organ
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Desktop Framework | Electron 39 |
-| UI Framework | Vue 3 (Composition API + `<script setup>`) |
-| State Management | Pinia |
-| Build Tooling | electron-vite, Vite, TypeScript |
-| Styling | UnoCSS (design tokens, component shortcuts) |
-| Database | better-sqlite3 (SQLite) |
-| Charts | Chart.js + vue-chartjs |
-| Packaging | electron-builder (Win/Mac/Linux) |
-| Auto-Update | electron-updater (GitHub) |
+| Layer             | Technology                                  |
+| ----------------- | ------------------------------------------- |
+| Desktop Framework | Electron 39                                 |
+| UI Framework      | Vue 3 (Composition API + `<script setup>`)  |
+| State Management  | Pinia                                       |
+| Build Tooling     | electron-vite, Vite, TypeScript             |
+| Styling           | UnoCSS (design tokens, component shortcuts) |
+| Database          | better-sqlite3 (SQLite)                     |
+| Charts            | Chart.js + vue-chartjs                      |
+| Packaging         | electron-builder (Win/Mac/Linux)            |
+| Auto-Update       | electron-updater (GitHub)                   |
 
 ## Project Setup
 
