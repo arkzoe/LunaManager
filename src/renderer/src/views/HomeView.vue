@@ -32,18 +32,19 @@ function onWheelScroll(e: WheelEvent): void {
 }
 
 // section 交错动画索引
+const SECTION_DELAYS = {
+  recentGames: 0,
+  recentAdded: 0.1,
+  activity: 0.2
+}
+
 const sectionDelays = computed(() => {
   const d = homeDataComputed.value
-  const visible = [
-    d.recentGames.length > 0,
-    d.recentAdded.length > 0,
-    d.recentGames.length > 0 || d.recentAdded.length > 0
-  ]
-  let i = 0
   return {
-    recentGames: visible[0] ? i++ * 0.1 : -1,
-    recentAdded: visible[1] ? i++ * 0.1 : -1,
-    activity: visible[2] ? i++ * 0.1 : -1
+    recentGames: d.recentGames.length > 0 ? SECTION_DELAYS.recentGames : -1,
+    recentAdded: d.recentAdded.length > 0 ? SECTION_DELAYS.recentAdded : -1,
+    activity:
+      d.recentGames.length > 0 || d.recentAdded.length > 0 ? SECTION_DELAYS.activity : -1
   }
 })
 
