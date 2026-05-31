@@ -43,10 +43,11 @@ export class VndbApiClient {
 
   async testConnection(): Promise<boolean> {
     try {
-      await safeFetch(() =>
+      await safeFetch((signal) =>
         fetch(`${VNDB_API}/authinfo`, {
           method: 'GET',
-          headers: this.headers()
+          headers: this.headers(),
+          signal
         })
       )
       return true
@@ -56,7 +57,7 @@ export class VndbApiClient {
   }
 
   async searchVN(query: string): Promise<SearchResult[]> {
-    const data = await safeFetch<any>(() =>
+    const data = await safeFetch<any>((signal) =>
       fetch(`${VNDB_API}/vn`, {
         method: 'POST',
         headers: this.headers(),
@@ -65,7 +66,8 @@ export class VndbApiClient {
           fields: `id, title, ${TITLE_FIELDS}, image.url, released, rating`,
           results: 10,
           sort: 'searchrank'
-        })
+        }),
+        signal
       })
     )
 
@@ -81,14 +83,15 @@ export class VndbApiClient {
   }
 
   async getVNDetail(vndbId: string): Promise<Partial<GameRecord>> {
-    const data = await safeFetchWithRetry<any>(() =>
+    const data = await safeFetchWithRetry<any>((signal) =>
       fetch(`${VNDB_API}/vn`, {
         method: 'POST',
         headers: this.headers(),
         body: JSON.stringify({
           filters: ['id', '=', vndbId],
           fields: `id, title, ${TITLE_FIELDS}, description, image.url, rating, released, developers.name, tags.name, tags.rating, tags.spoiler, tags.lie`
-        })
+        }),
+        signal
       })
     )
 

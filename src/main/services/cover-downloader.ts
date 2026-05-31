@@ -45,7 +45,7 @@ export async function downloadCover(gameId: string, remoteUrl: string): Promise<
         return `cover://${filename}?t=${existing}`
       }
 
-      const resp = await fetch(remoteUrl)
+      const resp = await fetch(remoteUrl, { signal: AbortSignal.timeout(15_000) })
       if (!resp.ok) return null
       await writeFile(localPath, Buffer.from(await resp.arrayBuffer()))
       return `cover://${filename}?t=${Date.now()}`

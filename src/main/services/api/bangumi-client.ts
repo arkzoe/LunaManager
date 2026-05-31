@@ -25,10 +25,11 @@ export class BangumiApiClient {
 
   async testConnection(): Promise<boolean> {
     try {
-      await safeFetch(() =>
+      await safeFetch((signal) =>
         fetch(`${BGM_API}/v0/me`, {
           method: 'GET',
-          headers: this.headers()
+          headers: this.headers(),
+          signal
         })
       )
       return true
@@ -50,11 +51,12 @@ export class BangumiApiClient {
       }
     }
 
-    const data = await safeFetch<any>(() =>
+    const data = await safeFetch<any>((signal) =>
       fetch(`${BGM_API}/v0/search/subjects`, {
         method: 'POST',
         headers: this.headers(),
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal
       })
     )
 
@@ -70,10 +72,11 @@ export class BangumiApiClient {
   }
 
   async getSubjectDetail(subjectId: string): Promise<Partial<GameRecord>> {
-    const data = await safeFetchWithRetry<any>(() =>
+    const data = await safeFetchWithRetry<any>((signal) =>
       fetch(`${BGM_API}/v0/subjects/${subjectId}`, {
         method: 'GET',
-        headers: this.headers()
+        headers: this.headers(),
+        signal
       })
     )
 

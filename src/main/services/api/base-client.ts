@@ -51,12 +51,12 @@ function normalizeError(err: unknown): ApiError {
 
 const FETCH_TIMEOUT_MS = 15_000
 
-export async function safeFetch<T>(fn: () => Promise<Response>): Promise<T> {
+export async function safeFetch<T>(fn: (signal: AbortSignal) => Promise<Response>): Promise<T> {
   let resp: Response
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
-    resp = await fn()
+    resp = await fn(controller.signal)
     clearTimeout(timeoutId)
   } catch (err) {
     if ((err as any)?.name === 'AbortError') {
@@ -92,7 +92,7 @@ export async function safeFetch<T>(fn: () => Promise<Response>): Promise<T> {
 const RETRYABLE_CODES = new Set(['TIMEOUT', 'RATE_LIMITED', 'SERVER_ERROR', 'NETWORK'])
 
 export async function safeFetchWithRetry<T>(
-  fn: () => Promise<Response>,
+  fn: (signal: AbortSignal) => Promise<Response>,
   maxRetries = 2,
   baseDelayMs = 1000
 ): Promise<T> {
