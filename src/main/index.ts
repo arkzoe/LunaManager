@@ -6,10 +6,11 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import iconPath from '../../resources/icon.png?asset'
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
-function debounceSetBounds(mainWindow: BrowserWindow): void {
+function debounceSetBounds(win: BrowserWindow): void {
   if (debounceTimer) clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
-    const b = mainWindow.getBounds()
+    if (win.isDestroyed()) { debounceTimer = null; return }
+    const b = win.getBounds()
     setConfig('windowBounds', { width: b.width, height: b.height, x: b.x, y: b.y })
     debounceTimer = null
   }, 200)
@@ -57,7 +58,7 @@ function createWindow(): void {
     if (isQuitting) return
     if (getConfig('minimizeToTray')) {
       event.preventDefault()
-      mainWindow!.hide()
+      hideToTray(mainWindow!)
       return
     }
     event.preventDefault()
@@ -80,9 +81,29 @@ function createWindow(): void {
   } else {
     mainWindow!.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  createTray()
 }
 
-function createTray(mainWindow: BrowserWindow): void {
+function hideToTray(win: BrowserWindow): void {
+  const bounds = win.getBounds()
+  setConfig('windowBounds', { width: bounds.width, height: bounds.height, x: bounds.x, y: bounds.y })
+  win.destroy()
+  mainWindow = null
+}
+
+function showFromTray(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
+    return
+  }
+  createWindow()
+}
+
+function createTray(): void {
+  if (tray) return
   const icon = nativeImage.createFromPath(iconPath)
   tray = new Tray(icon.resize({ width: 16, height: 16 }))
   tray.setToolTip('LunaManager')
@@ -90,33 +111,31 @@ function createTray(mainWindow: BrowserWindow): void {
   const contextMenu = Menu.buildFromTemplate([
     {
       label: '显示窗口',
-      click: () => {
-        mainWindow.show()
-        mainWindow.focus()
-      }
+      click: () => showFromTray()
     },
     { type: 'separator' },
     {
       label: '退出',
-      click: () => handleQuit(mainWindow)
+      click: () => handleQuit()
     }
   ])
   tray.setContextMenu(contextMenu)
 
-  tray.on('click', () => {
-    mainWindow.show()
-    mainWindow.focus()
-  })
+  tray.on('click', () => showFromTray())
 }
 
-async function handleQuit(win: BrowserWindow): Promise<void> {
+async function handleQuit(): Promise<void> {
   try {
-    const result = await win.webContents.executeJavaScript(
-      'window.api.requestQuit()',
-      true
-    )
-    if (result.hasActiveGames) {
-      win.webContents.send('app:show-quit-dialog', result.games)
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const result = await mainWindow.webContents.executeJavaScript(
+        'window.api.requestQuit()',
+        true
+      )
+      if (result.hasActiveGames) {
+        mainWindow.webContents.send('app:show-quit-dialog', result.games)
+      } else {
+        await endAllActiveSessionsAndQuit()
+      }
     } else {
       await endAllActiveSessionsAndQuit()
     }
@@ -429,7 +448,7 @@ function setupIpcHandlers(): void {
 
   // ===== Tray / Quit =====
   ipcMain.handle('app:minimizeToTray', () => {
-    mainWindow?.hide()
+    if (mainWindow && !mainWindow.isDestroyed()) hideToTray(mainWindow)
   })
 
   ipcMain.handle('app:requestQuit', () => {
@@ -482,12 +501,7 @@ if (!gotLock) {
   app.quit()
 } else {
   app.on('second-instance', () => {
-    const win = BrowserWindow.getAllWindows()[0]
-    if (win) {
-      if (win.isMinimized()) win.restore()
-      if (!win.isVisible()) win.show()
-      win.focus()
-    }
+    showFromTray()
   })
 
   app.whenReady().then(() => {
@@ -523,11 +537,8 @@ if (!gotLock) {
     setupUpdater()
     app.setLoginItemSettings({ openAtLogin: getConfig('autoStart') })
     createWindow()
-    if (mainWindow) {
-      createTray(mainWindow)
-    }
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+      if (BrowserWindow.getAllWindows().length === 0) showFromTray()
     })
   })
 
