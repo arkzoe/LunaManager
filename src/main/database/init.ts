@@ -119,6 +119,22 @@ export const initDatabase = (): Database.Database => {
     );
   `)
 
+  const ftsSql = (
+    db!.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='games_fts'").get() as
+      | { sql: string }
+      | undefined
+  )?.sql
+
+  if (ftsSql && !ftsSql.includes("tokenize='trigram'")) {
+    db!.exec('DROP TRIGGER IF EXISTS games_fts_insert')
+    db!.exec('DROP TRIGGER IF EXISTS games_fts_delete')
+    db!.exec('DROP TRIGGER IF EXISTS games_fts_update')
+    db!.exec('DROP TABLE IF EXISTS games_fts')
+    db!.exec(
+      "CREATE VIRTUAL TABLE games_fts USING fts5(title, title_cn, developer, content='games', content_rowid='rowid', tokenize='trigram')"
+    )
+  }
+
   // FTS sync triggers (idempotent — IF NOT EXISTS not supported for triggers, use try/catch)
   const triggers = [
     `CREATE TRIGGER IF NOT EXISTS games_fts_insert AFTER INSERT ON games BEGIN
@@ -127,7 +143,9 @@ export const initDatabase = (): Database.Database => {
     `CREATE TRIGGER IF NOT EXISTS games_fts_delete AFTER DELETE ON games BEGIN
        INSERT INTO games_fts(games_fts, rowid, title, title_cn, developer) VALUES ('delete', old.rowid, old.title, old.title_cn, old.developer);
      END`,
-    `CREATE TRIGGER IF NOT EXISTS games_fts_update AFTER UPDATE ON games BEGIN
+    `CREATE TRIGGER IF NOT EXISTS games_fts_update AFTER UPDATE ON games
+     WHEN old.title != new.title OR old.title_cn != new.title_cn OR old.developer != new.developer
+     BEGIN
        INSERT INTO games_fts(games_fts, rowid, title, title_cn, developer) VALUES ('delete', old.rowid, old.title, old.title_cn, old.developer);
        INSERT INTO games_fts(rowid, title, title_cn, developer) VALUES (new.rowid, new.title, new.title_cn, new.developer);
      END`
