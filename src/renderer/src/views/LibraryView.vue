@@ -471,6 +471,11 @@ const handleBatchImported = (result: ImportResult): void => {
       <div v-for="i in 8" :key="i" class="skeleton-card" />
     </div>
 
+    <!-- 过滤加载中 -->
+    <div v-else-if="filterLoading" class="filter-loading">
+      <p>加载中...</p>
+    </div>
+
     <!-- 游戏列表 / 网格 -->
     <template v-else-if="filteredGames.length > 0">
       <GameGridView
@@ -694,6 +699,19 @@ const handleBatchImported = (result: ImportResult): void => {
 }
 
 .empty-state p {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.filter-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.filter-loading p {
   font-size: 13px;
   color: var(--text-tertiary);
   margin: 0;

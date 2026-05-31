@@ -10,6 +10,7 @@ defineProps<{
   rankings: RankingItem[]
   topGame: RankingItem | undefined
   rankRange: 'week' | 'month' | 'all'
+  loading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -45,7 +46,10 @@ const emit = defineEmits<{
         </button>
       </div>
     </div>
-    <div v-if="topGame" class="rankings">
+    <div v-if="loading" class="loading-placeholder">
+      <p>加载中...</p>
+    </div>
+    <div v-else-if="topGame" class="rankings">
       <div class="rank-left">
         <div class="rl-cover">
           <img
@@ -261,5 +265,13 @@ const emit = defineEmits<{
   text-align: center;
   font-size: 13px;
   color: var(--text-tertiary);
+}
+
+.loading-placeholder {
+  padding: 40px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--border-color-light);
 }
 </style>

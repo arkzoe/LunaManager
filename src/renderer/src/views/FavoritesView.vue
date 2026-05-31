@@ -20,6 +20,7 @@ const { collections, loadCollections, createCollection, renameCollection, delete
   useCollections()
 const effectiveGames = computed(() => props.games || store.games)
 const collectionGames = ref<Map<string, GameRecord[]>>(new Map())
+const collectionsLoading = ref(false)
 
 // View mode
 const viewMode = ref<'collections' | 'games'>('collections')
@@ -70,17 +71,22 @@ onUnmounted(() => {
   if (favSyncTimer) clearTimeout(favSyncTimer)
 })
 const loadCollectionGames = async (): Promise<void> => {
-  if (unmounted) return
-  const gamesMap = await window.api.getAllCollectionGamesMap()
-  if (unmounted) return
-  const gameMap = new Map(effectiveGames.value.map((g) => [g.id, g]))
-  for (const col of collections.value) {
-    const gameIds = gamesMap[col.id] ?? []
-    col.gameIds = gameIds
-    collectionGames.value.set(
-      col.id,
-      gameIds.map((id) => gameMap.get(id) || ({ id } as GameRecord))
-    )
+  collectionsLoading.value = true
+  try {
+    if (unmounted) return
+    const gamesMap = await window.api.getAllCollectionGamesMap()
+    if (unmounted) return
+    const gameMap = new Map(effectiveGames.value.map((g) => [g.id, g]))
+    for (const col of collections.value) {
+      const gameIds = gamesMap[col.id] ?? []
+      col.gameIds = gameIds
+      collectionGames.value.set(
+        col.id,
+        gameIds.map((id) => gameMap.get(id) || ({ id } as GameRecord))
+      )
+    }
+  } finally {
+    if (!unmounted) collectionsLoading.value = false
   }
 }
 onMounted(async () => {
@@ -391,6 +397,7 @@ const handleCloseModal = (): void => {
         v-if="viewMode === 'collections'"
         key="collections"
         :collections="sortedFilteredCollections"
+        :loading="collectionsLoading"
         :search-query="searchQuery"
         :batch-mode="batchMode"
         :col-selected-ids="colSelectedIds"

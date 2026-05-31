@@ -126,6 +126,7 @@ const timeRanges = [
       v-model:rank-range="rankRange"
       :rankings="rankings"
       :top-game="filteredTopGame"
+      :loading="rankLoading"
     />
 
     <!-- 时间范围 + 时长趋势图表 -->
@@ -145,7 +146,10 @@ const timeRanges = [
         </div>
       </div>
       <div class="panel-body">
-        <div v-if="chartData" class="chart-container">
+        <div v-if="chartLoading" class="chart-ph">
+          <p>加载中...</p>
+        </div>
+        <div v-else-if="chartData" class="chart-container">
           <Line :data="chartData" :options="chartOptions" />
         </div>
         <div v-else class="chart-ph">
