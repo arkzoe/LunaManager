@@ -60,7 +60,11 @@ function parseLaunchMethods(value: string): string[] {
   return value.split(',').filter((m) => m && m !== 'normal')
 }
 
-watch(() => props.game, resetForm, { immediate: true })
+watch(
+  () => props.game.id,
+  () => resetForm(props.game),
+  { immediate: true }
+)
 
 // Toast
 const {
