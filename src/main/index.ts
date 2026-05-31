@@ -114,13 +114,11 @@ function hideToTray(win: BrowserWindow): void {
     x: bounds.x,
     y: bounds.y
   })
-  win.destroy()
-  mainWindow = null
+  win.hide()
 }
 
 function showFromTray(): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.show()
     mainWindow.focus()
     return
