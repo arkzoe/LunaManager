@@ -27,6 +27,8 @@ export function isGameRunning(gameId: string): boolean {
 
 // 提取：统一的游戏退出处理（含 playtime 累计 + IPC 推送）
 function handleGameExit(gameId: string, sessionId: string | null, trackPlaytime: boolean): void {
+  if (!activeProcesses.has(gameId)) return
+
   activeProcesses.delete(gameId)
   gameExePaths.delete(gameId)
   monitorMeta.delete(gameId)
@@ -188,8 +190,7 @@ export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<v
 
     if (useLE) {
       const lePath = getLeProcPath()
-      if (!existsSync(lePath))
-        throw new Error(`LEProc.exe 未找到：${lePath}，请确认程序已正确安装`)
+      if (!existsSync(lePath)) throw new Error(`LEProc.exe 未找到：${lePath}，请确认程序已正确安装`)
       cmd = lePath
       args = [game.executable_path]
     } else {
@@ -231,16 +232,14 @@ export async function launchGame(gameId: string, modes: LaunchMode[]): Promise<v
     // 缓存当前 playtime_seconds，游戏退出时直接累加
     sessionPlaytimeCache.set(gameId, game.playtime_seconds || 0)
 
-    // 存储可执行路径和监控元数据，用于逃逸检测
-    gameExePaths.set(gameId, game.executable_path)
-    monitorMeta.set(gameId, { sessionId, trackPlaytime })
-
     const proc = spawn(cmd, args, {
       cwd: gameDir,
       detached: false,
       stdio: 'ignore'
     })
 
+    gameExePaths.set(gameId, game.executable_path)
+    monitorMeta.set(gameId, { sessionId, trackPlaytime })
     activeProcesses.set(gameId, proc)
 
     // 推送游戏启动事件（前端立即响应）
@@ -315,6 +314,7 @@ export async function endAllActiveSessions(): Promise<void> {
     })
   }
   activeSessions.clear()
+  sessionPlaytimeCache.clear()
   // 清理所有监控定时器及辅助跟踪
   for (const [, timer] of monitorTimers) clearInterval(timer)
   monitorTimers.clear()
