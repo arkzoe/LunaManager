@@ -1,6 +1,6 @@
 ﻿import { dialog } from 'electron'
 import { readdir, stat } from 'fs/promises'
-import { join, basename } from 'path'
+import { join, basename, sep } from 'path'
 import type { ScanResult, BatchScanResult, ScanOptions } from '../../shared/types'
 
 const IO_CONCURRENCY = 50
@@ -164,8 +164,8 @@ export async function scanDirectory(
     .map((fullPath) => ({ name: basename(fullPath), fullPath }))
     .filter((e) => !isSystemExe(e.name))
     .sort((a, b) => {
-      const aDepth = a.fullPath.length - a.fullPath.replace(/\\/g, '').length
-      const bDepth = b.fullPath.length - b.fullPath.replace(/\\/g, '').length
+      const aDepth = a.fullPath.split(sep).length
+      const bDepth = b.fullPath.split(sep).length
       if (aDepth !== bDepth) return aDepth - bDepth
       return a.name.localeCompare(b.name)
     })
@@ -204,7 +204,7 @@ export async function scanBatchDirectory(
     const entries = await readdir(parentPath, { withFileTypes: true })
     const dirs = entries.filter((e) => e.isDirectory())
     // 跳过 size 计算，大幅加快扫描速度
-    const scanOptions: ScanOptions = { ...options, skipSize: true }
+    const scanOptions: ScanOptions = { ...options }
 
     const tasks = dirs.map((entry) => async () => {
       const folderPath = join(parentPath, entry.name)
