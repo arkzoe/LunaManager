@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
   show: boolean
@@ -11,9 +11,29 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const basename = (p: string) => p.split('\\').pop()!.split('/').pop()!
+const basename = (p: string): string => p.split('\\').pop()!.split('/').pop()!
 
 const selectedDir = ref<string | null>(null)
+const confirmBtn = ref<HTMLButtonElement | null>(null)
+
+function handleEsc(e: KeyboardEvent): void {
+  if (e.key === 'Escape' && props.show) {
+    emit('close')
+  }
+}
+
+onMounted(() => document.addEventListener('keydown', handleEsc))
+onUnmounted(() => document.removeEventListener('keydown', handleEsc))
+
+watch(
+  () => props.show,
+  (val) => {
+    if (val) {
+      selectedDir.value = null
+      setTimeout(() => confirmBtn.value?.focus(), 50)
+    }
+  }
+)
 
 const handleSelect = (): void => {
   if (selectedDir.value) emit('select', selectedDir.value)
@@ -23,7 +43,7 @@ const handleSelect = (): void => {
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="dialog-overlay" @keydown.esc="emit('close')">
+      <div v-if="show" class="dialog-overlay">
         <div class="dialog-card">
           <div class="dialog-header">
             <h2 class="dialog-title">选择存档目录</h2>
@@ -48,7 +68,12 @@ const handleSelect = (): void => {
 
           <div class="dialog-footer">
             <button class="btn-ghost" @click="emit('close')">取消</button>
-            <button class="btn-primary" :disabled="!selectedDir" @click="handleSelect">
+            <button
+              ref="confirmBtn"
+              class="btn-primary"
+              :disabled="!selectedDir"
+              @click="handleSelect"
+            >
               确认选择
             </button>
           </div>

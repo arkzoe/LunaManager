@@ -1,9 +1,15 @@
 ﻿<script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, shallowRef, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useGameStore } from '../stores/useGameStore'
 import type { GameRecord, GameStatus, ImportResult } from '../../../shared/types'
-import { STATUS_LABELS, STATUS_OPTIONS } from '../utils/constants'
+import { STATUS_LABELS } from '../utils/constants'
 import { useToast } from '../composables/useToast'
+import {
+  useLibraryFilter,
+  sortOptions,
+  filters,
+  statusFilters
+} from '../composables/useLibraryFilter'
 import type { UICollection } from '../composables/useCollections'
 import LibraryToolbar from './library/LibraryToolbar.vue'
 import LibraryFilterBar from './library/LibraryFilterBar.vue'
@@ -23,31 +29,19 @@ const ToastNotification = defineAsyncComponent(() => import('../shared/ToastNoti
 const emit = defineEmits<{ (e: 'selectGame', game: GameRecord): void }>()
 
 const store = useGameStore()
-const searchQuery = ref('')
-const debouncedSearch = ref('')
-let searchTimer: ReturnType<typeof setTimeout> | null = null
-const activeFilter = ref<GameStatus | 'all'>('all')
 const viewMode = ref<'grid' | 'list'>('grid')
 
-type SortKey = 'name' | 'playtime' | 'rating' | 'last_played'
-const sortKey = ref<SortKey>('name')
-const sortDir = ref<'asc' | 'desc'>('asc')
-
-const sortOptions = [
-  { key: 'name' as const, label: '名称' },
-  { key: 'playtime' as const, label: '时长' },
-  { key: 'rating' as const, label: '评分' },
-  { key: 'last_played' as const, label: '最后游玩' }
-]
-
-const toggleSort = (key: SortKey): void => {
-  if (sortKey.value === key) {
-    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortKey.value = key
-    sortDir.value = key === 'name' ? 'asc' : 'desc'
-  }
-}
+const {
+  searchQuery,
+  activeFilter,
+  sortKey,
+  sortDir,
+  toggleSort,
+  filteredGames,
+  filterLoading,
+  fetchFilteredGames,
+  cleanup: cleanupFilter
+} = useLibraryFilter(store)
 
 // 右键菜单
 const ctxMenu = ref<{ x: number; y: number; game: GameRecord } | null>(null)
@@ -243,67 +237,8 @@ onMounted(async () => {
   fetchFilteredGames()
 })
 
-watch(searchQuery, (val) => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    debouncedSearch.value = val
-  }, 200)
-})
-
-const filters: { id: GameStatus | 'all'; label: string }[] = [
-  { id: 'all', label: '全部' },
-  ...STATUS_OPTIONS.map((o) => ({ id: o.value as GameStatus, label: o.label }))
-]
-
-const statusFilters = computed(() =>
-  filters.filter((f): f is { id: GameStatus; label: string } => f.id !== 'all')
-)
-
-// 服务端过滤排序（SQL WHERE + ORDER BY），渲染进程仅负责展示
-const filteredGames = shallowRef<GameRecord[]>([])
-const filteredTotal = ref(0)
-const filterLoading = ref(false)
-
-let filterFetchTimer: ReturnType<typeof setTimeout> | null = null
-const fetchFilteredGames = async (): Promise<void> => {
-  filterLoading.value = true
-  try {
-    const result = await window.api.getFilteredGames({
-      status: activeFilter.value,
-      search: debouncedSearch.value || undefined,
-      sortKey: sortKey.value,
-      sortDir: sortDir.value,
-      limit: 200
-    })
-    filteredGames.value = result.items
-    filteredTotal.value = result.total
-  } catch {
-    // IPC 不可用时回退到本地计算
-    filteredGames.value = store.games
-  } finally {
-    filterLoading.value = false
-  }
-}
-
-// 监听过滤/排序/搜索条件变化 → 防抖后请求服务端过滤
-watch([activeFilter, debouncedSearch, sortKey, sortDir], () => {
-  if (filterFetchTimer) clearTimeout(filterFetchTimer)
-  filterFetchTimer = setTimeout(() => fetchFilteredGames(), 100)
-})
-
-// 当 store 数据变更时（批量操作 / 增删改），重新请求
-watch(
-  () => store.games,
-  () => {
-    if (filterFetchTimer) clearTimeout(filterFetchTimer)
-    filterFetchTimer = setTimeout(() => fetchFilteredGames(), 100)
-  },
-  { deep: false }
-)
-
 onUnmounted(() => {
-  if (searchTimer) clearTimeout(searchTimer)
-  if (filterFetchTimer) clearTimeout(filterFetchTimer)
+  cleanupFilter()
 })
 
 const handleContextMenu = (e: MouseEvent, game: GameRecord): void => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import type { UICollection } from '../composables/useCollections'
 
 const props = withDefaults(
@@ -19,6 +19,16 @@ const emit = defineEmits<{
 
 const collections = ref<UICollection[]>([])
 const loading = ref(false)
+const cancelBtn = ref<HTMLButtonElement | null>(null)
+
+function handleEsc(e: KeyboardEvent): void {
+  if (e.key === 'Escape' && props.show) {
+    emit('close')
+  }
+}
+
+onMounted(() => document.addEventListener('keydown', handleEsc))
+onUnmounted(() => document.removeEventListener('keydown', handleEsc))
 
 const loadCollections = async (): Promise<void> => {
   loading.value = true
@@ -50,7 +60,10 @@ const handleSelect = (id: string): void => {
 watch(
   () => props.show,
   (val) => {
-    if (val) loadCollections()
+    if (val) {
+      loadCollections()
+      setTimeout(() => cancelBtn.value?.focus(), 50)
+    }
   }
 )
 </script>
@@ -77,7 +90,7 @@ watch(
             </div>
           </div>
           <div class="modal-actions">
-            <button class="btn-cancel" @click="emit('close')">取消</button>
+            <button ref="cancelBtn" class="btn-cancel" @click="emit('close')">取消</button>
           </div>
         </div>
       </div>

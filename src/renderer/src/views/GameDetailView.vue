@@ -4,6 +4,7 @@ import type { GameRecord, GameStatus, LaunchMode } from '../../../shared/types'
 import { STATUS_OPTIONS } from '../utils/constants'
 import { useGameStore } from '../stores/useGameStore'
 import { useToast } from '../composables/useToast'
+import { useGameDetailForm } from '../composables/useGameDetailForm'
 import ToastNotification from '../shared/ToastNotification.vue'
 import ConfirmDialog from '../shared/ConfirmDialog.vue'
 import GameDetailHero from './game-detail/GameDetailHero.vue'
@@ -20,50 +21,35 @@ const activeTab = ref<'stats' | 'edit' | 'backup'>('stats')
 const showLaunchMenu = ref(false)
 const isRunning = ref(false)
 const selectedLaunchModes = ref<string[]>([])
-const tempStatus = ref<GameStatus>((props.game.status as GameStatus) || 'want')
-const tempRating = ref(props.game.personal_rating || 0)
-const tempNotes = ref(props.game.notes || '')
-const tempTitle = ref(props.game.title || '')
-const tempTitleCn = ref(props.game.title_cn || '')
-const tempDeveloper = ref(props.game.developer || '')
-const tempReleaseDate = ref(props.game.release_date || '')
-const tempTags = ref(props.game.custom_tags || '[]')
-const tempExecutablePath = ref(props.game.executable_path || '')
-const tempDescription = ref(props.game.description || '')
-const tempDataSource = ref<string>(
-  props.game.vndb_id ? 'vndb' : props.game.bangumi_id ? 'bangumi' : ''
-)
-const tempVndbId = ref(props.game.vndb_id || '')
-const tempBangumiId = ref(props.game.bangumi_id || '')
+const {
+  tempStatus,
+  tempRating,
+  tempNotes,
+  tempTitle,
+  tempTitleCn,
+  tempDeveloper,
+  tempReleaseDate,
+  tempTags,
+  tempExecutablePath,
+  tempDescription,
+  tempDataSource,
+  tempVndbId,
+  tempBangumiId,
+  resetForm
+} = useGameDetailForm()
+
 const saving = ref(false)
 const fetching = ref(false)
 const showDeleteConfirm = ref(false)
 
-function resetForm(game: GameRecord): void {
-  tempStatus.value = (game.status as GameStatus) || 'want'
-  tempRating.value = game.personal_rating || 0
-  tempNotes.value = game.notes || ''
-  tempTitle.value = game.title || ''
-  tempTitleCn.value = game.title_cn || ''
-  tempDeveloper.value = game.developer || ''
-  tempReleaseDate.value = game.release_date || ''
-  tempTags.value = game.custom_tags || '[]'
-  tempExecutablePath.value = game.executable_path || ''
-  tempDescription.value = game.description || ''
-  tempDataSource.value = game.vndb_id ? 'vndb' : game.bangumi_id ? 'bangumi' : ''
-  tempVndbId.value = game.vndb_id || ''
-  tempBangumiId.value = game.bangumi_id || ''
-  selectedLaunchModes.value = parseLaunchMethods(game.last_launch_method)
-}
-
-function parseLaunchMethods(value: string): string[] {
-  if (!value) return []
-  return value.split(',').filter((m) => m && m !== 'normal')
-}
-
 watch(
   () => props.game.id,
-  () => resetForm(props.game),
+  () => {
+    resetForm(props.game)
+    selectedLaunchModes.value = props.game.last_launch_method
+      ? props.game.last_launch_method.split(',').filter((m) => m && m !== 'normal')
+      : []
+  },
   { immediate: true }
 )
 

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import type { GameRecord } from '../../../shared/types'
 import { useGameStore } from '../stores/useGameStore'
 import { useToast } from '../composables/useToast'
 import { useCollections } from '../composables/useCollections'
+import { useFavoriteSync } from '../composables/useFavoriteSync'
 import type { UICollection } from '../composables/useCollections'
 import CollectionsListView from './favorites/CollectionsListView.vue'
 import CollectionGamesView from './favorites/CollectionGamesView.vue'
@@ -66,10 +67,6 @@ const {
 
 // Data loading
 let unmounted = false
-onUnmounted(() => {
-  unmounted = true
-  if (favSyncTimer) clearTimeout(favSyncTimer)
-})
 const loadCollectionGames = async (): Promise<void> => {
   collectionsLoading.value = true
   try {
@@ -147,34 +144,17 @@ const allGamesSelected = computed(
 )
 
 // Default collection sync (debounced)
-let favSyncTimer: ReturnType<typeof setTimeout> | null = null
-watch(
-  () => effectiveGames.value.filter((g) => g.favorite).map((g) => g.id),
-  async (favIds) => {
-    if (favSyncTimer) clearTimeout(favSyncTimer)
-    // collections 未加载完成时不触发同步
-    if (collections.value.length === 0) return
-    favSyncTimer = setTimeout(async () => {
-      const def = defaultCollection.value
-      if (!def) return
-      const colId = def.id
-      const currentIds = new Set(collectionGames.value.get(colId)?.map((g) => g.id) || [])
-      for (const id of favIds) {
-        if (!currentIds.has(id)) {
-          try {
-            await window.api.addGameToCollection(id, colId)
-          } catch {
-            /* */
-          }
-        }
-      }
-      const games = await window.api.getCollectionGames(colId)
-      collectionGames.value.set(colId, games)
-      def.gameIds = games.map((g) => g.id)
-    }, 500)
-  },
-  { immediate: true }
+const { cleanup: cleanupSync } = useFavoriteSync(
+  collections,
+  collectionGames,
+  effectiveGames,
+  defaultCollection
 )
+
+onUnmounted(() => {
+  unmounted = true
+  cleanupSync()
+})
 
 // Sort
 const handleSort = (field: string): void => {
