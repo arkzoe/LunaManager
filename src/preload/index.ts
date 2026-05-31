@@ -108,7 +108,7 @@ const api: IElectronAPI = {
   batchMatch: (request) => ipcRenderer.invoke('metadata:batchMatch', request),
 
   // 服务端过滤排序
-  getFilteredGames: (query) => ipcRenderer.invoke('db:getFilteredGames', query),
+  getFilteredGames: (query) => ipcRenderer.invoke('db:getFilteredGames', query)
 }
 
 if (process.contextIsolated) {
