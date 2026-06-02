@@ -1,6 +1,7 @@
 import { ipcMain, dialog, shell } from 'electron'
 import { existsSync } from 'fs'
 import { rm } from 'fs/promises'
+import { join } from 'path'
 import type {
   AppConfig,
   LaunchMode,
@@ -24,7 +25,7 @@ import {
 import { getRankings, getChartData } from '../database/play-sessions'
 import { getFilteredGames } from '../database/games'
 import { getConfig, setConfig, getAllConfig, setAllConfig } from '../config/store'
-import { getSnapshotDir } from '../config/paths'
+import { getSnapshotDir, getCoverDir } from '../config/paths'
 import { launchGame, stopGame, isGameRunning } from '../services/game-launcher'
 import {
   testApiConnection,
@@ -57,6 +58,11 @@ export function registerIpcHandlers(): void {
       }
       const snapDir = getSnapshotDir(id)
       if (existsSync(snapDir)) await rm(snapDir, { recursive: true }).catch(() => {})
+    }
+    const coverDir = getCoverDir()
+    for (const ext of ['jpg', 'png', 'webp']) {
+      const fp = join(coverDir, `${id}.${ext}`)
+      if (existsSync(fp)) await rm(fp).catch(() => {})
     }
     return gameOps.delete(id)
   })
