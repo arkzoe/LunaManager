@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { GameRecord, GameStatus, GameQuery, PaginatedResult } from '../../shared/types'
-import { getDatabase } from './init'
+import { getDatabase, rebuildFts } from './init'
 
 export const gameOps = {
   getAll: (): GameRecord[] => {
@@ -61,7 +61,19 @@ export const gameOps = {
   },
 
   delete: (id: string): void => {
-    getDatabase().prepare('DELETE FROM games WHERE id = ?').run(id)
+    try {
+      getDatabase().prepare('DELETE FROM games WHERE id = ?').run(id)
+    } catch (err: unknown) {
+      if (
+        err instanceof Error &&
+        (err as { code?: string }).code === 'SQLITE_CORRUPT_VTAB'
+      ) {
+        rebuildFts()
+        getDatabase().prepare('DELETE FROM games WHERE id = ?').run(id)
+      } else {
+        throw err
+      }
+    }
   },
 
   search: (query: string): GameRecord[] => {

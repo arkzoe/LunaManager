@@ -55,6 +55,32 @@ function migrateGamesTable(): void {
   }
 }
 
+export function rebuildFts(): void {
+  const d = getDatabase()
+  d.exec('DROP TRIGGER IF EXISTS games_fts_insert')
+  d.exec('DROP TRIGGER IF EXISTS games_fts_delete')
+  d.exec('DROP TRIGGER IF EXISTS games_fts_update')
+  d.exec('DROP TABLE IF EXISTS games_fts')
+  d.exec(
+    "CREATE VIRTUAL TABLE games_fts USING fts5(title, title_cn, developer, content='games', content_rowid='rowid', tokenize='trigram')"
+  )
+  d.exec(`CREATE TRIGGER IF NOT EXISTS games_fts_insert AFTER INSERT ON games BEGIN
+    INSERT INTO games_fts(rowid, title, title_cn, developer) VALUES (new.rowid, new.title, new.title_cn, new.developer);
+  END`)
+  d.exec(`CREATE TRIGGER IF NOT EXISTS games_fts_delete AFTER DELETE ON games BEGIN
+    INSERT INTO games_fts(games_fts, rowid, title, title_cn, developer) VALUES ('delete', old.rowid, old.title, old.title_cn, old.developer);
+  END`)
+  d.exec(`CREATE TRIGGER IF NOT EXISTS games_fts_update AFTER UPDATE ON games
+    WHEN old.title != new.title OR old.title_cn != new.title_cn OR old.developer != new.developer
+    BEGIN
+      INSERT INTO games_fts(games_fts, rowid, title, title_cn, developer) VALUES ('delete', old.rowid, old.title, old.title_cn, old.developer);
+      INSERT INTO games_fts(rowid, title, title_cn, developer) VALUES (new.rowid, new.title, new.title_cn, new.developer);
+    END`)
+  d.exec(
+    'INSERT INTO games_fts(rowid, title, title_cn, developer) SELECT rowid, title, title_cn, developer FROM games'
+  )
+}
+
 export const initDatabase = (): Database.Database => {
   if (db) return db
 
