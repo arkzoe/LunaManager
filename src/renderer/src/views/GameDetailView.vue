@@ -386,7 +386,11 @@ const iconPaths: Record<string, string> = {
         @fetch-metadata="handleFetchMetadata"
         @delete-game="showDeleteConfirm = true"
       />
-      <GameDetailBackup v-else-if="activeTab === 'backup'" :game="game" />
+      <GameDetailBackup
+        v-else-if="activeTab === 'backup'"
+        :game="game"
+        @updated="(g) => emit('updated', g)"
+      />
     </div>
 
     <ConfirmDialog

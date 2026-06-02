@@ -7,6 +7,7 @@ import SaveDirPicker from '../../shared/SaveDirPicker.vue'
 import ConfirmDialog from '../../shared/ConfirmDialog.vue'
 
 const props = defineProps<{ game: GameRecord }>()
+const emit = defineEmits<{ (e: 'updated', game: GameRecord): void }>()
 const store = useGameStore()
 
 const snapshots = ref<SaveSnapshot[]>([])
@@ -32,9 +33,7 @@ async function loadSnapshots(): Promise<void> {
 async function handleSelectFolder(): Promise<void> {
   const dir = await window.api.pickDirectory()
   if (!dir) return
-  await window.api.updateGame(props.game.id, { save_path: dir } as Partial<GameRecord>)
-  const g = store.games.find((x) => x.id === props.game.id)
-  if (g) g.save_path = dir
+  await setSaveDir(dir)
 }
 
 async function handleBackup(): Promise<void> {
@@ -94,23 +93,32 @@ async function handleAutoMatchSaveDir(): Promise<void> {
     error.value = '未设置可执行文件路径'
     return
   }
-  const dirs = await window.api.autoMatchSaveDir(props.game.executable_path)
-  if (dirs.length === 0) {
-    error.value = '未找到存档目录'
-    return
+  try {
+    const dirs = await window.api.autoMatchSaveDir(props.game.executable_path)
+    if (dirs.length === 0) {
+      error.value = '未找到存档目录'
+      return
+    }
+    if (dirs.length === 1) {
+      await setSaveDir(dirs[0])
+      return
+    }
+    saveDirCandidates.value = dirs
+    showSaveDirPicker.value = true
+  } catch (e: unknown) {
+    error.value = (e instanceof Error ? e.message : String(e)) || '自动匹配失败'
   }
-  if (dirs.length === 1) {
-    await setSaveDir(dirs[0])
-    return
-  }
-  saveDirCandidates.value = dirs
-  showSaveDirPicker.value = true
 }
 
 async function setSaveDir(dir: string): Promise<void> {
   await window.api.updateGame(props.game.id, { save_path: dir } as Partial<GameRecord>)
-  const g = store.games.find((x) => x.id === props.game.id)
-  if (g) g.save_path = dir
+  const idx = store.games.findIndex((x) => x.id === props.game.id)
+  if (idx !== -1) {
+    const copy = [...store.games]
+    copy[idx] = { ...copy[idx], save_path: dir }
+    store.games = copy
+  }
+  emit('updated', { ...props.game, save_path: dir })
 }
 
 function handleSaveDirSelect(dir: string): void {
