@@ -3,8 +3,10 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import type { GameRecord, SaveSnapshot } from '../../../../shared/types'
 import { formatDate, formatFileSize } from '../../utils/format'
 import { useGameStore } from '../../stores/useGameStore'
+import { useToast } from '../../composables/useToast'
 import SaveDirPicker from '../../shared/SaveDirPicker.vue'
 import ConfirmDialog from '../../shared/ConfirmDialog.vue'
+import ToastNotification from '../../shared/ToastNotification.vue'
 
 const props = defineProps<{ game: GameRecord }>()
 const emit = defineEmits<{ (e: 'updated', game: GameRecord): void }>()
@@ -20,6 +22,8 @@ const showRestoreConfirm = ref(false)
 const restoreTargetId = ref<string | null>(null)
 const showDeleteSnapshotConfirm = ref(false)
 const deleteTargetId = ref<string | null>(null)
+
+const { show: showToast, message: toastMessage, type: toastType, showToast: showToastMsg } = useToast()
 
 let _unmounted = false
 onUnmounted(() => {
@@ -61,6 +65,7 @@ async function confirmRestore(): Promise<void> {
   restoring.value = restoreTargetId.value
   try {
     await window.api.restoreSnapshotInPlace(restoreTargetId.value)
+    showToastMsg('快照还原成功', 'success')
   } catch (e: unknown) {
     error.value = (e instanceof Error ? e.message : String(e)) || '还原失败'
   } finally {
@@ -166,11 +171,17 @@ onMounted(() => {
 
       <p v-if="error" class="error-msg">{{ error }}</p>
 
+      <ToastNotification
+        v-if="showToast"
+        :message="toastMessage"
+        :type="toastType"
+        @close="showToast = false"
+      />
+
       <div v-if="snapshots.length" class="snapshot-list">
         <div v-for="snap in snapshots" :key="snap.id" class="snapshot-item">
           <div class="snapshot-info">
             <span class="snapshot-date">{{ formatDate(snap.created_at) }}</span>
-            <span v-if="snap.notes" class="snapshot-notes">{{ snap.notes }}</span>
             <span v-if="snap.file_size" class="snapshot-size">{{
               formatFileSize(snap.file_size)
             }}</span>
