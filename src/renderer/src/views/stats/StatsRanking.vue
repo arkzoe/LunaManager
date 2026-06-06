@@ -1,10 +1,5 @@
 <script setup lang="ts">
-interface RankingItem {
-  rank: number
-  title: string
-  playtime: string
-  cover: string
-}
+import type { RankingItem } from '../../../../shared/types'
 
 defineProps<{
   rankings: RankingItem[]
