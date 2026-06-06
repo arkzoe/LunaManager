@@ -27,7 +27,7 @@ export async function backupSave(gameId: string, savePath: string): Promise<stri
 
     output.on('close', () => {
       const fileSize = archive.pointer()
-      snapshotOps.create(gameId, '', zipPath, fileSize)
+      snapshotOps.create(gameId, zipPath, fileSize)
       resolve(snapshotId)
     })
 

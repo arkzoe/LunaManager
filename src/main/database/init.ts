@@ -118,10 +118,8 @@ export const initDatabase = (): Database.Database => {
     CREATE TABLE IF NOT EXISTS collections (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      parent_id TEXT,
       sort_order INTEGER DEFAULT 0,
-      created_at INTEGER NOT NULL,
-      FOREIGN KEY (parent_id) REFERENCES collections(id) ON DELETE SET NULL
+      created_at INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS game_collections (
@@ -137,7 +135,6 @@ export const initDatabase = (): Database.Database => {
       game_id TEXT NOT NULL,
       snapshot_path TEXT NOT NULL,
       file_size INTEGER DEFAULT 0,
-      notes TEXT DEFAULT '',
       created_at INTEGER NOT NULL,
       FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
     );

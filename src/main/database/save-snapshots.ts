@@ -9,18 +9,17 @@ export const snapshotOps = {
       .all(gameId) as SaveSnapshot[]
   },
 
-  create: (gameId: string, notes = '', snapshotPath?: string, fileSize = 0): SaveSnapshot => {
+  create: (gameId: string, snapshotPath?: string, fileSize = 0): SaveSnapshot => {
     const snap: SaveSnapshot = {
       id: `snap-${randomUUID()}`,
       game_id: gameId,
       snapshot_path: snapshotPath || '',
       file_size: fileSize,
-      notes,
       created_at: Date.now()
     }
     getDatabase()
       .prepare(
-        'INSERT INTO save_snapshots (id, game_id, snapshot_path, file_size, notes, created_at) VALUES (@id, @game_id, @snapshot_path, @file_size, @notes, @created_at)'
+        'INSERT INTO save_snapshots (id, game_id, snapshot_path, file_size, created_at) VALUES (@id, @game_id, @snapshot_path, @file_size, @created_at)'
       )
       .run(snap)
     return snap
