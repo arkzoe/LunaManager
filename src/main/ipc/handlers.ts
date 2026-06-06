@@ -20,7 +20,8 @@ import {
   gameOps,
   sessionOps,
   collectionOps,
-  snapshotOps
+  snapshotOps,
+  getDatabase
 } from '../database'
 import { getRankings, getChartData } from '../database/play-sessions'
 import { getFilteredGames } from '../database/games'
@@ -126,6 +127,15 @@ export function registerIpcHandlers(): void {
     const completedGames = allGames.filter((g: GameRecord) => g.status === 'played').length
     const avgPerDay = total > 0 ? Math.round((totalHours / Math.max(total, 1)) * 10) / 10 : 0
 
+    const now = new Date()
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+    const monthlyRow = getDatabase()
+      .prepare(
+        'SELECT COALESCE(SUM(duration), 0) as monthly_duration FROM play_sessions WHERE start_time >= ?'
+      )
+      .get(monthStart) as { monthly_duration: number }
+    const monthlyHours = Math.floor((monthlyRow?.monthly_duration ?? 0) / 3600000) || 0
+
     const withPlayed = allGames.filter((g: GameRecord) => g.last_played)
     const recentGames = [...withPlayed]
       .sort((a: GameRecord, b: GameRecord) =>
@@ -136,7 +146,7 @@ export function registerIpcHandlers(): void {
       .sort((a: GameRecord, b: GameRecord) => (b.created_at || 0) - (a.created_at || 0))
       .slice(0, 10)
 
-    return { totalGames: total, totalHours, completedGames, avgPerDay, recentGames, recentAdded }
+    return { totalGames: total, totalHours, monthlyHours, completedGames, avgPerDay, recentGames, recentAdded }
   })
 
   // ===== Game Launch =====

@@ -43,8 +43,7 @@ const sectionDelays = computed(() => {
   return {
     recentGames: d.recentGames.length > 0 ? SECTION_DELAYS.recentGames : -1,
     recentAdded: d.recentAdded.length > 0 ? SECTION_DELAYS.recentAdded : -1,
-    activity:
-      d.recentGames.length > 0 || d.recentAdded.length > 0 ? SECTION_DELAYS.activity : -1
+    activity: d.recentGames.length > 0 || d.recentAdded.length > 0 ? SECTION_DELAYS.activity : -1
   }
 })
 
@@ -52,6 +51,7 @@ const homeData = shallowRef<HomeData>({
   totalGames: 0,
   totalHours: 0,
   completedGames: 0,
+  monthlyHours: 0,
   avgPerDay: 0,
   recentGames: [],
   recentAdded: []
@@ -82,6 +82,7 @@ const homeDataComputed = computed(() => {
     totalGames: total,
     totalHours,
     completedGames,
+    monthlyHours: 0,
     avgPerDay,
     recentGames: sortedByPlayed,
     recentAdded: sortedByAdded
@@ -95,7 +96,7 @@ const recentAdded = computed(() => homeDataComputed.value.recentAdded)
 const overviewData = computed(() => ({
   totalGames: homeDataComputed.value.totalGames,
   totalHours: homeDataComputed.value.totalHours,
-  monthlyHours: 0,
+  monthlyHours: homeDataComputed.value.monthlyHours,
   avgPerDay: homeDataComputed.value.avgPerDay
 }))
 

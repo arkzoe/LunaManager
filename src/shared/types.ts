@@ -34,7 +34,6 @@ export interface PlaySession {
 export interface Collection {
   id: string
   name: string
-  parent_id: string | null
   sort_order: number
   created_at: number
   updated_at: number
@@ -97,7 +96,6 @@ export interface SaveSnapshot {
   game_id: string
   snapshot_path: string
   file_size: number
-  notes: string
   created_at: number
 }
 
@@ -154,6 +152,7 @@ export interface HomeData {
   totalHours: number
   completedGames: number
   avgPerDay: number
+  monthlyHours: number
   recentGames: GameRecord[]
   recentAdded: GameRecord[]
 }
@@ -201,7 +200,6 @@ export interface AppConfig {
   minimizeToTray: boolean
   metadataSource: 'vndb' | 'bangumi' | 'mixed'
   theme: Theme
-  language: 'zh-CN' | 'en-US'
   trackPlaytime: boolean
   recordHistory: boolean
   dbPath: string
