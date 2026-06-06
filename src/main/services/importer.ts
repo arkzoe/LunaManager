@@ -84,7 +84,7 @@ const SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB']
 const SIZE_DIVISORS = [1, 1024, 1048576, 1073741824, 1099511627776]
 
 function formatSize(bytes: number): string {
-  if (bytes === 0) return '未知'
+  if (bytes === 0) return '0 B'
   let i = 0
   while (i < SIZE_DIVISORS.length - 1 && bytes >= SIZE_DIVISORS[i + 1]) i++
   const size = (bytes / SIZE_DIVISORS[i]).toFixed(i > 0 ? 1 : 0)
