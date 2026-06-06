@@ -1,6 +1,10 @@
 import type { ChartDataResult } from '../../../shared/types'
 import type { TooltipItem } from 'chart.js'
 
+function getCS(varName: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+}
+
 function hexToRgba(hex: string, alpha: number): string {
   const v = parseInt(hex.replace('#', ''), 16)
   return `rgba(${(v >> 16) & 255}, ${(v >> 8) & 255}, ${v & 255}, ${alpha})`
@@ -66,11 +70,11 @@ export function chartOptions() {
       }
     },
     scales: {
-      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#9ca3af' } },
+      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: getCS('--text-tertiary') } },
       y: {
         beginAtZero: true,
-        grid: { color: 'rgba(156, 163, 175, 0.1)' },
-        ticks: { font: { size: 11 }, color: '#9ca3af', callback: (v: number | string) => `${v}h` }
+        grid: { color: getCS('--border-color-light') },
+        ticks: { font: { size: 11 }, color: getCS('--text-tertiary'), callback: (v: number | string) => `${v}h` }
       }
     }
   }
