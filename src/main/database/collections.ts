@@ -15,7 +15,6 @@ export const collectionOps = {
     const c: Collection = {
       id: `col-${randomUUID()}`,
       name,
-      parent_id: null,
       sort_order: (
         db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM collections').get() as {
           n: number
@@ -25,7 +24,7 @@ export const collectionOps = {
       updated_at: now
     }
     db.prepare(
-      'INSERT INTO collections (id, name, parent_id, sort_order, created_at, updated_at) VALUES (@id, @name, @parent_id, @sort_order, @created_at, @updated_at)'
+      'INSERT INTO collections (id, name, sort_order, created_at, updated_at) VALUES (@id, @name, @sort_order, @created_at, @updated_at)'
     ).run(c)
     return c
   },
