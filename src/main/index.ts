@@ -199,6 +199,9 @@ function setupIpcHandlers(): void {
     return mainWindow?.isMaximized() ?? false
   })
 
+  // ===== App Info =====
+  ipcMain.handle('app:getVersion', () => app.getVersion())
+
   // ===== Tray / Quit =====
   ipcMain.handle('app:minimizeToTray', () => {
     if (mainWindow && !mainWindow.isDestroyed()) hideToTray(mainWindow)
