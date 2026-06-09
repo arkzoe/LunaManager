@@ -41,7 +41,7 @@ const emit = defineEmits<{
         </button>
       </div>
     </div>
-    <div v-if="loading" class="loading-placeholder">
+    <div v-if="loading && !topGame" class="loading-placeholder">
       <p>加载中...</p>
     </div>
     <div v-else-if="topGame" class="rankings">

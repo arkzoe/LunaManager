@@ -37,6 +37,7 @@ const loadRankings = async (): Promise<void> => {
 // 图表：通过 IPC getChartData 获取（后端 SQL 聚合）
 const chartData = shallowRef<ReturnType<typeof buildChartData>>(null)
 const chartLoading = ref(false)
+const chartLoaded = ref(false)
 
 const loadChartData = async (): Promise<void> => {
   chartLoading.value = true
@@ -47,6 +48,7 @@ const loadChartData = async (): Promise<void> => {
     chartData.value = null
   } finally {
     chartLoading.value = false
+    chartLoaded.value = true
   }
 }
 
@@ -146,7 +148,7 @@ const timeRanges = [
         </div>
       </div>
       <div class="panel-body">
-        <div v-if="chartLoading" class="chart-ph">
+        <div v-if="chartLoading && !chartLoaded" class="chart-ph">
           <p>加载中...</p>
         </div>
         <div v-else-if="chartData" class="chart-container">
